@@ -4,6 +4,8 @@
  * Credits: Myself, my family and my girlfriend and child.
  */
 
+require('./ascii')
+
 const ws        = require('ws')
 const express   = require('express')
 const app       = express()
