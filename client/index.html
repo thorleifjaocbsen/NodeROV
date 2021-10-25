@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>NodeROV</title>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=0.5, minimum-scale=0.5, maximum-scale=0.5" />
+    <link rel="stylesheet" type="text/css" href="css/reset.css">
+    <link rel="stylesheet" type="text/css" href="css/base.css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+    <script type="text/javascript" src="js/broadway/decoder.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/broadway/yuvcanvas.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/broadway/player.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/controls.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/gui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/socket.js" charset="utf-8"></script>
+    <style>
+
+
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="msgbox-bg">&nbsp;</div>
+      <div class="msgbox">
+        <h1>My super custom love header abdc</h1>
+        <div class="content"><p>Data</p></div>
+        <div class="button">
+        <button>OK</button>
+        <button>Cancel</button>
+        </div>
+      </div>
+      <header>
+        <section class="video">
+          <div class="field fvideo">
+            <canvas width="1260" height="709"></canvas>
+          </div>
+          <div class="field foverlay">EMERGENCY DATA</div>
+        </section>
+        <aside>
+          <section>
+            <div class="field finfo">
+              <h1>NodeROV</h1>
+              <aside>
+                <time>00:00:00</time><br />
+                <time>0000-00-00</time>
+              </aside>
+              <hr>
+              <ul>
+                <li><b>Dive nr.:</b><br />#0</li>
+                <li><b>Dive time:</b><br />0 min</li>
+                <li><b>Pilot:</b><br />Thorleif</li>
+                <li><b>Location:</b><br />Unknown</li>
+              </ul>
+            </div>
+
+          </section>
+          <section>
+            <div class="field fdata">
+              <ul>
+                <li><b></b><br /><span></span></li>
+                <li><b></b><br /><span></span></li>
+                <li><b></b><br /><span></span></li>
+                <li><b></b><br /><span></span></li>
+              </ul>
+              <hr />
+              <ul>
+                <li><b></b><br /><span></span></li>
+                <li><b></b><br /><span></span></li>
+                <li><b></b><br /><span></span></li>
+                <li><b></b><br /><span></span></li>
+              </ul>
+              <hr />
+              <ul>
+                <li><b></b><br /><span></span></li>
+                <li><b></b><br /><span></span></li>
+                <li><b></b><br /><span></span></li>
+                <li><b></b><br /><span></span></li>
+              </ul>
+            </div>
+          </section>
+          <section>
+            <div class="field fcontrols">
+              <div class="buttonarray">
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+                <button type="button">-</button>
+            </div>
+          </section>
+        </aside>
+        <div class="clearfix"><!-- --></div>
+      </header>
+      <footer>
+        <section>
+          <div class="field fdatagraphics">
+            <canvas>DataGraphics</canvas>
+          </div>
+        </section>
+        <section>
+          <div class="field fvitals">
+            <div class="compass">
+
+              <div class="rose"><canvas>| N | NE | E | SE | S | SW | W | NW |</canvas></div>
+              <div class="heading"><b>1</b></div>
+            </div>
+
+            <div class="accelerometer">
+              <canvas>You'r browser does not support canvas, prick!</canvas>
+            </div>
+            <div class="scale scale1"><hr /><p>PRESSURE</p><b>9 PSI</b></div>
+            <div class="scale scale2"><hr /><p>DEPTH</p><b>90 M</b></div>
+            <div class="scale scale3"><hr /><p>TEMPERATURE</p><b>11.3 &deg;</b></div>
+          </div>
+        </section>
+        <section>
+          <div class="field flog">
+            <button>1</button>
+            <button>2</button>
+            <h1>LOG</h1>
+            <hr/>
+            <div class="logs">
+              <table></table>
+            </div>
+          </div>
+        </section>
+        <div class="clearfix"><!-- --></div>
+      </footer>
+    </div>
+    <script type="text/javascript" src="js/main.js" charset="utf-8"></script>
+  </body>
+</html>

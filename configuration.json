@@ -1,0 +1,61 @@
+{
+	"port": 8000,
+	"socketPort": 8080,
+	"rov": {
+
+	},
+	"thrusters": {
+		"minUS": 1000,
+		"idleUS": 1550,
+		"maxUS": 2000,
+		"motors": [
+			[0,   0,    0,    -1.0,   0,      1.0,    -1.0,   0],
+			[1,   0,    0,    1.0,    0,      1.0,    1.0,    1],
+			[2,   0,    0,    -1.0,   0,      1.0,    1.0,    2],
+			[3,   0,    0,    1.0,    0,      1.0,    -1.0,   3],
+			[4,   0,    0,    0,      -1.0,   0,      0,      4],
+			[5,   0,    0,    0,      1.0,    0,      0,      5]
+		]
+	},
+	"auxiliary": {
+		"dunno": "XXX",
+		"devices": [
+			{
+				"id": "left_light",
+				"name": "Left Light",
+				"type": "hold",
+				"pin": 6,
+				"minUS": 1000,
+				"idleUS": 1500,
+				"maxUS": 2000
+			},
+			{
+				"id": "right_light",
+				"name": "Right Light",
+				"type": "hold",
+				"pin": 6,
+				"minUS": 1000,
+				"idleUS": 1500,
+				"maxUS": 2000
+			},
+			{
+				"id": "claw",
+				"name": "Claw",
+				"type": "return",
+				"pin": 6,
+				"minUS": 1000,
+				"idleUS": 1500,
+				"maxUS": 2000
+			},
+			{
+				"id": "camera",
+				"name": "Camera",
+				"type": "hold",
+				"pin": 6,
+				"minUS": 1000,
+				"idleUS": 1500,
+				"maxUS": 2000
+			}
+		]
+	}
+}
