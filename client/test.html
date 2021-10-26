@@ -1,33 +1,80 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
 <head>
-  <meta charset="UTF-8">
-  <title>NodeROV</title>
-  <meta name="viewport"
-    content="user-scalable=no, width=device-width, initial-scale=0.5, minimum-scale=0.5, maximum-scale=0.5" />
-  <script type="text/javascript" src="js/socket.js" charset="utf-8"></script>
-  <style>
-
-
-  </style>
+<meta charset="UTF-8" />
+<title>Canvas Test</title>
 </head>
-
 <body>
-  <script type="text/javascript" charset="utf-8">
+<header> </header>
+<nav> </nav>
+<section>
 
-    var socket = Socket();
-    socket.onmessage = function(e) {
-      console.log(e)
-    }
+<div>
+<canvas id="canvas" width="320" height="200">
+This text is displayed if your browser does not support HTML5 Canvas.
+</canvas>
+</div>
 
-    socket.onopen = function () { 
-      socket.send("heey");
-    
-    };
-    socket.connect(location.hostname, 8080);
+<script type="text/javascript">
+var canvas;
+var ctx;
 
-  </script>
+function init() {
+canvas = document.getElementById("canvas");
+ctx = canvas.getContext("2d");
+draw();
+}
+
+
+function draw() {
+
+ctx.fillStyle = 'green';
+ctx.shadowOffsetX = 5;
+ctx.shadowOffsetY = 5;
+ctx.shadowBlur    = 4;
+ctx.shadowColor   = 'rgba(204, 204, 204, 0.5)';
+ctx.fillRect(0,0,15,150);
+ctx.save();
+
+ctx.fillStyle = 'blue';
+ctx.shadowOffsetX = 10;
+ctx.shadowOffsetY = 10;
+ctx.shadowBlur    = 4;
+ctx.shadowColor   = 'rgba(204, 204, 204, 0.5)';
+ctx.fillRect(30,0,30,150);
+ctx.save();
+
+ctx.fillStyle = 'red';
+ctx.shadowOffsetX = 15;
+ctx.shadowOffsetY = 15;
+ctx.shadowBlur    = 4;
+ctx.shadowColor   = 'rgba(204, 204, 204, 0.5)';
+ctx.fillRect(90,0,45,150);
+ctx.save();
+
+ctx.restore();
+ctx.beginPath();
+ctx.arc(185, 75, 22, 0, Math.PI*2, true);
+ctx.closePath();
+ctx.fill();
+
+ctx.restore();
+ctx.beginPath();
+ctx.arc(260, 75, 15, 0, Math.PI*2, true);
+ctx.closePath();
+ctx.fill();
+
+ctx.restore();
+ctx.beginPath();
+ctx.arc(305, 75, 8, 0, Math.PI*2, true);
+ctx.closePath();
+ctx.fill();
+}
+
+init();
+</script>
+</section>
+<aside> </aside>
+<footer> </footer>
 </body>
-
 </html>

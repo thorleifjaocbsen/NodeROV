@@ -7,6 +7,8 @@ var vacuumTest = false;
 var confirmWaterTight = false;
 
 
+
+
 /************************
  *
  *
@@ -42,16 +44,16 @@ gui.log("Initializing NodeROV GUI");
 
 
 $("canvas").each(function () { $(this).get(0).height = $(this).height(); $(this).get(0).width = $(this).width(); });
-gui.accelCanvas = $(".fvitals .accelerometer canvas").get(0);
-gui.compassCanvas = $(".fvitals .compass .rose canvas").get(0);
-gui.dataGraphCanvasContext = $(".fdatagraphics canvas").get(0);
 
-gui.animateDataGraph();
-gui.drawAccelerometer(3, 5)
-gui.drawCompass(120);
-gui.animateScale(1, 50, 50 + " PSI");
-gui.animateScale(2, 30, 30 + " M");
-gui.animateScale(3, 30, 30 + " &deg;");
+// Darhboard Drawer
+const dashboard = new Dashboard($(".fdatagraphics canvas").get(0))
+dashboard.draw()
+
+
+// HUDBlock
+const hudBlock = new HUDBlock($(".fvitals canvas").get(0))
+setTimeout(() => { hudBlock.draw() }, 100)
+
 
 
 let d = new Date().toISOString();

@@ -14,7 +14,7 @@ GUI = function () {
   }
 
   self.init = function () {
-    self.compassRose.src = 'gfx/compass_rose.png';
+    //self.compassRose.src = 'gfx/compass_rose.png';
   }
 
   self.log = function (text, time, dontsend) {
