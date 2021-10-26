@@ -1,6 +1,12 @@
 {
 	"port": 8000,
 	"socketPort": 8080,
+	"video": {
+		"width": 320, 
+		"height": 240, 
+		"fps": 5, 
+		"port": 8282
+	},
 	"rov": {
 
 	},

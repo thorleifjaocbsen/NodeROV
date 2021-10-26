@@ -11,13 +11,14 @@ const express   = require('express')
 const app       = express()
 const http      = require('http').Server(app)
 const log       = require('./js/Log.js')
-const hb        = require('./js/heartbeat.js')
+const hb        = require('./js/Heartbeat.js')
 
+const EventEmitter           = require('events')
 const Configuration          = require('./configuration.json')
 const RemoteOperatedVehicle  = require('./js/RemoteOperatedVehicle.js');
 const ThrusterController     = require('./js/ThrusterController.js');
 const AuxiliaryController    = require('./js/AuxiliaryController.js')
-const EventEmitter           = require('events')
+const HeartbeatController    = require('./js/Heartbeat.js')
 
 
 // LOOP
@@ -34,6 +35,7 @@ const EventEmitter           = require('events')
 const thrusterController  = new ThrusterController(Configuration.thrusters)
 const auxiliaryController = new AuxiliaryController(Configuration.auxiliary)
 const rovController       = new RemoteOperatedVehicle(Configuration.rov)
+const heartbeatController = new HeartbeatController()
 const eventEmitter        = new EventEmitter()
 
 /************************
@@ -77,6 +79,18 @@ auxiliaryController.on('deviceOutputChange', (device) => {
 })
 
 
+/************************
+ *
+ * Heartbeat Event Handlers
+ *
+ ************************/
+heartbeatController.on("timeout", () => {
+  log.warn("Heartbeat failed, disarm ROV")
+  rovController.disarm()
+
+})
+
+
 
 
 // TEST: Testing that everything works on paper for now.
@@ -102,15 +116,17 @@ auxiliaryController.calculateOutput("camera", 1)
  ************************/
 const wss = new ws.WebSocketServer({ perMessageDeflate: false, port: Configuration.socketPort })
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
-wss.on('connection', function(c) {
+wss.on('connection', function(client) {
 
-  client = c
   try { log.remove(log.transports.socketIO); }
   catch(e) {  }
   log.info(`Websocket: Remote connection from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
   log.add(log.socketIOTransport,client)
   log.info('Websocket: Starting heartbeat')
-  hb.start(client)
+
+  heartbeatController.start()
+  heartbeatController.on("beat", (data, latency) => { client.send(`hb ${data} ${latency}`) })
+
   client.on('message', wss.parseMessage)
 
 });
@@ -125,7 +141,6 @@ wss.on('connection', function(c) {
  ************************/
 wss.parseMessage = function (data) {
 
-  log.debug("WS Data: " + data);
   data = data.toString()
   if (typeof data == "string") {
     var cmd = data.split(" ")[0];
@@ -133,8 +148,8 @@ wss.parseMessage = function (data) {
 
     switch (cmd) {
       case "hb":
-        hb.pulse(data.split(" ")[0]);
-        break;
+        heartbeatController.pulse(data.split(" ")[0])
+        break
 
       case "clog":
         log.log('info', 'CLIENT: ' + data);

@@ -1,6 +1,7 @@
 
 // var config          = { width : 1296, height: 730, fps : 15, port : 8282 }
-var config          = { width : 320, height: 240, fps : 5, port : 8282 }
+
+const config          = require('./configuration.json').video
 
 var spawn           = require('child_process').spawn;
 var Splitter        = require('stream-split');
