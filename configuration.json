@@ -2,10 +2,26 @@
 	"port": 8000,
 	"socketPort": 8080,
 	"video": {
-		"width": 320, 
-		"height": 240, 
-		"fps": 5, 
+		"width": 320,
+		"height": 240,
+		"fps": 5,
 		"port": 8282
+	},
+	"controls": {
+		"thrusterControl": {
+			"forward": null,
+			"lateral": null,
+			"yaw": null,
+			"climb": null,
+			"roll": null,
+			"pitch": null
+		},
+		"auxiliary": [
+			{
+				"id": "left_light"
+
+			}
+		]
 	},
 	"rov": {
 
@@ -24,7 +40,6 @@
 		]
 	},
 	"auxiliary": {
-		"dunno": "XXX",
 		"devices": [
 			{
 				"id": "left_light",

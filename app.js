@@ -11,7 +11,6 @@ const express   = require('express')
 const app       = express()
 const http      = require('http').Server(app)
 const log       = require('./js/Log.js')
-const hb        = require('./js/Heartbeat.js')
 
 const EventEmitter           = require('events')
 const Configuration          = require('./configuration.json')
@@ -58,10 +57,10 @@ rovController.on('controlInputChange', (newInput) => {
  *
  ************************/
 thrusterController.on('thrusterOutputChange', (thrusters) => {
-
+  log.debug("Thruster Output Change")
   thrusters.forEach(thruster => {
 
-    log.debug(`Setting PWM for pin ${thruster.pin} to ${thruster.us}uS`)
+    log.silly(`Setting PWM for pin ${thruster.pin} to ${thruster.us}uS`)
     // TODO: Add PWM Controller to SET PWM
   });
 })
@@ -84,13 +83,11 @@ auxiliaryController.on('deviceOutputChange', (device) => {
  * Heartbeat Event Handlers
  *
  ************************/
-heartbeatController.on("timeout", () => {
+heartbeatController.on("life", () => {
   log.warn("Heartbeat failed, disarm ROV")
   rovController.disarm()
-
+  heartbeatController.stop()
 })
-
-
 
 
 // TEST: Testing that everything works on paper for now.
@@ -120,15 +117,25 @@ wss.on('connection', function(client) {
 
   try { log.remove(log.transports.socketIO); }
   catch(e) {  }
-  log.info(`Websocket: Remote connection from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
+  log.info(`Websocket: Remote connection OPENED from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
   log.add(log.socketIOTransport,client)
   log.info('Websocket: Starting heartbeat')
 
+  const sendHeartbeat = (data, latency) => {
+    client.send(`hb ${data} ${latency}`)
+  }
+
   heartbeatController.start()
-  heartbeatController.on("beat", (data, latency) => { client.send(`hb ${data} ${latency}`) })
+  heartbeatController.on('beat', sendHeartbeat)
 
-  client.on('message', wss.parseMessage)
+  client.on('message', parseWebsocketData)
+  client.on('close', () => {
+    log.info(`Websocket: Remote connection CLOSED from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
 
+    rovController.disarm()
+    heartbeatController.stop()
+    heartbeatController.removeListener('beat', sendHeartbeat)
+  })
 });
 
 
@@ -139,105 +146,110 @@ wss.on('connection', function(client) {
  *
  *
  ************************/
-wss.parseMessage = function (data) {
+function parseWebsocketData(data) {
 
-  data = data.toString()
-  if (typeof data == "string") {
-    var cmd = data.split(" ")[0];
-    var data = data.substr(cmd.length + 1);
+  data = data.toString().split(" ")
+  const cmd = data.shift(1)
 
-    switch (cmd) {
-      case "hb":
-        heartbeatController.pulse(data.split(" ")[0])
-        break
-
-      case "clog":
-        log.log('info', 'CLIENT: ' + data);
-        break;
-
-      case "setlight":
-        var d = data.split(" ");
-        rovController.setLight(d[0], parseInt(d[1]));
-        break;
-
-      case "armtoggle":
-        rovController.toggleArm()
-        break;
-
-      case "arm":
-        rovController.arm()
-        break;
-
-      case "disarm":
-        rovController.disarm()
-        break;
-
-      case "depthhold":
-        if (!rovController.armed) { log.info('Depth hold not activated, ROV not armed'); break; }
-        rovController.depth.PID.reset();
-        rovController.depth.wanted = parseInt(ptSensorExt.pressure);
-        if (rovController.depth.hold) rovController.depth.hold = false;
-        else rovController.depth.hold = true;
-        log.log('info', 'Depth hold is: ' + (rovController.depth.hold ? 'Activated' : 'Deactivated'));
-        break;
-
-      case "headinghold":
-        if (!rovController.armed) {
-          log.log('info', 'Heading hold not activated, ROV not armed');
-          return;
-        }
-        rovController.heading.PID.reset();
-        rovController.heading.wanted = rovController.heading.totalHeading * 10;
-        if (rovController.heading.hold) rovController.heading.hold = false;
-        else rovController.heading.hold = true;
-        log.log('info', 'Heading hold is: ' + (rovController.heading.hold ? 'Activated' : 'Deactivated'));
-        break;
-
-      case "setdepth":
-        rovController.depth.wanted = parseInt(data);
-        break;
-
-      case "setgain":
-        rovController.gain = parseInt(data);
-        if (rovController.gain > 400) rovController.gain = 400;
-        if (rovController.gain < 50) rovController.gain = 50;
-        break;
-
-      case "setflat":
-        accmag.setFlat();
-        config.acc.flat = accmag.acc.flat;
-        utils.writeConfig(config);
-        log.log('info', 'ROV Flat calibration set');
-        break;
-
-      case "calibrategyro":
-        gyro.calibrate(100, 10);
-        log.log('info', 'ROV Gyro Calibration starting. Do not move ROV');
-        break;
-
-      case "setcamera":
-        rovController.setCamera(data);
-        break;
-
-      case "gripopen":
-        rovController.setGripper(1);
-        break;
-      case "gripclose":
-        rovController.setGripper(-1);
-        break;
-
-      case "controls":
-        controls = JSON.parse(data);
-        break;
-
-      default:
-        log.log('warn', 'Websocket: Unknown command: ' + cmd + ' (' + data + ')');
-        break;
-    }
-  }
+  if (cmd == "hb") { heartbeatController.pulse(data[0]) }
+  else if (cmd == "clog") { }
+  else if (cmd == "armtoggle") { rovController.toggleArm() }
+  else if (cmd == "arm") { rovController.arm() }
+  else if (cmd == "disarm") { rovController.arm() }
   else {
-    log.log('warn', 'Websocket: Bad data received: ' + data);
+    log.warn(`Websocket: Unknown command: ${cmd} (${JSON.stringify(data)})`);
   }
+
+    // switch (cmd) {
+
+
+    //   case "clog":
+    //     log.log('info', 'CLIENT: ' + data);
+    //     break;
+
+    //   case "setlight":
+    //     var d = data.split(" ");
+    //     rovController.setLight(d[0], parseInt(d[1]));
+    //     break;
+
+    //   case "armtoggle":
+    //     rovController.toggleArm()
+    //     break;
+
+    //   case "arm":
+    //     rovController.arm()
+    //     break;
+
+    //   case "disarm":
+    //     rovController.disarm()
+    //     break;
+
+    //   case "depthhold":
+    //     if (!rovController.armed) { log.info('Depth hold not activated, ROV not armed'); break; }
+    //     rovController.depth.PID.reset();
+    //     rovController.depth.wanted = parseInt(ptSensorExt.pressure);
+    //     if (rovController.depth.hold) rovController.depth.hold = false;
+    //     else rovController.depth.hold = true;
+    //     log.log('info', 'Depth hold is: ' + (rovController.depth.hold ? 'Activated' : 'Deactivated'));
+    //     break;
+
+    //   case "headinghold":
+    //     if (!rovController.armed) {
+    //       log.log('info', 'Heading hold not activated, ROV not armed');
+    //       return;
+    //     }
+    //     rovController.heading.PID.reset();
+    //     rovController.heading.wanted = rovController.heading.totalHeading * 10;
+    //     if (rovController.heading.hold) rovController.heading.hold = false;
+    //     else rovController.heading.hold = true;
+    //     log.log('info', 'Heading hold is: ' + (rovController.heading.hold ? 'Activated' : 'Deactivated'));
+    //     break;
+
+    //   case "setdepth":
+    //     rovController.depth.wanted = parseInt(data);
+    //     break;
+
+    //   case "setgain":
+    //     rovController.gain = parseInt(data);
+    //     if (rovController.gain > 400) rovController.gain = 400;
+    //     if (rovController.gain < 50) rovController.gain = 50;
+    //     break;
+
+    //   case "setflat":
+    //     accmag.setFlat();
+    //     config.acc.flat = accmag.acc.flat;
+    //     utils.writeConfig(config);
+    //     log.log('info', 'ROV Flat calibration set');
+    //     break;
+
+    //   case "calibrategyro":
+    //     gyro.calibrate(100, 10);
+    //     log.log('info', 'ROV Gyro Calibration starting. Do not move ROV');
+    //     break;
+
+    //   case "setcamera":
+    //     rovController.setCamera(data);
+    //     break;
+
+    //   case "gripopen":
+    //     rovController.setGripper(1);
+    //     break;
+    //   case "gripclose":
+    //     rovController.setGripper(-1);
+    //     break;
+
+    //   case "controls":
+    //     controls = JSON.parse(data);
+    //     break;
+
+    //   default:
+    //     
+    //     break;
+    // }
+  
+  // else {
+  //   log.log('warn', 'Websocket: Bad data received: ' + data);
+  // }
 }
 
 
@@ -248,22 +260,22 @@ wss.parseMessage = function (data) {
  *
  ************************/
 
- setInterval(function() { // Send data to client
+ setInterval(() => { // Send data to client
   /************************
    *
    * Check client connectivity
    *
    ************************/
-  if(!hb.connected) {
-    // Warning lights!! Lost topsite connecton, do stop everything!
-    if(rovController.armed) rovController.disarm(); // Disarm
+  // if(!heartbeatController.isAlive()) {
+  //   // Warning lights!! Lost topsite connecton, do stop everything!
+  //   if(rovController.armed) rovController.disarm(); // Disarm
 
-    if((hb.offTime > 5) && (client != null)) {
-      client.close(); // Kill connection
-      client = null; // Allow new connection
-    }
-    return;
-  }
+  //   if((heartbeatController.offTime > 5) && (client != null)) {
+  //     client.close(); // Kill connection
+  //     client = null; // Allow new connection
+  //   }
+  //   return;
+  // }
 
 
   // /************************

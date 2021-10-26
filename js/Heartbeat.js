@@ -25,21 +25,25 @@ module.exports = class HeartbeatController {
     this.eventEmitter.on(event, callback)
   }
 
+  removeListener(event, callback) {
+
+    this.eventEmitter.removeListener(event, callback)
+  }
+
   start() {
 
     this.stop()
     this.startime = 0
     this.offTime = 0
-    this.timer = setInterval(() => { this.beat() }, this.frequency*1000)
+    this.timer = setTimeout(() => { this.beat() }, this.frequency*1000)
 
   }
 
   stop() {
 
-    clearInterval(this.timer)
+    clearTimeout(this.timer)
     this.timer = null
     this.startime = 0
-    this.eventEmitter.removeAllListeners('beat')
   }
 
   beat() {
@@ -63,6 +67,7 @@ module.exports = class HeartbeatController {
         this.eventEmitter.emit('timeout')
       }
     }
+    this.timeout = setTimeout(() => { this.beat() }, this.frequency*1000)
   }
 
   pulse(data) {
@@ -70,5 +75,9 @@ module.exports = class HeartbeatController {
     this.latency = Math.ceil((Date.now() - data) / 2)
     this.starttime = 0
     this.connected = true
+  }
+
+  isAlive() {
+    return this.alive
   }
 }
