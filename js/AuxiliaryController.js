@@ -63,9 +63,4 @@ module.exports = class AuxiliaryController {
     // Emit event for change
     this.eventEmitter.emit('deviceOutputChange', device)    
   }
-
-
-  getOutputUS(deviceId) {
-
-  }
 }
