@@ -13,10 +13,11 @@ const http      = require('http').Server(app)
 const log       = require('./js/Log.js')
 const hb        = require('./js/heartbeat.js')
 
-const Configuration               = require('./configuration.json')
-const RemoteOperatedVehicleClass  = require('./js/RemoteOperatedVehicle.js');
-const ThrusterControllerClass     = require('./js/ThrusterController.js');
-const AuxiliaryControllerClass    = require('./js/AuxiliaryController.js')
+const Configuration          = require('./configuration.json')
+const RemoteOperatedVehicle  = require('./js/RemoteOperatedVehicle.js');
+const ThrusterController     = require('./js/ThrusterController.js');
+const AuxiliaryController    = require('./js/AuxiliaryController.js')
+const EventEmitter           = require('events')
 
 
 // LOOP
@@ -30,29 +31,34 @@ const AuxiliaryControllerClass    = require('./js/AuxiliaryController.js')
  * Initialize scripts
  *
  ************************/
-const ThrusterController  = new ThrusterControllerClass(Configuration.thrusters)
-const AuxiliaryController = new AuxiliaryControllerClass(Configuration.auxiliary)
-const ROVController       = new RemoteOperatedVehicleClass(Configuration.rov)
+const thrusterController  = new ThrusterController(Configuration.thrusters)
+const auxiliaryController = new AuxiliaryController(Configuration.auxiliary)
+const rovController       = new RemoteOperatedVehicle(Configuration.rov)
+const eventEmitter        = new EventEmitter()
 
 /************************
  *
  * ROV Event Handlers
  *
  ************************/
-ROVController.on('arm', () => { log.info('ROV Armed') })
-ROVController.on('disarm', () => { log.info('ROV Disarmed') })
-ROVController.on('controlInputChange', (newInput) => { 
+rovController.on('arm', () => { log.info('ROV Armed') })
+rovController.on('disarm', () => { log.info('ROV Disarmed') })
+rovController.on('controlInputChange', (newInput) => { 
+  
   log.info("Controller input changed")
-  ThrusterController.calculateOutput(newInput)
+  thrusterController.calculateOutput(newInput)
 })
+
 
 /************************
  *
  * Thruster Event Handlers
  *
  ************************/
-ThrusterController.on('thrusterOutputChange', (thrusters) => {
+thrusterController.on('thrusterOutputChange', (thrusters) => {
+
   thrusters.forEach(thruster => {
+
     log.debug(`Setting PWM for pin ${thruster.pin} to ${thruster.us}uS`)
     // TODO: Add PWM Controller to SET PWM
   });
@@ -64,7 +70,8 @@ ThrusterController.on('thrusterOutputChange', (thrusters) => {
  * Auxiliary Event Handlers
  *
  ************************/
-AuxiliaryController.on('deviceOutputChange', (device) => {
+auxiliaryController.on('deviceOutputChange', (device) => {
+
   log.debug(`PWM Signal change on ${device.id} (pin: ${device.pin}, us: ${device.us})`)
   // TODO: Add PWM Controller to SET PWM
 })
@@ -73,9 +80,9 @@ AuxiliaryController.on('deviceOutputChange', (device) => {
 
 
 // TEST: Testing that everything works on paper for now.
-ROVController.arm();
-ROVController.setControlInput({climb: 1, yaw: 0.1})
-AuxiliaryController.calculateOutput("camera", 1)
+rovController.arm();
+rovController.setControlInput({climb: 1, yaw: 0.1})
+auxiliaryController.calculateOutput("camera", 1)
 
 
 /************************
@@ -96,6 +103,7 @@ AuxiliaryController.calculateOutput("camera", 1)
 const wss = new ws.WebSocketServer({ perMessageDeflate: false, port: Configuration.socketPort })
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
 wss.on('connection', function(c) {
+
   client = c
   try { log.remove(log.transports.socketIO); }
   catch(e) {  }
@@ -116,6 +124,7 @@ wss.on('connection', function(c) {
  *
  ************************/
 wss.parseMessage = function (data) {
+
   log.debug("WS Data: " + data);
   data = data.toString()
   if (typeof data == "string") {
@@ -133,50 +142,50 @@ wss.parseMessage = function (data) {
 
       case "setlight":
         var d = data.split(" ");
-        ROVController.setLight(d[0], parseInt(d[1]));
+        rovController.setLight(d[0], parseInt(d[1]));
         break;
 
       case "armtoggle":
-        ROVController.toggleArm()
+        rovController.toggleArm()
         break;
 
       case "arm":
-        ROVController.arm()
+        rovController.arm()
         break;
 
       case "disarm":
-        ROVController.disarm()
+        rovController.disarm()
         break;
 
       case "depthhold":
-        if (!ROVController.armed) { log.info('Depth hold not activated, ROV not armed'); break; }
-        ROVController.depth.PID.reset();
-        ROVController.depth.wanted = parseInt(ptSensorExt.pressure);
-        if (ROVController.depth.hold) ROVController.depth.hold = false;
-        else ROVController.depth.hold = true;
-        log.log('info', 'Depth hold is: ' + (ROVController.depth.hold ? 'Activated' : 'Deactivated'));
+        if (!rovController.armed) { log.info('Depth hold not activated, ROV not armed'); break; }
+        rovController.depth.PID.reset();
+        rovController.depth.wanted = parseInt(ptSensorExt.pressure);
+        if (rovController.depth.hold) rovController.depth.hold = false;
+        else rovController.depth.hold = true;
+        log.log('info', 'Depth hold is: ' + (rovController.depth.hold ? 'Activated' : 'Deactivated'));
         break;
 
       case "headinghold":
-        if (!ROVController.armed) {
+        if (!rovController.armed) {
           log.log('info', 'Heading hold not activated, ROV not armed');
           return;
         }
-        ROVController.heading.PID.reset();
-        ROVController.heading.wanted = ROVController.heading.totalHeading * 10;
-        if (ROVController.heading.hold) ROVController.heading.hold = false;
-        else ROVController.heading.hold = true;
-        log.log('info', 'Heading hold is: ' + (ROVController.heading.hold ? 'Activated' : 'Deactivated'));
+        rovController.heading.PID.reset();
+        rovController.heading.wanted = rovController.heading.totalHeading * 10;
+        if (rovController.heading.hold) rovController.heading.hold = false;
+        else rovController.heading.hold = true;
+        log.log('info', 'Heading hold is: ' + (rovController.heading.hold ? 'Activated' : 'Deactivated'));
         break;
 
       case "setdepth":
-        ROVController.depth.wanted = parseInt(data);
+        rovController.depth.wanted = parseInt(data);
         break;
 
       case "setgain":
-        ROVController.gain = parseInt(data);
-        if (ROVController.gain > 400) ROVController.gain = 400;
-        if (ROVController.gain < 50) ROVController.gain = 50;
+        rovController.gain = parseInt(data);
+        if (rovController.gain > 400) rovController.gain = 400;
+        if (rovController.gain < 50) rovController.gain = 50;
         break;
 
       case "setflat":
@@ -192,14 +201,14 @@ wss.parseMessage = function (data) {
         break;
 
       case "setcamera":
-        ROVController.setCamera(data);
+        rovController.setCamera(data);
         break;
 
       case "gripopen":
-        ROVController.setGripper(1);
+        rovController.setGripper(1);
         break;
       case "gripclose":
-        ROVController.setGripper(-1);
+        rovController.setGripper(-1);
         break;
 
       case "controls":
@@ -232,7 +241,7 @@ wss.parseMessage = function (data) {
    ************************/
   if(!hb.connected) {
     // Warning lights!! Lost topsite connecton, do stop everything!
-    if(ROVController.armed) ROVController.disarm(); // Disarm
+    if(rovController.armed) rovController.disarm(); // Disarm
 
     if((hb.offTime > 5) && (client != null)) {
       client.close(); // Kill connection
