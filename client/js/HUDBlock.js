@@ -108,7 +108,7 @@ class HUDBlock {
     ctx.fillStyle = "#fb6362";
     ctx.strokeStyle = "rgba(145,152,169,1)";
     ctx.lineWidth = 2;
-    ctx.rect(width/2-35,-2,70,35)
+    ctx.rect(width/2-35,-2,70,30)
     ctx.stroke()
     ctx.fill()
     ctx.closePath()

@@ -76,13 +76,44 @@ class Dashboard {
     const memSpace = Math.round(100 / 4095 * 2032);
     const memColor = memSpace < 80 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)';
 
-    this.drawScale(200 + grid * 1, height1, "VOLTAGE", voltPercentage, voltColor, 13.5);
-    this.drawScale(200 + grid * 3, height1, "AMPERE", ampPercentage, ampColor, amp);
-    this.drawScale(200 + grid * 5, height1, "UNUSED", 0, 'rgba(255,255,255,1)');
+    const pressure = 40;
+    const pressureMax = 160;
+    const pressurePercentage = Math.round(pressure / pressureMax * 100)
+    const pressureColor = pressure < pressureMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
 
-    this.drawScale(200 + grid * 1, height2, "RAM LEFT (MB)", memSpace, memColor, 2132);
-    this.drawScale(200 + grid * 3, height2, "CPU (%)", 32.1, cpuColor);
-    this.drawScale(200 + grid * 5, height2, "DISK SPACE (GB)  ", diskSpace, diskColor, 4 + "/" + 16);
+    const depth = 25;
+    const depthMax = 100;
+    const depthPercentage = Math.round(depth / depthMax * 100)
+    const depthColor = depth < depthMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
+
+    const temp = 4;
+    const tempMax = 35;
+    const tempPercentage = Math.round(temp / tempMax * 100)
+    const tempColor = temp < tempMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
+
+    const voltage = 15.8;
+    const voltageMax = 16.8;
+    const voltagePercentage = Math.round(voltage / voltageMax * 100)
+    const voltageColor = voltage > voltageMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
+
+    const current = 25;
+    const currentMax = 90;
+    const currentPercentage = Math.round(current / currentMax * 100)
+    const currentColor = current < currentMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
+
+    const mah = 3200;
+    const mahMax = 5000;
+    const mahPercentage = Math.round(mah / mahMax * 100)
+    const mahColor = mah < mahMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
+
+
+    this.drawScale(200 + grid * 1, height1, "PRESSURE", pressurePercentage, pressureColor, pressure);
+    this.drawScale(200 + grid * 3, height1, "DEPTH", depthPercentage, depthColor, depth);
+    this.drawScale(200 + grid * 5, height1, "TEMPERATURE", tempPercentage, tempColor, temp);
+
+    this.drawScale(200 + grid * 1, height2, "VOLTAGE", voltagePercentage, voltageColor, voltage);
+    this.drawScale(200 + grid * 3, height2, "CURRENT", currentPercentage, currentColor, current);
+    this.drawScale(200 + grid * 5, height2, "MAH", mahPercentage, mahColor, mah);
 
   }
 
@@ -96,12 +127,12 @@ class Dashboard {
 
     if (!value) value = percentage;
 
-    ctx.font = "bold 20px 'Open Sans'";
+    ctx.font = "bold 20px Open Sans";
     ctx.textAlign = "center";
     ctx.fillStyle = color;
     ctx.fillText(value, 0, 7)
 
-    ctx.font = "bold 12px 'Open Sans'";
+    ctx.font = "bold 12px Open Sans";
     ctx.textAlign = "center";
     ctx.fillStyle = color;
     ctx.fillText(title, 0, -55)

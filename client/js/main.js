@@ -17,19 +17,19 @@ var confirmWaterTight = false;
  *
  ************************/
 
-player.socket = Socket();
-player.socket.log = function (text) { gui.log("Video: " + text); }
-player.socket.onopen = function () { player.socket.send("REQUESTSTREAM"); };
-player.socket.onmessage = function (e) {
-  if (typeof e.data == "string") {
-    gui.log(e.data, Date.now());
-  };
-  if (player.skipMessages) { return; }
-  var frame = new Uint8Array(e.data);
-  player.decode(frame);
-};
-player.socket.connect(location.hostname, 8282);
-$(".fvideo").html(player.canvas);
+// player.socket = Socket();
+// player.socket.log = function (text) { gui.log("Video: " + text); }
+// player.socket.onopen = function () { player.socket.send("REQUESTSTREAM"); };
+// player.socket.onmessage = function (e) {
+//   if (typeof e.data == "string") {
+//     gui.log(e.data, Date.now());
+//   };
+//   if (player.skipMessages) { return; }
+//   var frame = new Uint8Array(e.data);
+//   player.decode(frame);
+// };
+// player.socket.connect(location.hostname, 8282);
+// $(".fvideo").html(player.canvas);
 
 /************************
  *
@@ -47,7 +47,7 @@ $("canvas").each(function () { $(this).get(0).height = $(this).height(); $(this)
 
 // Darhboard Drawer
 const dashboard = new Dashboard($(".fdatagraphics canvas").get(0))
-dashboard.draw()
+setTimeout(() => { dashboard.draw() }, 100)
 
 
 // HUDBlock
