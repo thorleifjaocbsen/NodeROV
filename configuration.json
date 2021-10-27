@@ -39,7 +39,12 @@
 				"yaw": -1.0,
 				"climb": 0,
 				"forward": 1.0,
-				"lateral": -1.0
+				"lateral": -1.0,
+				"gui": {
+					"offsetX": 0,
+					"offsetY": 0,
+					"rotation": 45
+				}
 			},
 			{
 				"id": "front_right",
@@ -49,7 +54,12 @@
 				"yaw": 1.0,
 				"climb": 0,
 				"forward": 1.0,
-				"lateral": 1.0
+				"lateral": 1.0,
+				"gui": {
+					"offsetX": 100,
+					"offsetY": 0,
+					"rotation": 315
+				}
 			},
 			{
 				"id": "back_left",
@@ -59,7 +69,12 @@
 				"yaw": -1.0,
 				"climb": 0,
 				"forward": 1.0,
-				"lateral": 1.0
+				"lateral": 1.0,
+				"gui": {
+					"offsetX": 0,
+					"offsetY": 200,
+					"rotation": 135
+				}
 			},
 			{
 				"id": "back_right",
@@ -69,7 +84,12 @@
 				"yaw": 1.0,
 				"climb": 0,
 				"forward": 1.0,
-				"lateral": -1.0
+				"lateral": -1.0,
+				"gui": {
+					"offsetX": 100,
+					"offsetY": 200,
+					"rotation": 225
+				}
 			},
 			{
 				"id": "vertical_left",
@@ -79,7 +99,12 @@
 				"yaw": 0,
 				"climb": -1.0,
 				"forward": 0,
-				"lateral": 0
+				"lateral": 0,
+				"gui": {
+					"offsetX": 20,
+					"offsetY": 100,
+					"rotation": 0
+				}
 			},
 			{
 				"id": "vertical_right",
@@ -89,7 +114,12 @@
 				"yaw": 0,
 				"climb": 1.0,
 				"forward": 0,
-				"lateral": 0
+				"lateral": 0,
+				"gui": {
+					"offsetX": 80,
+					"offsetY": 100,
+					"rotation": 0
+				}
 			}
 		]
 	},
