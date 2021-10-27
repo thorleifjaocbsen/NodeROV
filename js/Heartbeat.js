@@ -67,7 +67,7 @@ module.exports = class HeartbeatController {
         this.eventEmitter.emit('timeout')
       }
     }
-    this.timeout = setTimeout(() => { this.beat() }, this.frequency*1000)
+    this.timer = setTimeout(() => { this.beat() }, this.frequency*1000)
   }
 
   pulse(data) {
