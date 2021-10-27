@@ -15,20 +15,15 @@ var confirmWaterTight = false;
  *
  *
  ************************/
-
-// player.socket = new Socket();
-// player.socket.log = function (text) { gui.log("Video: " + text); }
-// player.socket.onopen = function () { player.socket.send("REQUESTSTREAM"); };
-// player.socket.onmessage = function (e) {
-//   if (typeof e.data == "string") {
-//     gui.log(e.data, Date.now());
-//   };
-//   if (player.skipMessages) { return; }
-//   var frame = new Uint8Array(e.data);
-//   player.decode(frame);
-// };
-// player.socket.connect(location.hostname, 8282);
-// $(".fvideo").html(player.canvas);
+player.ws = new Socket(location.hostname, 8282);
+player.ws.on('open', () => { player.ws.send("REQUESTSTREAM") })
+player.ws.on('message', (e) => {
+  if (typeof e.data == "string") console.log(e.data, Date.now())
+  if (player.skipMessages) return
+  var frame = new Uint8Array(e.data)
+  player.decode(frame)
+})
+$(".fvideo").html(player.canvas)
 
 /************************
  *
@@ -42,14 +37,14 @@ var confirmWaterTight = false;
 // gui.log("Initializing NodeROV GUI");
 
 const ws = new Socket(location.hostname, 8080)
-ws.on('message', (data) => {
+ws.on('message', (e) => {
 
-  if (typeof data != 'string') {
+  if (typeof e.data != 'string') {
     console.log("Unknown data")
     return false
   }
 
-  data = data.split(' ')
+  const data = e.data.split(' ')
   const cmd = data.shift()
 
   if (cmd == "hb") {
@@ -58,9 +53,11 @@ ws.on('message', (data) => {
     ws.send(`hb ${data[0]}`)
   }
   else if (cmd == "log") {
+
     console.log(data.join(" "))
   }
   else {
+
     console.log(`Unhandeled command: ${cmd} (${JSON.stringify(data)})`)
     console.log(data)
   }

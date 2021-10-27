@@ -10,10 +10,8 @@ class Socket {
 
   constructor(host, port) {
 
-    this.host = host
-    this.port = port
-    this.connect(host, port)
     this.callbacks = {}
+    if(host && port) this.connect(host, port)
   }
 
 
@@ -33,11 +31,13 @@ class Socket {
 
   connect(host, port) {
 
+    this.host = host
+    this.port = port
     this.ws = new WebSocket(`ws://${host}:${port}`)
     this.ws.onopen = (e) => this.emit('open', e)
     this.ws.onclose = (e) => this.emit("close", e)
     this.ws.onerror = (e) => this.emit('error', e)
-    this.ws.onmessage = (e) => this.emit('message', e.data)
+    this.ws.onmessage = (e) => this.emit('message', e)
     this.ws.binaryType = 'arraybuffer'
   }
 
