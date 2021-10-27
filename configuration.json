@@ -31,12 +31,66 @@
 		"idleUS": 1550,
 		"maxUS": 2000,
 		"motors": [
-			[0,   0,    0,    -1.0,   0,      1.0,    -1.0,   0],
-			[1,   0,    0,    1.0,    0,      1.0,    1.0,    1],
-			[2,   0,    0,    -1.0,   0,      1.0,    1.0,    2],
-			[3,   0,    0,    1.0,    0,      1.0,    -1.0,   3],
-			[4,   0,    0,    0,      -1.0,   0,      0,      4],
-			[5,   0,    0,    0,      1.0,    0,      0,      5]
+			{
+				"id": "front_left",
+				"pwmPin": 0,
+				"roll": 0,
+				"pitch": 0,
+				"yaw": -1.0,
+				"climb": 0,
+				"forward": 1.0,
+				"lateral": -1.0
+			},
+			{
+				"id": "front_right",
+				"pwmPin": 1,
+				"roll": 0,
+				"pitch": 0,
+				"yaw": 1.0,
+				"climb": 0,
+				"forward": 1.0,
+				"lateral": 1.0
+			},
+			{
+				"id": "back_left",
+				"pwmPin": 2,
+				"roll": 0,
+				"pitch": 0,
+				"yaw": -1.0,
+				"climb": 0,
+				"forward": 1.0,
+				"lateral": 1.0
+			},
+			{
+				"id": "back_right",
+				"pwmPin": 3,
+				"roll": 0,
+				"pitch": 0,
+				"yaw": 1.0,
+				"climb": 0,
+				"forward": 1.0,
+				"lateral": -1.0
+			},
+			{
+				"id": "vertical_left",
+				"pwmPin": 4,
+				"roll": 0,
+				"pitch": 0,
+				"yaw": 0,
+				"climb": -1.0,
+				"forward": 0,
+				"lateral": 0
+			},
+			{
+				"id": "vertical_right",
+				"pwmPin": 5,
+				"roll": 0,
+				"pitch": 0,
+				"yaw": 0,
+				"climb": 1.0,
+				"forward": 0,
+				"lateral": 0
+			}
 		]
 	},
 	"auxiliary": {

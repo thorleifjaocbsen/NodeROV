@@ -11,6 +11,7 @@ const DEFAULT_CONTROL_INPUT = { roll: 0, pitch: 0, yaw: 0, climb: 0, forward: 0,
 module.exports = class ThrusterController {
 
   constructor(options) {
+
     this.eventEmitter = new EventEmitter()
     let default_values = {
       minUS: 1000,
@@ -28,22 +29,28 @@ module.exports = class ThrusterController {
     this.maxUS = options.maxUS;
 
     for(let motor of options.motors) {
-      this.addMotor(...motor)
+
+      this.addMotor(motor.pwmPin, motor.roll, motor.pitch, motor.yaw, motor.climb, motor.forward, motor.lateral)
     }
 
     this.calculateOutput()
   }
 
+
   on(event, callback) {
+
     this.eventEmitter.on(event, callback)
   }
 
+
   constrain(value, min, max) {
+
     return Math.max(Math.min(value, max), min)
   }
 
 
   map( x,  in_min,  in_max,  out_min,  out_max){
+
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
   } 
 
@@ -100,8 +107,9 @@ module.exports = class ThrusterController {
   }
 
 
-  addMotor(pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor, testingOrder) {
-    this.motors.push({ pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor, testingOrder })
+  addMotor(pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor) {
+    
+    this.motors.push({ pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor })
   }
 
 }
