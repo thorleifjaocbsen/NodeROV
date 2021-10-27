@@ -9,8 +9,36 @@ class Dashboard {
   constructor(canvas) {
 
     this.canvas = canvas
+
+    this.normalColor = 'rgba(255,255,255,1)';
+    this.warningColor = 'rgba(231,96,98,1)'
+    this.scales = []
+
+    this.setScale(0, "PRESSURE",    40,   160,  30)
+    this.setScale(1, "DEPTH",       90,   110,  30)
+    this.setScale(2, "TEMPERATURE", 4,    30,   0)
+    this.setScale(3, "VOLTAGE",     11, 16.8,   -6.8)
+    this.setScale(4, "CURRENT",     20,   90,   10)
+    this.setScale(5, "MAH USED",    3214, 5500, 1000)
   }
 
+  setScale(scale, desc, value, maxValue, warningDiff) {
+    
+    let diff = maxValue - value;
+    if(warningDiff < 0) {
+      diff = diff * -1 
+    }
+
+    const color = diff < warningDiff ? this.warningColor : this.normalColor;
+
+    this.scales[scale] = {
+      desc,
+      value,
+      maxValue,
+      percentage: Math.round(value / maxValue * 100),
+      color
+    }
+  }
 
   draw() {
 
@@ -51,8 +79,8 @@ class Dashboard {
 
     /* FL */ this.drawThruster(x, y, fl, 45)
     /* FR */ this.drawThruster(x + 100, y, fr, 315)
-    /* UL */ this.drawThruster(x + 10, y + 100, ul, 0)
-    /* UR */ this.drawThruster(x + 90, y + 100, ur, 0)
+    /* UL */ this.drawThruster(x + 20, y + 100, ul, 0)
+    /* UR */ this.drawThruster(x + 80, y + 100, ur, 0)
     /* BL */ this.drawThruster(x, y + 200, bl, 135)
     /* BR */ this.drawThruster(x + 100, y + 200, br, 225)
 
@@ -60,60 +88,13 @@ class Dashboard {
     const height1 = (height / 4) + 20
     const height2 = height / 4 * 3
 
+    this.drawScale(200 + grid * 1, height1, this.scales[0].desc, this.scales[0].percentage, this.scales[0].color, this.scales[0].value);
+    this.drawScale(200 + grid * 3, height1, this.scales[1].desc, this.scales[1].percentage, this.scales[1].color, this.scales[1].value);
+    this.drawScale(200 + grid * 5, height1, this.scales[2].desc, this.scales[2].percentage, this.scales[2].color, this.scales[2].value);
 
-    const voltPercentage = 32
-    if (voltPercentage > 100) voltPercentage = 100
-    const voltColor = voltPercentage > 30 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
-
-    const amp = 34.22
-    const ampPercentage = 40
-    if (ampPercentage > 100) ampPercentage = 100
-    const ampColor = ampPercentage < 50 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
-
-    const diskSpace = Math.round(100 / 80 * 40);
-    const diskColor = diskSpace < 80 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)';
-    const cpuColor = 30 < 80 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)';
-    const memSpace = Math.round(100 / 4095 * 2032);
-    const memColor = memSpace < 80 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)';
-
-    const pressure = 40;
-    const pressureMax = 160;
-    const pressurePercentage = Math.round(pressure / pressureMax * 100)
-    const pressureColor = pressure < pressureMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
-
-    const depth = 25;
-    const depthMax = 100;
-    const depthPercentage = Math.round(depth / depthMax * 100)
-    const depthColor = depth < depthMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
-
-    const temp = 4;
-    const tempMax = 35;
-    const tempPercentage = Math.round(temp / tempMax * 100)
-    const tempColor = temp < tempMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
-
-    const voltage = 15.8;
-    const voltageMax = 16.8;
-    const voltagePercentage = Math.round(voltage / voltageMax * 100)
-    const voltageColor = voltage > voltageMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
-
-    const current = 25;
-    const currentMax = 90;
-    const currentPercentage = Math.round(current / currentMax * 100)
-    const currentColor = current < currentMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
-
-    const mah = 3200;
-    const mahMax = 5000;
-    const mahPercentage = Math.round(mah / mahMax * 100)
-    const mahColor = mah < mahMax - 10 ? 'rgba(255,255,255,1)' : 'rgba(231,96,98,1)'
-
-
-    this.drawScale(200 + grid * 1, height1, "PRESSURE", pressurePercentage, pressureColor, pressure);
-    this.drawScale(200 + grid * 3, height1, "DEPTH", depthPercentage, depthColor, depth);
-    this.drawScale(200 + grid * 5, height1, "TEMPERATURE", tempPercentage, tempColor, temp);
-
-    this.drawScale(200 + grid * 1, height2, "VOLTAGE", voltagePercentage, voltageColor, voltage);
-    this.drawScale(200 + grid * 3, height2, "CURRENT", currentPercentage, currentColor, current);
-    this.drawScale(200 + grid * 5, height2, "MAH", mahPercentage, mahColor, mah);
+    this.drawScale(200 + grid * 1, height2, this.scales[3].desc, this.scales[3].percentage, this.scales[3].color, this.scales[3].value);
+    this.drawScale(200 + grid * 3, height2, this.scales[4].desc, this.scales[4].percentage, this.scales[4].color, this.scales[4].value);
+    this.drawScale(200 + grid * 5, height2, this.scales[5].desc, this.scales[5].percentage, this.scales[5].color, this.scales[5].value);
 
   }
 
