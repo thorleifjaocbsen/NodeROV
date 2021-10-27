@@ -30,7 +30,7 @@ module.exports = class ThrusterController {
 
     for(let motor of options.motors) {
 
-      this.addMotor(motor.pwmPin, motor.roll, motor.pitch, motor.yaw, motor.climb, motor.forward, motor.lateral)
+      this.addMotor(motor.id, motor.pwmPin, motor.roll, motor.pitch, motor.yaw, motor.climb, motor.forward, motor.lateral)
     }
 
     this.calculateOutput()
@@ -107,9 +107,9 @@ module.exports = class ThrusterController {
   }
 
 
-  addMotor(pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor) {
-    
-    this.motors.push({ pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor })
+  addMotor(id, pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor) {
+
+    this.motors[id] = { pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor }
   }
 
 }
