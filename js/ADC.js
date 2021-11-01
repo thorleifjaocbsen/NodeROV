@@ -15,7 +15,7 @@ const connection = [1, 0x48, 'i2c-bus']
  
 module.exports = class ADC {
 
-  constructor() {
+  constructor(options) {
 
     this.eventEmitter = new EventEmitter()
 
@@ -30,6 +30,10 @@ module.exports = class ADC {
       this.readSensorData()
       this.eventEmitter.emit('init')
     })
+
+
+    this.voltageMultiplier = (options && options.hasOwnProperty('vMultiplier')) ? options.voltageMultiplier : 5.697050938;    
+    this.currentMultiplier = (options && options.hasOwnProperty('cMultiplier')) ? options.currentMultiplier : 5.697050938;    
 
     // Default values = 0
     this.leak = 0
@@ -52,7 +56,7 @@ module.exports = class ADC {
 
 
     this.leak = await this.sensor.measure('0+GND')  / MAX_RANGE * PGA
-    this.voltage = (await this.sensor.measure('1+GND') / MAX_RANGE * PGA) * 5.697050938
+    this.voltage = (await this.sensor.measure('1+GND') / MAX_RANGE * PGA) * this.voltageMultiplier
     this.current = await this.sensor.measure('2+GND')  / MAX_RANGE * PGA
 
     this.eventEmitter.emit('read')

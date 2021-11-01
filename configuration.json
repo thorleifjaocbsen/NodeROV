@@ -1,6 +1,10 @@
 {
 	"port": 8000,
 	"socketPort": 8080,
+	"calibration": {
+		"voltageMultiplier": 5.697050938,
+		"currentMultiplier": 5.697050938
+	},
 	"video": {
 		"width": 320,
 		"height": 240,

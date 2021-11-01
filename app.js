@@ -44,7 +44,10 @@ bme280.on('read', () => {
 })
 
 const ADC = require('./js/ADC')
-const adc = new ADC()
+const adc = new ADC({
+  vMultuiplier: Configuration.calibration.voltageMultiplier, 
+  cMultiplier: Configuration.calibration.currentMultiplier
+})
 adc.on('init', () => { log.info("ADS1015 successfully initialized") })
 adc.on('read', () => { 
   log.verbose(`ADS1015 Read: 0=${adc.leak.toFixed(2)}v, 1=${adc.voltage.toFixed(2)}v, 2=${adc.current.toFixed(2)}v`)
