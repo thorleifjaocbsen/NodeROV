@@ -19,6 +19,42 @@ const ThrusterController     = require('./js/ThrusterController.js');
 const AuxiliaryController    = require('./js/AuxiliaryController.js')
 const HeartbeatController    = require('./js/Heartbeat.js')
 
+const enviroment = {
+  internalHumidity: 0,
+  internalPressure: 0,
+  externalPressure: 0,
+  internalTemp: 0,
+  externalTemp: 0,
+  voltage: 0,
+  current: 0,
+  mahUsed: 0,
+  leak: false
+}
+
+// Internal Pressure Sensor
+const BME280 = require('./js/BME280')
+const bme280 = new BME280()
+bme280.on('initError', (err) => { log.error(`BME280 initializing failed (${err})`) })
+bme280.on('readError', (err) => { log.error(`BME280 read failed (${err})`) })
+bme280.on('init', () => { log.info("BME280 successfully initialized") })
+bme280.on('read', () => { 
+  log.verbose(`BME280 Read: ${bme280.temperature}c, ${bme280.humidity.toFixed(0)}%, ${bme280.pressure.toFixed(3)}hPa`)
+  enviroment.internalPressure = bme280.pressure
+  enviroment.humidity = bme280.humidity
+})
+
+const ADC = require('./js/ADC')
+const adc = new ADC()
+adc.on('init', () => { log.info("ADS1015 successfully initialized") })
+adc.on('read', () => { 
+  log.verbose(`ADS1015 Read: 0=${adc.leak.toFixed(2)}v, 1=${adc.voltage.toFixed(2)}v, 2=${adc.current.toFixed(2)}v`)
+  enviroment.internalPressure = bme280.pressure
+  enviroment.voltage = adc.voltage
+  enviroment.current = adc.current
+  enviroment.leak = adc.leak > 0
+})
+
+
 
 // LOOP
 // 1hz - Update ping
