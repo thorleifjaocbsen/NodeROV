@@ -43,6 +43,7 @@ bme280.on('read', () => {
   enviroment.humidity = bme280.humidity
 })
 
+// ADC
 const ADC = require('./js/ADC')
 const adc = new ADC({
   vMultuiplier: Configuration.calibration.voltageMultiplier, 
@@ -57,7 +58,13 @@ adc.on('read', () => {
   enviroment.leak = adc.leak > 0
 })
 
-
+// IMU
+const IMU = require('./js/IMU')
+const imu = new IMU()
+imu.on('init', () => { log.info("LSM9DS1 successfully initialized") })
+imu.on('read', () => {
+  // log.info("read")
+})
 
 // LOOP
 // 1hz - Update ping
