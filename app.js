@@ -34,7 +34,8 @@ const enviroment = {
   leak: false,
   roll: 0,
   pitch: 0,
-  heading: 0
+  heading: 0,
+  latency: null
 }
 
 // Internal Pressure Sensor
@@ -57,7 +58,7 @@ const adc = new ADC({
 })
 adc.on('init', () => { log.info("ADS1015 successfully initialized") })
 adc.on('read', () => { 
-  log.info(`ADS1015 Read: 0=${adc.current.toFixed(3)}a, 1=${adc.voltage.toFixed(2)}v, 2=${adc.leak.toFixed(2)}v`)
+  log.debug(`ADS1015 Read: 0=${adc.current.toFixed(3)}a, 1=${adc.voltage.toFixed(2)}v, 2=${adc.leak.toFixed(2)}v`)
   enviroment.internalPressure = bme280.pressure
   enviroment.voltage = adc.voltage
   enviroment.current = adc.current
@@ -90,7 +91,6 @@ const thrusterController  = new ThrusterController(Configuration.thrusters)
 const auxiliaryController = new AuxiliaryController(Configuration.auxiliary)
 const rovController       = new RemoteOperatedVehicle(Configuration.rov)
 const heartbeatController = new HeartbeatController()
-const eventEmitter        = new EventEmitter()
 
 /************************
  *
@@ -138,8 +138,8 @@ auxiliaryController.on('deviceOutputChange', (device) => {
  * Heartbeat Event Handlers
  *
  ************************/
-heartbeatController.on("life", () => {
-  log.warn("Heartbeat failed, disarm ROV")
+heartbeatController.on("timeout", () => {
+  log.warn("Heartbeat timeout, disarm ROV")
   rovController.disarm()
   heartbeatController.stop()
 })
@@ -178,6 +178,7 @@ wss.on('connection', function(client) {
 
   const sendHeartbeat = (data, latency) => {
     client.send(`hb ${data} ${latency}`)
+    enviroment.latency = latency
   }
 
   heartbeatController.start()
@@ -208,9 +209,11 @@ function parseWebsocketData(data) {
 
   if (cmd == "hb") { heartbeatController.pulse(data[0]) }
   else if (cmd == "clog") { }
-  else if (cmd == "armtoggle") { rovController.toggleArm() }
-  else if (cmd == "arm") { rovController.arm() }
-  else if (cmd == "disarm") { rovController.arm() }
+  else if (cmd == "controls") { 
+    // Data json object?
+    data = parseJson(data.join(' '))
+    console.log(data)
+  }
   else {
     log.warn(`Websocket: Unknown command: ${cmd} (${JSON.stringify(data)})`);
   }
