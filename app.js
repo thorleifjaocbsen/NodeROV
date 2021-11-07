@@ -12,6 +12,9 @@ const app       = express()
 const http      = require('http').Server(app)
 const log       = require('./js/Log.js')
 
+console.log   = log.debug
+console.error = log.error
+
 const EventEmitter           = require('events')
 const Configuration          = require('./configuration.json')
 const RemoteOperatedVehicle  = require('./js/RemoteOperatedVehicle.js');
@@ -28,7 +31,10 @@ const enviroment = {
   voltage: 0,
   current: 0,
   mahUsed: 0,
-  leak: false
+  leak: false,
+  roll: 0,
+  pitch: 0,
+  heading: 0
 }
 
 // Internal Pressure Sensor
@@ -38,7 +44,7 @@ bme280.on('initError', (err) => { log.error(`BME280 initializing failed (${err})
 bme280.on('readError', (err) => { log.error(`BME280 read failed (${err})`) })
 bme280.on('init', () => { log.info("BME280 successfully initialized") })
 bme280.on('read', () => { 
-  log.verbose(`BME280 Read: ${bme280.temperature}c, ${bme280.humidity.toFixed(0)}%, ${bme280.pressure.toFixed(3)}hPa`)
+  log.debug(`BME280 Read: ${bme280.temperature}c, ${bme280.humidity.toFixed(0)}%, ${bme280.pressure.toFixed(3)}hPa`)
   enviroment.internalPressure = bme280.pressure
   enviroment.humidity = bme280.humidity
 })
@@ -51,11 +57,11 @@ const adc = new ADC({
 })
 adc.on('init', () => { log.info("ADS1015 successfully initialized") })
 adc.on('read', () => { 
-  log.verbose(`ADS1015 Read: 0=${adc.leak.toFixed(2)}v, 1=${adc.voltage.toFixed(2)}v, 2=${adc.current.toFixed(2)}v`)
+  log.info(`ADS1015 Read: 0=${adc.current.toFixed(3)}a, 1=${adc.voltage.toFixed(2)}v, 2=${adc.leak.toFixed(2)}v`)
   enviroment.internalPressure = bme280.pressure
   enviroment.voltage = adc.voltage
   enviroment.current = adc.current
-  enviroment.leak = adc.leak > 0
+  enviroment.leak = adc.leak > 1
 })
 
 // IMU
@@ -63,7 +69,10 @@ const IMU = require('./js/IMU')
 const imu = new IMU()
 imu.on('init', () => { log.info("LSM9DS1 successfully initialized") })
 imu.on('read', () => {
-  // log.info("read")
+  log.debug(`IMU Data: Roll = ${imu.roll}, Pitch = ${imu.pitch}, Heading = ${imu.heading}`)
+  enviroment.roll = imu.roll
+  enviroment.pitch = imu.pitch
+  enviroment.heading = imu.heading
 })
 
 // LOOP

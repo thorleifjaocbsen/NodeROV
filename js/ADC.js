@@ -11,8 +11,6 @@ const PGA = 4.096 // Power Gain Amplifier  - 4.096 on gain 1
 const MAX_RANGE = 2048 // ADS1015 - 2^(12-1) // 12bit, -2048 to 2047
 
 
-const connection = [1, 0x48, 'i2c-bus']
- 
 module.exports = class ADC {
 
   constructor(options) {
@@ -23,7 +21,7 @@ module.exports = class ADC {
     this.address = 0x48
     this.provider = 'i2c-bus'
 
-    ADS1015.open(this.busNo, this.address, this. provider)
+    ADS1015.open(this.busNo, this.address, this.provider)
     .then(ads1015 => {
       this.sensor = ads1015
       this.sensor.gain = 1
@@ -33,7 +31,7 @@ module.exports = class ADC {
 
 
     this.voltageMultiplier = (options && options.hasOwnProperty('vMultiplier')) ? options.voltageMultiplier : 5.697050938;    
-    this.currentMultiplier = (options && options.hasOwnProperty('cMultiplier')) ? options.currentMultiplier : 5.697050938;    
+    this.currentMultiplier = (options && options.hasOwnProperty('cMultiplier')) ? options.currentMultiplier : 0;    
 
     // Default values = 0
     this.leak = 0
@@ -54,10 +52,11 @@ module.exports = class ADC {
 
   async readSensorData() {
 
-
-    this.leak = await this.sensor.measure('0+GND')  / MAX_RANGE * PGA
+    this.current = await this.sensor.measure('0+GND')  / MAX_RANGE * PGA
     this.voltage = (await this.sensor.measure('1+GND') / MAX_RANGE * PGA) * this.voltageMultiplier
-    this.current = await this.sensor.measure('2+GND')  / MAX_RANGE * PGA
+    this.leak = (await this.sensor.measure('2+GND')  / MAX_RANGE * PGA)
+
+    this.current = (this.current * 1000) / (0.0005 * 56000)
 
     this.eventEmitter.emit('read')
 
