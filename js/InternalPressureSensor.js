@@ -6,7 +6,7 @@
 const EventEmitter = require('events')
 const BME280_SENSOR = require('bme280-sensor')
 
-module.exports = class BME280 {
+module.exports = class InternalPressureSensor {
 
   constructor() {
 

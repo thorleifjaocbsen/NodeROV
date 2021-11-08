@@ -6,7 +6,7 @@
 const EventEmitter = require('events')
 const LSM9DS1 = require('lsm9ds1-sensor')
  
-module.exports = class IMU {
+module.exports = class InertialMeasurementUnit {
 
   constructor(options) {
 

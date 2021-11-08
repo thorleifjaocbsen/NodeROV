@@ -9,25 +9,31 @@ const DEFAULT_CONTROL_INPUT = { roll: 0, pitch: 0, yaw: 0, climb: 0, forward: 0,
 
 module.exports = class RemoteOperatedVehicle {
   constructor(config) {
+
+    this.environment = {
+      internalHumidity: 0,
+      internalPressure: 0,
+      externalPressure: 0,
+      humidity: 0,
+      internalTemp: 0,
+      externalTemp: 0,
+      leak: false
+    }
+    this.battery = {
+      voltage: 0,
+      current: 0,
+      mahUsed: 0
+    }
+
+    this.attitude = {
+      roll: 0,
+      pitch: 0,
+      heading: 0
+    }
+
     this.eventEmitter = new EventEmitter()
     this.armed = false
     this.controlInput = this.DEFAULT_CONTROL_INPUT
-    this.depth = {
-      hold: false,
-      wanted: 0,
-      PID: false
-    }
-    this.heading = {
-      hold: false,
-      current: 0,
-      wanted: 0,
-      PID: false,
-      turns: 0,
-      totalHeading: 0
-    }
-    this.roll = 0
-    this.pitch = 0
-    this.gain = 100
   }
 
   on(event, callback) {
@@ -55,8 +61,8 @@ module.exports = class RemoteOperatedVehicle {
 
   setControlInput(newInput) {
     if (!this.armed) return false
-    this.controlInput = {...DEFAULT_CONTROL_INPUT, ...newInput}
+    this.controlInput = { ...DEFAULT_CONTROL_INPUT, ...newInput }
     this.eventEmitter.emit("controlInputChange", newInput)
   }
-  
+
 }

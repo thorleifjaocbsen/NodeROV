@@ -15,66 +15,15 @@ const log       = require('./js/Log.js')
 console.log   = log.debug
 console.error = log.error
 
-const EventEmitter           = require('events')
-const Configuration          = require('./configuration.json')
-const RemoteOperatedVehicle  = require('./js/RemoteOperatedVehicle.js');
-const ThrusterController     = require('./js/ThrusterController.js');
-const AuxiliaryController    = require('./js/AuxiliaryController.js')
-const HeartbeatController    = require('./js/Heartbeat.js')
-
-const enviroment = {
-  internalHumidity: 0,
-  internalPressure: 0,
-  externalPressure: 0,
-  internalTemp: 0,
-  externalTemp: 0,
-  voltage: 0,
-  current: 0,
-  mahUsed: 0,
-  leak: false,
-  roll: 0,
-  pitch: 0,
-  heading: 0,
-  latency: null
-}
-
-// Internal Pressure Sensor
-const BME280 = require('./js/BME280')
-const bme280 = new BME280()
-bme280.on('initError', (err) => { log.error(`BME280 initializing failed (${err})`) })
-bme280.on('readError', (err) => { log.error(`BME280 read failed (${err})`) })
-bme280.on('init', () => { log.info("BME280 successfully initialized") })
-bme280.on('read', () => { 
-  log.debug(`BME280 Read: ${bme280.temperature}c, ${bme280.humidity.toFixed(0)}%, ${bme280.pressure.toFixed(3)}hPa`)
-  enviroment.internalPressure = bme280.pressure
-  enviroment.humidity = bme280.humidity
-})
-
-// ADC
-const ADC = require('./js/ADC')
-const adc = new ADC({
-  vMultuiplier: Configuration.calibration.voltageMultiplier, 
-  cMultiplier: Configuration.calibration.currentMultiplier
-})
-adc.on('init', () => { log.info("ADS1015 successfully initialized") })
-adc.on('read', () => { 
-  log.debug(`ADS1015 Read: 0=${adc.current.toFixed(3)}a, 1=${adc.voltage.toFixed(2)}v, 2=${adc.leak.toFixed(2)}v`)
-  enviroment.internalPressure = bme280.pressure
-  enviroment.voltage = adc.voltage
-  enviroment.current = adc.current
-  enviroment.leak = adc.leak > 1
-})
-
-// IMU
-const IMU = require('./js/IMU')
-const imu = new IMU()
-imu.on('init', () => { log.info("LSM9DS1 successfully initialized") })
-imu.on('read', () => {
-  log.debug(`IMU Data: Roll = ${imu.roll}, Pitch = ${imu.pitch}, Heading = ${imu.heading}`)
-  enviroment.roll = imu.roll
-  enviroment.pitch = imu.pitch
-  enviroment.heading = imu.heading
-})
+const Configuration = require('./configuration.json')
+const RemoteOperatedVehicle = require('./js/RemoteOperatedVehicle.js');
+const ThrusterController = require('./js/ThrusterController.js');
+const AuxiliaryController = require('./js/AuxiliaryController.js')
+const HeartbeatController = require('./js/Heartbeat.js')
+const RemoteController = require('./js/RemoteController.js')
+const InternalPressureSensor = require('./js/InternalPressureSensor')
+const AnalogDigitalConverter = require('./js/AnalogDigitalConverter')
+const InertialMeasurementUnit = require('./js/InertialMeasurementUnit')
 
 // LOOP
 // 1hz - Update ping
@@ -87,19 +36,23 @@ imu.on('read', () => {
  * Initialize scripts
  *
  ************************/
-const thrusterController  = new ThrusterController(Configuration.thrusters)
+const thrusterController = new ThrusterController(Configuration.thrusters)
 const auxiliaryController = new AuxiliaryController(Configuration.auxiliary)
-const rovController       = new RemoteOperatedVehicle(Configuration.rov)
+const rov = new RemoteOperatedVehicle(Configuration.rov)
 const heartbeatController = new HeartbeatController()
+const remoteController = new RemoteController()
+const ips = new InternalPressureSensor()
+const imu = new InertialMeasurementUnit()
+const adc = new AnalogDigitalConverter(Configuration.calibration.adc)
 
 /************************
  *
  * ROV Event Handlers
  *
  ************************/
-rovController.on('arm', () => { log.info('ROV Armed') })
-rovController.on('disarm', () => { log.info('ROV Disarmed') })
-rovController.on('controlInputChange', (newInput) => { 
+rov.on('arm', () => { log.info('ROV Armed') })
+rov.on('disarm', () => { log.info('ROV Disarmed') })
+rov.on('controlInputChange', (newInput) => { 
   
   log.info("Controller input changed")
   thrusterController.calculateOutput(newInput)
@@ -108,10 +61,54 @@ rovController.on('controlInputChange', (newInput) => {
 
 /************************
  *
+ * Internal Pressure Sensor
+ *
+ ************************/
+ips.on('initError', (err) => { log.error(`IPS initializing failed (${err})`) })
+ips.on('readError', (err) => { log.error(`IPS read failed (${err})`) })
+ips.on('init', () => { log.info("IPS successfully initialized") })
+ips.on('read', () => { 
+
+  log.debug(`IPS Read: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
+  rov.environment.internalPressure = ips.pressure
+  rov.environment.humidity = ips.humidity
+})
+
+/************************
+ *
+ * Analog Digital Converter (ADC)
+ *
+ ************************/
+adc.on('init', () => { log.info("ADC successfully initialized") })
+adc.on('read', () => { 
+
+  log.debug(`ADS1015 Read: 0=${adc.current.toFixed(3)}a, 1=${adc.voltage.toFixed(2)}v, 2=${adc.leak.toFixed(2)}v`)
+  rov.battery.voltage = adc.voltage
+  rov.battery.current = adc.current
+  rov.environment.leak = adc.leak > 1
+})
+
+/************************
+ *
+ * Inertial Measurement Unit (IMU)
+ *
+ ************************/
+imu.on('init', () => { log.info("IMU successfully initialized") })
+imu.on('read', () => {
+
+  log.debug(`IMU Data: Roll = ${imu.roll}, Pitch = ${imu.pitch}, Heading = ${imu.heading}`)
+  rov.attitude.roll = imu.roll
+  rov.attitude.pitch = imu.pitch
+  rov.attitude.heading = imu.heading
+})
+
+/************************
+ *
  * Thruster Event Handlers
  *
  ************************/
 thrusterController.on('thrusterOutputChange', (thrusters) => {
+  
   log.debug("Thruster Output Change")
   thrusters.forEach(thruster => {
 
@@ -139,15 +136,16 @@ auxiliaryController.on('deviceOutputChange', (device) => {
  *
  ************************/
 heartbeatController.on("timeout", () => {
+
   log.warn("Heartbeat timeout, disarm ROV")
-  rovController.disarm()
+  rov.disarm()
   heartbeatController.stop()
 })
 
 
 // TEST: Testing that everything works on paper for now.
-rovController.arm();
-rovController.setControlInput({climb: 1, yaw: 0.1})
+rov.arm();
+rov.setControlInput({climb: 1, yaw: 0.1})
 auxiliaryController.calculateOutput("camera", 1)
 
 
@@ -188,7 +186,7 @@ wss.on('connection', function(client) {
   client.on('close', () => {
     log.info(`Websocket: Remote connection CLOSED from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
 
-    rovController.disarm()
+    rov.disarm()
     heartbeatController.stop()
     heartbeatController.removeListener('beat', sendHeartbeat)
   })

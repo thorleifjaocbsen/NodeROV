@@ -11,7 +11,7 @@ const PGA = 4.096 // Power Gain Amplifier  - 4.096 on gain 1
 const MAX_RANGE = 2048 // ADS1015 - 2^(12-1) // 12bit, -2048 to 2047
 
 
-module.exports = class ADC {
+module.exports = class AnalogDigitalConverter {
 
   constructor(options) {
 
@@ -31,7 +31,7 @@ module.exports = class ADC {
 
 
     this.voltageMultiplier = (options && options.hasOwnProperty('vMultiplier')) ? options.voltageMultiplier : 5.697050938;    
-    this.currentMultiplier = (options && options.hasOwnProperty('cMultiplier')) ? options.currentMultiplier : 0;    
+    this.currentMultiplier = (options && options.hasOwnProperty('cMultiplier')) ? options.currentMultiplier : 35.714285714285715;    
 
     // Default values = 0
     this.leak = 0
@@ -40,7 +40,7 @@ module.exports = class ADC {
 
     // Auto Read Sensor 
     this.autoRead = true
-    this.readInterval = 1000
+    this.readInterval = 500
   }
 
 
@@ -52,11 +52,9 @@ module.exports = class ADC {
 
   async readSensorData() {
 
-    this.current = await this.sensor.measure('0+GND')  / MAX_RANGE * PGA
+    this.current = (await this.sensor.measure('0+GND')  / MAX_RANGE * PGA) * this.currentMultiplier
     this.voltage = (await this.sensor.measure('1+GND') / MAX_RANGE * PGA) * this.voltageMultiplier
     this.leak = (await this.sensor.measure('2+GND')  / MAX_RANGE * PGA)
-
-    this.current = (this.current * 1000) / (0.0005 * 56000)
 
     this.eventEmitter.emit('read')
 
