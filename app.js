@@ -82,10 +82,11 @@ ips.on('read', () => {
 adc.on('init', () => { log.info("ADC successfully initialized") })
 adc.on('read', () => { 
 
-  log.debug(`ADS1015 Read: 0=${adc.current.toFixed(3)}a, 1=${adc.voltage.toFixed(2)}v, 2=${adc.leak.toFixed(2)}v`)
-  rov.battery.voltage = adc.voltage
-  rov.battery.current = adc.current
-  rov.environment.leak = adc.leak > 1
+  log.debug(`ADS1015 Read: V=${adc.getCurrent().toFixed(3)}a, 1=${adc.getVoltage().toFixed(2)}v, 2=${adc.getLeak()}, X=${adc.getAccumulatedMah()}mAh`)
+  rov.battery.voltage = adc.getVoltage()
+  rov.battery.current = adc.getCurrent()
+  rov.battery.mahUsed = adc.getAccumulatedMah()
+  rov.environment.leak = adc.getLeak()
 })
 
 /************************
@@ -96,7 +97,7 @@ adc.on('read', () => {
 imu.on('init', () => { log.info("IMU successfully initialized") })
 imu.on('read', () => {
 
-  log.debug(`IMU Data: Roll = ${imu.roll}, Pitch = ${imu.pitch}, Heading = ${imu.heading}`)
+  //log.debug(`IMU Data: Roll = ${imu.roll}, Pitch = ${imu.pitch}, Heading = ${imu.heading}`)
   rov.attitude.roll = imu.roll
   rov.attitude.pitch = imu.pitch
   rov.attitude.heading = imu.heading

@@ -3,7 +3,7 @@
 	"socketPort": 8080,
 	"calibration": {
 		"adc": {
-			"voltageMultiplier": 5.697050938,
+			"voltageDividor": 0.1760299625468165,
 			"currentMultiplier": 35.714285714285715
 		}
 	},

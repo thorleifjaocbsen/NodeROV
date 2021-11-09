@@ -49,3 +49,20 @@ I have had 5+ successful trips at the current date (21st April 17) but are still
 # DISCLAIMER
 
 Use this software at own risk, I do NOT recommend you to use this software if you do now know what you are doing. It is not 100% finished and stuff might go haywire at any second! I might remove this disclaimer when I'm done with the project, but who knows? Who wants to take responsibility for anything these days! :)
+
+
+# Calculate Voltage Dividor
+
+The voltage sensor is a simple voltage dividor. So using Rl = left resistor (usually the highest one) and Rr = right resistor.
+
+First calculate the resistor values::
+
+voltageDividor = Rr / (Rl + Rr) = 47k / (220k + 57k) = 0.1760299625468165
+
+# Calculate Current Multiplier
+
+Current sensor consists of a shunt resistor (Rs) and a voltage dividor resistor (Rd). Schematics has these set to 0.0005 Ohm (Rs) and 56 000 Ohm (Rd).
+
+The current multiplier is calculated using this formula: 
+
+Multiplier = 1000 / (Rs * Rd) = 1000 / (0.0005 * 56 000) = 1000 / 28 = 35.714285714285715
