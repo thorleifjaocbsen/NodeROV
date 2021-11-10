@@ -132,7 +132,7 @@
 				"id": "left_light",
 				"name": "Left Light",
 				"type": "hold",
-				"pin": 6,
+				"pin": 7,
 				"minUS": 1000,
 				"idleUS": 1500,
 				"maxUS": 2000
@@ -141,7 +141,7 @@
 				"id": "right_light",
 				"name": "Right Light",
 				"type": "hold",
-				"pin": 6,
+				"pin": 8,
 				"minUS": 1000,
 				"idleUS": 1500,
 				"maxUS": 2000
@@ -150,7 +150,7 @@
 				"id": "claw",
 				"name": "Claw",
 				"type": "return",
-				"pin": 6,
+				"pin": 9,
 				"minUS": 1000,
 				"idleUS": 1500,
 				"maxUS": 2000
@@ -159,7 +159,7 @@
 				"id": "camera",
 				"name": "Camera",
 				"type": "hold",
-				"pin": 6,
+				"pin": 10,
 				"minUS": 1000,
 				"idleUS": 1500,
 				"maxUS": 2000
