@@ -23,28 +23,47 @@ module.exports = class RemoteOperatedVehicle {
     // Button actions:
     // Repeat: Function is repeated every X ms
     // Momentary: Function resets once the button is released
+
+    // 0 A
+    // 1 B
+    // 2 X
+    // 3 Y
+    // 4 LB
+    // 5 RB
+    // 6 LT
+    // 7 RT
+    // 8 BACK
+    // 9 START
+    // 10 Left stick press
+    // 11 Right stick press
+    // 12 U
+    // 13 D
+    // 14 L
+    // 15 R
+
+
     
     this.controlMapping = {
       axes: {
         "0": "forward",
         "1": "lateral",
         "2": "climb",
-        "3": "yaw"
+        "3": "yaw",
       },
       buttons: {
-        "0": ["arm", false],
-        "1": ["disarm", false],
-        "2": ["cameraTiltUp", true],
-        "3": ["cameraTiltDown", true],
-        "4": ["cameraCenter", false],
-        "5": ["gainIncrease", false],
-        "6": ["gainDecrease", false],
-        "7": ["lightsDimBrighter", true],
-        "8": ["lightsDimDarker", true],
-        "9": ["depthHoldToggle", false],
-        "10": ["headingHoldToggle", false],
-        "11": ["gripperClose", false],
-        "12": ["gripperOpen", false],
+        "2": ["depthHoldToggle", false],
+        "3": ["headingHoldToggle", false],
+        "4": ["cameraTiltUp", true],
+        "5": ["cameraTiltDown", true],
+        "6": ["gripperClose", false],
+        "7": ["gripperOpen", false],
+        "8": ["arm", false],
+        "9": ["disarm", false],
+        "10": ["cameraCenter", false],
+        "12": ["gainIncrease", false],
+        "13": ["gainDecrease", false],
+        "14": ["lightsDimDarker", true],
+        "15": ["lightsDimBrighter", true],
       }
     }
 
@@ -119,7 +138,7 @@ module.exports = class RemoteOperatedVehicle {
   }
 
   toggleArm(pressed) {
-    
+
     if (!pressed) return
     if (this.armed) this.disarm()
     else this.arm()
