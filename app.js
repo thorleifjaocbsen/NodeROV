@@ -38,7 +38,7 @@ const InertialMeasurementUnit = require('./js/InertialMeasurementUnit')
 const thrusterController = new ThrusterController(Configuration.thrusters)
 const auxiliaryController = new AuxiliaryController(Configuration.auxiliary)
 const rov = new RemoteOperatedVehicle(Configuration.rov)
-const heartbeatController = new HeartbeatController()
+const hb = new HeartbeatController()
 const ips = new InternalPressureSensor()
 const imu = new InertialMeasurementUnit()
 const adc = new AnalogDigitalConverter(Configuration.calibration.adc)
@@ -134,17 +134,17 @@ auxiliaryController.on('deviceOutputChange', (device) => {
  * Heartbeat Event Handlers
  *
  ************************/
-heartbeatController.on("timeout", () => {
+hb.on("timeout", () => {
 
   log.warn("Heartbeat timeout, disarm ROV")
   rov.disarm()
-  heartbeatController.stop()
+  hb.stop()
 })
 
 
 // TEST: Testing that everything works on paper for now.
 rov.arm();
-rov.setControlInput({climb: 1, yaw: 0.1})
+rov.controllerInputUpdate({climb: 1, yaw: 0.1})
 auxiliaryController.calculateOutput("camera", 1)
 
 
@@ -178,16 +178,16 @@ wss.on('connection', function(client) {
     enviroment.latency = latency
   }
 
-  heartbeatController.start()
-  heartbeatController.on('beat', sendHeartbeat)
+  hb.start()
+  hb.on('beat', sendHeartbeat)
 
   client.on('message', parseWebsocketData)
   client.on('close', () => {
     log.info(`Websocket: Remote connection CLOSED from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
 
     rov.disarm()
-    heartbeatController.stop()
-    heartbeatController.removeListener('beat', sendHeartbeat)
+    hb.stop()
+    hb.removeListener('beat', sendHeartbeat)
   })
 });
 
@@ -204,7 +204,7 @@ function parseWebsocketData(data) {
   data = data.toString().split(" ")
   const cmd = data.shift(1)
 
-  if (cmd == "hb") { heartbeatController.pulse(data[0]) }
+  if (cmd == "hb") { hb.pulse(data[0]) }
   else if (cmd == "clog") { }
   else if (cmd == "controls") { 
     // Data json object?

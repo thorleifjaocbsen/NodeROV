@@ -9,18 +9,3 @@
   Controller system, how?
 
 PWM usually has a 0 - 1 or maybe 1000-2000
-
-Arm
-Disarm
-Camera tilt up
-Camera tilt down
-Camera center
-Increase gain
-Decrease gain
-Lights up
-Lights down
-Depth hold
-Heading hold
-Trim roll left
-Trim roll right6
-git clean -dfx && git pull origin master
