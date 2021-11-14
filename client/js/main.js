@@ -1,10 +1,8 @@
 var gui = GUI();
-var controls = Controls();
 var player = new Player({});
 var rovData = {};
 var vacuumTest = false;
 var confirmWaterTight = false;
-
 
 
 
@@ -77,6 +75,10 @@ setTimeout(() => { dashboard.draw() }, 100)
 // HUDBlock
 const hudBlock = new HUDBlock($(".fvitals canvas").get(0))
 setTimeout(() => { hudBlock.draw() }, 100)
+
+// Controls
+const controls = new Controls()
+setInterval(() => { console.log(controls.getControls()) }, 100)
 
 
 

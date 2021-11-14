@@ -175,9 +175,8 @@ wss.on('connection', function(client) {
 
   const sendHeartbeat = (data, latency) => {
     client.send(`hb ${data} ${latency}`)
-    enviroment.latency = latency
   }
-
+  
   hb.start()
   hb.on('beat', sendHeartbeat)
 
