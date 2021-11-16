@@ -78,8 +78,37 @@ setTimeout(() => { hudBlock.draw() }, 100)
 
 // Controls
 const controls = new Controls()
-setInterval(() => { console.log(controls.getControls()) }, 100)
+  // setInterval(() => { console.log(controls.getControls()) }, 100)
 
+
+/************************
+ *
+ *
+ * Start system loop
+ *
+ *
+ ************************/
+
+ function systemLoop() {
+  let d = new Date().toISOString();
+  $("time:first").html(d.split('T')[1].split('.')[0] + " UTC");
+  $("time:last").html(d.split('T')[0]);
+
+  // Detect controller
+  if(!controls.isGamepadDetected()) {
+    const gp = controls.detectPressedGamepad()
+
+    if(gp == false) { popup("Detecting controller input", "Press the button of the gamepad to enable") }
+    else { popup("Detected controller", `Id: ${gp.id}`, "Confirm", "Detect again", popup_hide, () => controls.disconnectGamepad()) }
+  } 
+  else if (controls.inputChanged()) {
+    
+    ws.send(`controls ${JSON.stringify(controls.getGamepad())}`)
+  }
+  requestAnimationFrame(systemLoop);
+}
+
+systemLoop();
 
 
 // let d = new Date().toISOString();
@@ -227,64 +256,48 @@ setInterval(() => { console.log(controls.getControls()) }, 100)
 // socket.on("log", function (data) { data = JSON.parse(data); gui.log(data.message, data.time, true); })
 
 
-// /************************
-//  *
-//  *
-//  * Start system loop
-//  *
-//  *
-//  ************************/
-
-// function systemLoop() {
-//   let d = new Date().toISOString();
-//   $("time:first").html(d.split('T')[1].split('.')[0] + " UTC");
-//   $("time:last").html(d.split('T')[0]);
-
-//   requestAnimationFrame(systemLoop);
-// }
-
-// systemLoop();
 
 
 
 
-// function popup(title, message, button1, button2, button1_callback, button2_callback) {
-//   if (!button1_callback && button1) {
-//     button1_callback = popup_hide;
-//   }
-//   if (!button2_callback && button2) {
-//     button2_callback = popup_hide;
-//   }
 
-//   $(".msgbox button").css("display", "none");
-//   $(".msgbox button").off();
+function popup(title, message, button1, button2, button1_callback, button2_callback) {
+  if (!button1_callback && button1) {
+    button1_callback = popup_hide;
+  }
+  if (!button2_callback && button2) {
+    button2_callback = popup_hide;
+  }
 
-//   if (button1) {
-//     $(".msgbox button:first").html(button1);
-//     $(".msgbox button:first").on('click', button1_callback);
-//     $(".msgbox button:first").css("display", "");
-//   }
-//   if (button2) {
-//     $(".msgbox button:last").html(button2);
-//     $(".msgbox button:last").on('click', button2_callback);
-//     $(".msgbox button:last").css("display", "");
-//   }
+  $(".msgbox button").css("display", "none");
+  $(".msgbox button").off();
 
-//   $(".msgbox h1").html(title);
-//   $(".msgbox div:first").html(message);
-//   $(".msgbox").fadeIn();
-//   $(".msgbox-bg").fadeIn();
+  if (button1) {
+    $(".msgbox button:first").html(button1);
+    $(".msgbox button:first").on('click', button1_callback);
+    $(".msgbox button:first").css("display", "");
+  }
+  if (button2) {
+    $(".msgbox button:last").html(button2);
+    $(".msgbox button:last").on('click', button2_callback);
+    $(".msgbox button:last").css("display", "");
+  }
 
-//   $(".msgbox").css("margin-top", $(".msgbox").height() * -1);
-// }
+  $(".msgbox h1").html(title);
+  $(".msgbox div:first").html(message);
+  $(".msgbox").fadeIn();
+  $(".msgbox-bg").fadeIn();
 
-// function popup_hide() {
-//   $(".msgbox").fadeOut();
-//   $(".msgbox-bg").fadeOut();
-// }
+  $(".msgbox").css("margin-top", $(".msgbox").height() * -1);
+}
 
-// $(".msgbox").keyup(function (e) {
-//   e.preventDefault();
-//   if (e.keyCode == 13) $(".msgbox button:first").click();
-//   if (e.keyCode == 27) $(".msgbox button:last").click();
-// });
+function popup_hide() {
+  $(".msgbox").fadeOut();
+  $(".msgbox-bg").fadeOut();
+}
+
+$(".msgbox").keyup(function (e) {
+  e.preventDefault();
+  if (e.keyCode == 13) $(".msgbox button:first").click();
+  if (e.keyCode == 27) $(".msgbox button:last").click();
+});

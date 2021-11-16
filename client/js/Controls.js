@@ -6,39 +6,66 @@ const DEFAULT_GAMEPAD = {
 class Controls {  
 
   constructor() {
-    this.lastUpdate = 0
     this.gamepad = DEFAULT_GAMEPAD
     this.autoUpdate = true
-    this.updateInterval = 1
-    this.buttons = []
 
-    this.update()
+    this.gpIndex = null
+    this.gp = [null,null,null,null]
+
+    this.axes = DEFAULT_GAMEPAD.axes
+    this.buttons = DEFAULT_GAMEPAD.buttons
+    this.timestamp = DEFAULT_GAMEPAD.timestamp
   }
 
-  update() {
 
-    try { 
-      const gp = navigator.getGamepads()[0]
-      if (gp) { this.gamepad = gp }
-    }
-    catch (e) { 
-      this.gamepad = DEFAULT_GAMEPAD 
-    }
-    if (this.autoUpdate) setTimeout(() => { this.update() }, this.updateInterval)
+  isGamepadDetected() {
+    return ! (this.gpIndex == null)
   }
 
-  getControls() { 
+  detectPressedGamepad() {
+    const gp = navigator.getGamepads()
 
-    if (this.lastUpdate != this.gamepad.timestamp) {
-      this.lastUpdate = this.gamepad.timestamp
+    for (var i = 0; i < gp.length; i++) {
 
-      for (let i = 0; i<this.gamepad.buttons.length; i++) {
-        this.buttons[i] = this.gamepad.buttons[i].pressed
+      if (this.gp[i] != gp[i]) {
+        this.gp = gp
+        this.gpIndex = i
+        return gp[i]
       }
     }
-    return {
-      axes: this.gamepad.axes,
-      buttons: this.buttons
+
+    return false
+  }
+
+  disconnectGamepad() {
+    this.gpIndex = null
+    this.gp = navigator.getGamepads()
+  }
+
+  inputChanged() {
+    const oldTimestamp = this.timestamp
+    try { 
+      const gp = navigator.getGamepads()[this.gpIndex]
+      this.axes = gp.axes
+      gp.buttons.forEach((elem, index) => {
+        this.buttons[index] = elem.pressed
+      })
+      this.timestamp = gp.timestamp
     }
+    catch (e) { 
+      this.axes = DEFAULT_GAMEPAD.axes
+      this.buttons = DEFAULT_GAMEPAD.buttons
+      this.timestamp = DEFAULT_GAMEPAD.timestamp
+      this.disconnectGamepad()
+    }
+
+    if(oldTimestamp == this.timestamp) { return false }
+    else {
+      return true
+    }
+  }
+
+  getGamepad() {
+    return { axes: this.axes, buttons: this.buttons }
   }
 }

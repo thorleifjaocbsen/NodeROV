@@ -54,6 +54,8 @@ rov.on('controlInputChange', (newInput) => {
   
   log.info("Controller input changed")
   thrusterController.calculateOutput(newInput)
+  
+
 })
 
 
@@ -207,7 +209,7 @@ function parseWebsocketData(data) {
   else if (cmd == "clog") { }
   else if (cmd == "controls") { 
     // Data json object?
-    data = parseJson(data.join(' '))
+    data = JSON.parse(data.join(' '))
     console.log(data)
   }
   else {
