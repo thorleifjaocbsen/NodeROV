@@ -8,7 +8,7 @@ const log = new winston.Logger({
     new winston.transports.Console({
       timestamp: (new Date()).toLocaleTimeString(),
       colorize: true,
-      level : 'silly'
+      level : 'info'
     }),
 
     new winston.transports.File({ 

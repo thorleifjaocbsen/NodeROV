@@ -15,30 +15,23 @@ const log       = require('./js/Log.js')
 console.log   = log.debug
 console.error = log.error
 
-const Configuration = require('./configuration.json')
-const RemoteOperatedVehicle = require('./js/RemoteOperatedVehicle.js');
-const ThrusterController = require('./js/ThrusterController.js');
-const AuxiliaryController = require('./js/AuxiliaryController.js')
-const HeartbeatController = require('./js/Heartbeat.js')
-const InternalPressureSensor = require('./js/InternalPressureSensor')
-const AnalogDigitalConverter = require('./js/AnalogDigitalConverter')
+const Configuration           = require('./configuration.json')
+const RemoteOperatedVehicle   = require('./js/RemoteOperatedVehicle.js');
+const ThrusterController      = require('./js/ThrusterController.js');
+const AuxiliaryController     = require('./js/AuxiliaryController.js')
+const HeartbeatController     = require('./js/Heartbeat.js')
+const InternalPressureSensor  = require('./js/InternalPressureSensor')
+const AnalogDigitalConverter  = require('./js/AnalogDigitalConverter')
 const InertialMeasurementUnit = require('./js/InertialMeasurementUnit')
-
-// LOOP
-// 1hz - Update ping
-// 10hz - Update gyro
-// 50Hz - Update PWM
-// 0.5Hz - Send data to client
 
 /************************
  *
  * Initialize scripts
  *
  ************************/
-const thrusterController = new ThrusterController(Configuration.thrusters)
-const auxiliaryController = new AuxiliaryController(Configuration.auxiliary)
+const thrusters = new ThrusterController(Configuration.thrusters)
+const aux = new AuxiliaryController(Configuration.auxiliary)
 const rov = new RemoteOperatedVehicle(Configuration.rov)
-const hb = new HeartbeatController()
 const ips = new InternalPressureSensor()
 const imu = new InertialMeasurementUnit()
 const adc = new AnalogDigitalConverter(Configuration.calibration.adc)
@@ -53,7 +46,7 @@ rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('controlInputChange', (newInput) => { 
   
   log.info("Controller input changed")
-  thrusterController.calculateOutput(newInput)
+  thrusters.calculateOutput(newInput)
   
 
 })
@@ -97,7 +90,7 @@ adc.on('read', () => {
 imu.on('init', () => { log.info("IMU successfully initialized") })
 imu.on('read', () => {
 
-  //log.debug(`IMU Data: Roll = ${imu.roll}, Pitch = ${imu.pitch}, Heading = ${imu.heading}`)
+  log.debug(`IMU Data: Roll = ${imu.roll}, Pitch = ${imu.pitch}, Heading = ${imu.heading}`)
   rov.attitude.roll = imu.roll
   rov.attitude.pitch = imu.pitch
   rov.attitude.heading = imu.heading
@@ -108,7 +101,7 @@ imu.on('read', () => {
  * Thruster Event Handlers
  *
  ************************/
-thrusterController.on('thrusterOutputChange', (thrusters) => {
+thrusters.on('thrusterOutputChange', (thrusters) => {
   
   log.debug("Thruster Output Change")
   thrusters.forEach(thruster => {
@@ -124,31 +117,11 @@ thrusterController.on('thrusterOutputChange', (thrusters) => {
  * Auxiliary Event Handlers
  *
  ************************/
-auxiliaryController.on('deviceOutputChange', (device) => {
+aux.on('deviceOutputChange', (device) => {
 
   log.debug(`PWM Signal change on ${device.id} (pin: ${device.pin}, us: ${device.us})`)
   // TODO: Add PWM Controller to SET PWM
 })
-
-
-/************************
- *
- * Heartbeat Event Handlers
- *
- ************************/
-hb.on("timeout", () => {
-
-  log.warn("Heartbeat timeout, disarm ROV")
-  rov.disarm()
-  hb.stop()
-})
-
-
-// TEST: Testing that everything works on paper for now.
-rov.arm();
-rov.controllerInputUpdate({climb: 1, yaw: 0.1})
-auxiliaryController.calculateOutput("camera", 1)
-
 
 /************************
  *
@@ -167,29 +140,38 @@ auxiliaryController.calculateOutput("camera", 1)
  ************************/
 const wss = new ws.WebSocketServer({ perMessageDeflate: false, port: Configuration.socketPort })
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
-wss.on('connection', function(client) {
+wss.on('connection', function(ws, req) {
 
   try { log.remove(log.transports.socketIO); }
   catch(e) {  }
-  log.info(`Websocket: Remote connection OPENED from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
-  log.add(log.socketIOTransport,client)
+
+
+
+  log.info(`Websocket: Remote connection OPENED from: ${ws._socket.remoteAddress}:${ws._socket.remotePort}`)
+  log.add(log.socketIOTransport,ws)
   log.info('Websocket: Starting heartbeat')
 
-  const sendHeartbeat = (data, latency) => {
-    client.send(`hb ${data} ${latency}`)
-  }
+  const hb = new HeartbeatController()
+  hb.on("timeout", () => {
   
+    log.warn(`Heartbeat timeout, disarm ROV  ${ws._socket.remoteAddress}:${ws._socket.remotePort}`)
+    rov.disarm()
+    hb.stop()
+  })
+ 
+  hb.on('beat', (data, latency) => { ws.send(`hb ${data} ${latency}`) })
   hb.start()
-  hb.on('beat', sendHeartbeat)
 
-  client.on('message', parseWebsocketData)
-  client.on('close', () => {
-    log.info(`Websocket: Remote connection CLOSED from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
+  ws.on('message', parseWebsocketData)
+  ws.on('close', () => {
+    log.info(`Websocket: Remote connection CLOSED from: ${ws._socket.remoteAddress}:${ws._socket.remotePort}`)
 
     rov.disarm()
     hb.stop()
     hb.removeListener('beat', sendHeartbeat)
   })
+
+  ws.hb = hb
 });
 
 
@@ -202,10 +184,11 @@ wss.on('connection', function(client) {
  ************************/
 function parseWebsocketData(data) {
 
+
   data = data.toString().split(" ")
   const cmd = data.shift(1)
 
-  if (cmd == "hb") { hb.pulse(data[0]) }
+  if (cmd == "hb") { this.hb.pulse(data[0]) }
   else if (cmd == "clog") { }
   else if (cmd == "controls") { 
     // Data json object?
