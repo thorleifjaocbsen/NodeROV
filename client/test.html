@@ -3,14 +3,29 @@
 <head>
   <title>Controller Test</title>
   <script type="text/javascript" src="js/jquery.min.js" charset="utf-8"></script>
+  <style type="text/css">
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    #credits {
+      margin-top: 30px;
+      font-size: 10px;
+      color: #cccccc;
+    }
+    #credits a {
+      color: #cccccc;
+    }
+    
+  </style>
 </head>
 
 <body>
   <h1>Simple Remote Controller Test</h1>
   <p>Latency: <span id="latency">-1</span>ms</p>
   <p>Loop Latency: <span id="looplatency">-1</span>ms</p>
-  <p>Gamepad ID: <span id="gamepadid">null</span></p>
-  <svg width="300" viewBox="0 0 441 383" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="400" viewBox="0 0 441 383" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g id="gamepad">
       <path id="LOutline"
         d="M220.5 294.5C220.5 294.5 195 294.5 150 294.5C105 294.5 81.5 378.5 49.5 378.5C17.5 378.5 4 363.9 4 317.5C4 271.1 43.5 165.5 55 137.5C66.5 109.5 95.5 92.0001 128 92.0001C154 92.0001 200.5 92.0001 220.5 92.0001"
@@ -111,6 +126,9 @@
       <g id="LMeta">
         <circle cx="185" cy="162" r="10" fill="rgba(0,0,0,0)" stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle>
       </g>
+      <g id="MMeta">
+        <circle cx="222" cy="132" r="15" fill="rgba(0,0,0,0)" stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle>
+      </g>
       <g id="RMeta">
         <circle cx="259" cy="162" r="10" fill="rgba(0,0,0,0)" stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle>
       </g>
@@ -125,8 +143,13 @@
         d="M317.5 37C317.5 41.1421 314.142 44.5 310 44.5H297C292.858 44.5 289.5 41.1421 289.5 37V16.5C289.5 8.76801 295.768 2.5 303.5 2.5C311.232 2.5 317.5 8.76801 317.5 16.5V37Z"
         fill="rgba(0,0,0,0)" stroke="rgba(0,0,0,0.2)" stroke-width="5"></path>
     </g>
-  </svg>
+  </svg><br>
+  <span id="gamepadid">No gamepad detected yed</span>
 
+  <div id="credits">
+    Remote Control SVG inspiration from: <a href="https://gamepad-tester.com/">https://gamepad-tester.com/</a>
+  </div>
+  
   <script>
     const ws = new WebSocket(`ws://${location.hostname}:8080`)
     ws.onmessage = (event) => {
@@ -149,13 +172,17 @@
     function mainLoop(timestamp) {
       const gp = navigator.getGamepads()[0]
       if (gp != null && gp.timestamp != controllerLastTimestamp) {
-        
+
         $("#gamepadid").html(gp.id)
 
         $("#gamepad #Bbottom > path").attr('fill', `rgba(0,0,0,${gp.buttons[0].value})`)
         $("#gamepad #BRight > path").attr('fill', `rgba(0,0,0,${gp.buttons[1].value})`)
         $("#gamepad #BLeft > path").attr('fill', `rgba(0,0,0,${gp.buttons[2].value})`)
         $("#gamepad #Btop > path").attr('fill', `rgba(0,0,0,${gp.buttons[3].value})`)
+        $("#gamepad #L1").attr('fill', `rgba(0,0,0,${gp.buttons[4].value})`)
+        $("#gamepad #R1").attr('fill', `rgba(0,0,0,${gp.buttons[5].value})`)
+        $("#gamepad #L2").attr('fill', `rgba(0,0,0,${gp.buttons[6].value})`)
+        $("#gamepad #R2").attr('fill', `rgba(0,0,0,${gp.buttons[7].value})`)
         $("#gamepad #LMeta > circle").attr('fill', `rgba(0,0,0,${gp.buttons[8].value})`)
         $("#gamepad #Rmeta > circle").attr('fill', `rgba(0,0,0,${gp.buttons[9].value})`)
         $("#gamepad #LeftStick").attr('fill', `rgba(0,0,0,${gp.buttons[10].value})`)
@@ -164,10 +191,7 @@
         $("#gamepad #DDown > path").attr('fill', `rgba(0,0,0,${gp.buttons[13].value})`)
         $("#gamepad #DLeft > path").attr('fill', `rgba(0,0,0,${gp.buttons[14].value})`)
         $("#gamepad #DRight > path").attr('fill', `rgba(0,0,0,${gp.buttons[15].value})`)
-        $("#gamepad #L1").attr('fill', `rgba(0,0,0,${gp.buttons[4].value})`)
-        $("#gamepad #R1").attr('fill', `rgba(0,0,0,${gp.buttons[5].value})`)
-        $("#gamepad #L2").attr('fill', `rgba(0,0,0,${gp.buttons[6].value})`)
-        $("#gamepad #R2").attr('fill', `rgba(0,0,0,${gp.buttons[7].value})`)
+        $("#gamepad #MMeta > circle").attr('fill', `rgba(0,0,0,${gp.buttons[16].value})`)
 
         $("#gamepad #LeftStick").attr('cx', 113 + gp.axes[0] * 12)
         $("#gamepad #LeftStick").attr('cy', 160 + gp.axes[1] * 12)
@@ -210,7 +234,6 @@
       }
 
       $("#looplatency").html(Math.round(timestamp - lastTimestamp))
-
       lastTimestamp = timestamp
       window.requestAnimationFrame(mainLoop)
     }
