@@ -4,71 +4,14 @@
  * Credits: Myself, my family and my girlfriend and child.
  */
 
-// Button
-/*
-Every time I press an button the action is sent with "pressed" true
-When I release it is sent again with "pressed" false
-For repeated actions it will send the same command multiple times every X millisecond
-
-
-
-*/
-
 const EventEmitter = require('events')
-const DEFAULT_CONTROL_INPUT = { axes: [0,0,0,0], buttons: [] }
 
 module.exports = class RemoteOperatedVehicle {
-  constructor(config) {
 
-    // Button actions:
-    // Repeat: Function is repeated every X ms
-    // Momentary: Function resets once the button is released
+  constructor(options) {
 
-    // 0 A
-    // 1 B
-    // 2 X
-    // 3 Y
-    // 4 LB
-    // 5 RB
-    // 6 LT
-    // 7 RT
-    // 8 BACK
-    // 9 START
-    // 10 Left stick press
-    // 11 Right stick press
-    // 12 U
-    // 13 D
-    // 14 L
-    // 15 R
-
-
-    
-    this.controlMapping = {
-      axes: {
-        "0": "forward",
-        "1": "lateral",
-        "2": "climb",
-        "3": "yaw",
-      },
-      buttons: {
-        "2": ["depthHoldToggle", false],
-        "3": ["headingHoldToggle", false],
-        "4": ["cameraTiltUp", true],
-        "5": ["cameraTiltDown", true],
-        "6": ["gripperClose", false],
-        "7": ["gripperOpen", false],
-        "8": ["arm", false],
-        "9": ["disarm", false],
-        "10": ["cameraCenter", false],
-        "12": ["gainIncrease", false],
-        "13": ["gainDecrease", false],
-        "14": ["lightsDimDarker", true],
-        "15": ["lightsDimBrighter", true],
-      }
-    }
-
-    // 
-
+    this.battery     = { voltage: 0, current: 0, mahUsed: 0 }
+    this.attitude    = { roll: 0, pitch: 0, heading: 0 }
     this.environment = {
       internalHumidity: 0,
       internalPressure: 0,
@@ -78,101 +21,177 @@ module.exports = class RemoteOperatedVehicle {
       externalTemp: 0,
       leak: false
     }
-    this.battery = {
-      voltage: 0,
-      current: 0,
-      mahUsed: 0
-    }
 
-    this.attitude = {
-      roll: 0,
-      pitch: 0,
-      heading: 0
+    // uS Overview
+    this.minUS  = options && options.hasOwnProperty('minUS') ? options.minUS : 1000
+    this.idleUS = options && options.hasOwnProperty('idleUS') ? options.idleUS : 1550;
+    this.maxUS  = options && options.hasOwnProperty('maxUS') ? options.maxUS : 2000;
+
+    // Loop through and add all motors for thruster calculations
+    this.motors = {}
+
+    if (options && options.hasOwnProperty('motors')) {    
+
+      for (let motor of options.motors) {
+        this.motors[motor.id] = { 
+          pwmPin: motor.pwmPin, 
+          rollFactor: motor.roll,
+          pitchFactor: motor.pitch,
+          yawFactor: motor.yaw, 
+          ascendFactor: motor.ascend, 
+          forwardFactor: motor.forward, 
+          lateralFactor: motor.lateral 
+        }
+      }
     }
 
     this.eventEmitter = new EventEmitter()
     this.armed = false
-    this.controlInput = this.DEFAULT_CONTROL_INPUT
+    this.controlData = {}
   }
 
-  on(event, callback) {
-    this.eventEmitter.on(event, callback)
+  on(event, callback) { this.eventEmitter.on(event, callback) }
+  constrain(value, min, max) { return Math.max(Math.min(value, max), min) }
+  map(x, in_min, in_max, out_min, out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min }
+
+
+  calculateThrusterOutput() {
+
+    // to keep track of changes
+    let changes = false
+
+    // If not armed calculate all to 0, if not get actual control data
+    let roll, pitch, yaw, ascend, forward, lateral
+    if (!this.armed) [roll, pitch, yaw, ascend, forward, lateral] = [0, 0, 0, 0, 0, 0]
+    else ({ roll, pitch, yaw, ascend, forward, lateral } = this.controlData)
+
+    // Loop through each motor to calculate output of it
+    for (let id in this.motors) {
+
+      const motor = this.motors[id]
+
+      // Calculate the roll pitch yaw movements
+      const rollPitchYaw = roll * motor.rollFactor +
+        pitch * motor.pitchFactor +
+        yaw * motor.yawFactor
+
+      // Calculate the linaer movements
+      const linear = ascend * motor.ascendFactor +
+        forward * motor.forwardFactor +
+        lateral * motor.lateralFactor
+
+      const output = this.constrain(rollPitchYaw + linear, -1, 1)
+
+      // Tracking changes and storing changes.
+      changes = changes || motor.output != output
+      motor.output = output
+    }
+
+    if(changes == true) {
+      this.eventEmitter.emit('thusterOutputChanged', this.getOutputUS())
+    }
+  }
+
+  getOutputUS() {
+
+    const ouputUS = [];
+
+    for(let id in this.motors) {
+      const motor = this.motors[id]
+      const pin = motor.pwmPin;
+      const motorOutput = motor.output;
+      
+      let us = this.map(motorOutput, -1, 1, this.minUS, this.maxUS);
+      if(motorOutput == 0 || !motorOutput) us = this.idleUS;
+     
+      us = Math.round(us)
+
+      ouputUS.push({ pin, us })
+    }
+
+    return ouputUS;
   }
 
   controllerInputUpdate(newInput) {
-    this.controlInput = { ...DEFAULT_CONTROL_INPUT, ...newInput }
-   
-    // Go through all buttons to see if anyone is pressed
-    for (const buttonId in this.controlInput.buttons) {
-      const pressed = this.controlInput.buttons[buttonId].pressed
-      const mappedFunction = this.controlMapping.buttons[buttonId][0]
-      const repeat = this.controlMapping.buttons[buttonId][1]
 
-      // If not repeat just fire of that function
-      if(repeat == false) this[mappedFunction](pressed)
+    const lastControlData = this.controlData
+    this.controlData = newInput
 
-      console.log(`Pressing ${mappedFunction[0]} - Repeat: ${mappedFunction[1]}`)
+
+    // Loop through new controls, if there is a function matching, then run it
+    for (const functionName in newInput) {
+
+      // Skip if not pointing to a function name
+      if (typeof this[functionName] != "function") continue
+
+      // Process Value to be within requirements
+      let value = newInput[functionName]
+      const constrainedValue = this.constrain(value, -1, 1)
+      if (value != constrainedValue) value = 0
+
+      // Skip if value is not changed since last time
+      if (value == lastControlData[functionName]) continue
+
+      // If not run the function with the new value!
+      this[functionName](value)
     }
-
-    // Go through axis to calculate thruster output
-    // this.controll
-
-    this.eventEmitter.emit("controlInputChange", newInput)
   }
 
+  roll(value) { this.calculateThrusterOutput() }
+  pitch(value) { this.calculateThrusterOutput() }
+  yaw(value) { this.calculateThrusterOutput() }
+  ascend(value) { this.calculateThrusterOutput() }
+  forward(value) { this.calculateThrusterOutput() }
+  lateral(value) { this.calculateThrusterOutput() }
 
+  arm(value) {
 
-
-  arm(pressed) {
-
-    if (this.armed || !pressed) return
+    if (this.armed || value != 0) return
     this.armed = true
     this.eventEmitter.emit("arm")
   }
 
-  disarm(pressed) {
+  disarm(value) {
 
-    if (!this.armed || !pressed) return
+    if (!this.armed || value != 0) return
     this.armed = false
+
+    // Set all motors off
+    this.calculateThrusterOutput()
+
     this.eventEmitter.emit("disarm")
   }
 
-  toggleArm(pressed) {
+  toggleArm(value) {
 
-    if (!pressed) return
+    if (!value) return
     if (this.armed) this.disarm()
     else this.arm()
   }
 
-  cameraTiltUp(pressed) { if (pressed) console.log("Tilt camera up") }
-  cameraTiltDown(pressed) { if (pressed) console.log("Tilt camera down") }
-  cameraCenter(pressed) { if (pressed) console.log("Set camera center") }
+  cameraTiltUp(value) { if (value != 0) console.log("Tilt camera up", value) }
+  cameraTiltDown(value) { if (value != 0) console.log("Tilt camera down") }
+  cameraCenter(value) { if (value != 0) console.log("Set camera center") }
 
-  gainIncrease(pressed) { if (pressed) console.log("Increment gain by 100") }
-  gainDecrease(pressed) { if (pressed) console.log("Decrement gain by 100") }
+  gainIncrease(value) { if (value != 0) console.log("Increment gain by 100") }
+  gainDecrease(value) { if (value != 0) console.log("Decrement gain by 100") }
 
-  gripperClose(pressed) {
-    if(pressed == true) { console.log("Close gripper") }
-    else { console.log("Stop moving gripper!!") }
-  }
-  gripperOpen(pressed) {
-    if(pressed == true) { console.log("Open gripper") }
-    else { console.log("Stop moving gripper!!") }
-  }
+  gripperClose(value) { if (value > 0) console.log("Close gripper", value) }
+  gripperOpen(value) { if (value > 0) console.log("Open gripper", value) }
 
-  lightsDimBrighter(pressed) { if (pressed) console.log("Brighten lights with X amount") }
-  lightsDimDarker(pressed) { if (pressed) console.log("Darken lights with X amount") }
+  lightsDimBrighter(value) { if (value != 0) console.log("Brighten lights with X amount") }
+  lightsDimDarker(value) { if (value != 0) console.log("Darken lights with X amount") }
 
-  depthHoldEnable(pressed) { if (pressed) console.log("Enable depth hold!") }
-  depthHoldDisable(pressed) { if (pressed) console.log("Disable depth hold!") }
-  depthHoldToggle(pressed) { if (pressed) console.log("Toggle depth hold!") }
+  depthHoldEnable(value) { if (value != 0) console.log("Enable depth hold!") }
+  depthHoldDisable(value) { if (value != 0) console.log("Disable depth hold!") }
+  depthHoldToggle(value) { if (value != 0) console.log("Toggle depth hold!") }
 
-  headingHoldEnable(pressed) { if (pressed) console.log("Enable heading hold") }
-  headingHoldDisable(pressed) { if (pressed) console.log("Disable heading hold") }
-  headingHoldToggle(pressed) { if (pressed) console.log("Toggle heading hold") }
+  headingHoldEnable(value) { if (value != 0) console.log("Enable heading hold") }
+  headingHoldDisable(value) { if (value != 0) console.log("Disable heading hold") }
+  headingHoldToggle(value) { if (value != 0) console.log("Toggle heading hold") }
 
-  trimRollLeft(pressed) { if (pressed) console.log("Trim roll left") }
-  trimRollRight(pressed) { if (pressed) console.log("Trim roll right") }
+  trimRollLeft(value) { if (value != 0) console.log("Trim roll left") }
+  trimRollRight(value) { if (value != 0) console.log("Trim roll right") }
 
 
 }

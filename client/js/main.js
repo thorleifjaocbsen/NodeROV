@@ -102,7 +102,6 @@ const controls = new Controls()
     else { popup("Detected controller", `Id: ${gp.id}`, "Confirm", "Detect again", popup_hide, () => controls.disconnectGamepad()) }
   } 
   else if (controls.inputChanged()) {
-    
     ws.send(`controls ${JSON.stringify(controls.getGamepad())}`)
   }
   requestAnimationFrame(systemLoop);

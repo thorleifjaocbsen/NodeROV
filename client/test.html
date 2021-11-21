@@ -1,80 +1,80 @@
-<!doctype html>
 <html>
+
 <head>
-<meta charset="UTF-8" />
-<title>Canvas Test</title>
+  <title>Controller Test</title>
+  <script type="text/javascript" src="js/jquery.min.js" charset="utf-8"></script>
 </head>
+
 <body>
-<header> </header>
-<nav> </nav>
-<section>
+  <h1>Simple Remote Controller Test</h1>
+  <p>Latency: <span id="latency">-1</span>ms</p>
+  <p>Loop Latency: <span id="looplatency">-1</span>ms</p>
+  <script>
+    const ws = new WebSocket(`ws://${location.hostname}:8080`)
+    ws.onmessage = (event) => {
+      if (typeof event.data != 'string') {
+        console.log("Unknown data")
+        return false
+      }
 
-<div>
-<canvas id="canvas" width="320" height="200">
-This text is displayed if your browser does not support HTML5 Canvas.
-</canvas>
-</div>
+      const data = event.data.split(' ')
+      const cmd = data.shift()
 
-<script type="text/javascript">
-var canvas;
-var ctx;
+      if (cmd == "hb") {
+        $("#latency").html(data[1])
+        ws.send(`hb ${data[0]}`)
+      }
+    }
 
-function init() {
-canvas = document.getElementById("canvas");
-ctx = canvas.getContext("2d");
-draw();
-}
+    let lastTimestamp = 0
+    let controllerLastTimestamp = 0
+    function mainLoop(timestamp) {
+      const gp = navigator.getGamepads()[0]
+      if (gp != null && gp.timestamp != controllerLastTimestamp) {
 
+        let controls = {
+          "roll": 0, 
+          "pitch": 0, 
+          "yaw": gp.axes[2], 
+          "ascend": gp.axes[3], 
+          "forward": gp.axes[1], 
+          "lateral": gp.axes[0],
+          "arm": gp.buttons[9].value,
+          "disarm": gp.buttons[8].value,
+          "toggleArm": 0,
+          "cameraTiltUp": gp.buttons[5].value,
+          "cameraTiltDown": gp.buttons[4].value,
+          "cameraCenter": gp.buttons[10].value,
+          "gainIncrease": gp.buttons[12].value,
+          "gainDecrease": gp.buttons[13].value,
+          "gripperClose": gp.buttons[6].value,
+          "gripperOpen": gp.buttons[7].value,
+          "lightsDimBrighter": gp.buttons[15].value,
+          "lightsDimDarker": gp.buttons[14].value,
+          "depthHoldEnable": 0,
+          "depthHoldDisable": 0,
+          "depthHoldToggle": gp.buttons[2].value,
+          "headingHoldEnable": 0,
+          "headingHoldDisable": 0,
+          "headingHoldToggle": gp.buttons[3].value,
+          "trimRollLeft": 0,
+          "trimRollRight": 0
+        }
 
-function draw() {
+        ws.send(`controls ${JSON.stringify(controls)}`)
 
-ctx.fillStyle = 'green';
-ctx.shadowOffsetX = 5;
-ctx.shadowOffsetY = 5;
-ctx.shadowBlur    = 4;
-ctx.shadowColor   = 'rgba(204, 204, 204, 0.5)';
-ctx.fillRect(0,0,15,150);
-ctx.save();
+        controllerLastTimestamp = gp.timestamp
+      }
 
-ctx.fillStyle = 'blue';
-ctx.shadowOffsetX = 10;
-ctx.shadowOffsetY = 10;
-ctx.shadowBlur    = 4;
-ctx.shadowColor   = 'rgba(204, 204, 204, 0.5)';
-ctx.fillRect(30,0,30,150);
-ctx.save();
+      $("#looplatency").html(Math.round(timestamp - lastTimestamp))
 
-ctx.fillStyle = 'red';
-ctx.shadowOffsetX = 15;
-ctx.shadowOffsetY = 15;
-ctx.shadowBlur    = 4;
-ctx.shadowColor   = 'rgba(204, 204, 204, 0.5)';
-ctx.fillRect(90,0,45,150);
-ctx.save();
+      lastTimestamp = timestamp
+      window.requestAnimationFrame(mainLoop)
+    }
 
-ctx.restore();
-ctx.beginPath();
-ctx.arc(185, 75, 22, 0, Math.PI*2, true);
-ctx.closePath();
-ctx.fill();
+    window.requestAnimationFrame(mainLoop)
 
-ctx.restore();
-ctx.beginPath();
-ctx.arc(260, 75, 15, 0, Math.PI*2, true);
-ctx.closePath();
-ctx.fill();
-
-ctx.restore();
-ctx.beginPath();
-ctx.arc(305, 75, 8, 0, Math.PI*2, true);
-ctx.closePath();
-ctx.fill();
-}
-
-init();
-</script>
-</section>
-<aside> </aside>
-<footer> </footer>
+  </script>
 </body>
+
 </html>

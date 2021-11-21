@@ -12,12 +12,12 @@ const app       = express()
 const http      = require('http').Server(app)
 const log       = require('./js/Log.js')
 
-console.log   = log.debug
+console.log   = log.warn
 console.error = log.error
 
 const Configuration           = require('./configuration.json')
+const defaultControls         = require('./controls.json')
 const RemoteOperatedVehicle   = require('./js/RemoteOperatedVehicle.js');
-const ThrusterController      = require('./js/ThrusterController.js');
 const AuxiliaryController     = require('./js/AuxiliaryController.js')
 const HeartbeatController     = require('./js/Heartbeat.js')
 const InternalPressureSensor  = require('./js/InternalPressureSensor')
@@ -29,7 +29,6 @@ const InertialMeasurementUnit = require('./js/InertialMeasurementUnit')
  * Initialize scripts
  *
  ************************/
-const thrusters = new ThrusterController(Configuration.thrusters)
 const aux = new AuxiliaryController(Configuration.auxiliary)
 const rov = new RemoteOperatedVehicle(Configuration.rov)
 const ips = new InternalPressureSensor()
@@ -43,14 +42,12 @@ const adc = new AnalogDigitalConverter(Configuration.calibration.adc)
  ************************/
 rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
-rov.on('controlInputChange', (newInput) => { 
-  
-  log.info("Controller input changed")
-  thrusters.calculateOutput(newInput)
-  
-
+rov.on('thusterOutputChanged', (ouputInUs) => { 
+  ouputInUs.forEach((output) => {
+    log.info(`Pin: ${output.pin} = ${output.us}us`)
+  })
 })
-
+rov.controllerInputUpdate(defaultControls)
 
 /************************
  *
@@ -96,20 +93,6 @@ imu.on('read', () => {
   rov.attitude.heading = imu.heading
 })
 
-/************************
- *
- * Thruster Event Handlers
- *
- ************************/
-thrusters.on('thrusterOutputChange', (thrusters) => {
-  
-  log.debug("Thruster Output Change")
-  thrusters.forEach(thruster => {
-
-    log.silly(`Setting PWM for pin ${thruster.pin} to ${thruster.us}uS`)
-    // TODO: Add PWM Controller to SET PWM
-  });
-})
 
 
 /************************
@@ -145,26 +128,30 @@ wss.on('connection', function(ws, req) {
   try { log.remove(log.transports.socketIO); }
   catch(e) {  }
 
+  const ip = ws._socket.remoteAddress.split(":").pop()
+  const port = ws._socket.remotePort
 
 
-  log.info(`Websocket: Remote connection OPENED from: ${ws._socket.remoteAddress}:${ws._socket.remotePort}`)
+  log.info(`Websocket: Connection from: ${ip}:${port}`)
   log.add(log.socketIOTransport,ws)
   log.info('Websocket: Starting heartbeat')
 
   const hb = new HeartbeatController()
   hb.on("timeout", () => {
   
-    log.warn(`Heartbeat timeout, disarm ROV  ${ws._socket.remoteAddress}:${ws._socket.remotePort}`)
+    log.warn(`Heartbeat timeout, disarm ROV (${ip}:${port})`)
     rov.disarm()
     hb.stop()
   })
  
-  hb.on('beat', (data, latency) => { ws.send(`hb ${data} ${latency}`) })
+  const sendHeartbeat = (data, latency) => { ws.send(`hb ${data} ${latency}`) }
+
+  hb.on('beat', sendHeartbeat)
   hb.start()
 
   ws.on('message', parseWebsocketData)
   ws.on('close', () => {
-    log.info(`Websocket: Remote connection CLOSED from: ${ws._socket.remoteAddress}:${ws._socket.remotePort}`)
+    log.info(`Websocket: Close from ${ip}:${port}`)
 
     rov.disarm()
     hb.stop()
@@ -189,11 +176,12 @@ function parseWebsocketData(data) {
   const cmd = data.shift(1)
 
   if (cmd == "hb") { this.hb.pulse(data[0]) }
-  else if (cmd == "clog") { }
   else if (cmd == "controls") { 
     // Data json object?
     data = JSON.parse(data.join(' '))
-    console.log(data)
+    data = {...{ axes: defaultControls.axes }, ...data}
+    rov.controllerInputUpdate(data)
+    
   }
   else {
     log.warn(`Websocket: Unknown command: ${cmd} (${JSON.stringify(data)})`);

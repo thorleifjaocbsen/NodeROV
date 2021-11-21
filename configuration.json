@@ -13,23 +13,7 @@
 		"fps": 5,
 		"port": 8282
 	},
-	"controls": {
-		"thrusterControl": {
-			"forward": null,
-			"lateral": null,
-			"yaw": null,
-			"climb": null,
-			"roll": null,
-			"pitch": null
-		},
-		"auxiliary": [
-			{
-				"id": "left_light"
-			}
-		]
-	},
-	"rov": {},
-	"thrusters": {
+	"rov": {
 		"minUS": 1000,
 		"idleUS": 1550,
 		"maxUS": 2000,
@@ -40,7 +24,7 @@
 				"roll": 0,
 				"pitch": 0,
 				"yaw": -1.0,
-				"climb": 0,
+				"ascend": 0,
 				"forward": 1.0,
 				"lateral": -1.0,
 				"gui": {
@@ -55,7 +39,7 @@
 				"roll": 0,
 				"pitch": 0,
 				"yaw": 1.0,
-				"climb": 0,
+				"ascend": 0,
 				"forward": 1.0,
 				"lateral": 1.0,
 				"gui": {
@@ -70,7 +54,7 @@
 				"roll": 0,
 				"pitch": 0,
 				"yaw": -1.0,
-				"climb": 0,
+				"ascend": 0,
 				"forward": 1.0,
 				"lateral": 1.0,
 				"gui": {
@@ -85,7 +69,7 @@
 				"roll": 0,
 				"pitch": 0,
 				"yaw": 1.0,
-				"climb": 0,
+				"ascend": 0,
 				"forward": 1.0,
 				"lateral": -1.0,
 				"gui": {
@@ -100,7 +84,7 @@
 				"roll": 0,
 				"pitch": 0,
 				"yaw": 0,
-				"climb": -1.0,
+				"ascend": -1.0,
 				"forward": 0,
 				"lateral": 0,
 				"gui": {
@@ -115,7 +99,7 @@
 				"roll": 0,
 				"pitch": 0,
 				"yaw": 0,
-				"climb": 1.0,
+				"ascend": 1.0,
 				"forward": 0,
 				"lateral": 0,
 				"gui": {
