@@ -10,8 +10,8 @@ module.exports = class RemoteOperatedVehicle {
 
   constructor(options) {
 
-    this.battery     = { voltage: 0, current: 0, mahUsed: 0 }
-    this.attitude    = { roll: 0, pitch: 0, heading: 0 }
+    this.battery = { voltage: 0, current: 0, mahUsed: 0 }
+    this.attitude = { roll: 0, pitch: 0, heading: 0 }
     this.environment = {
       internalHumidity: 0,
       internalPressure: 0,
@@ -23,24 +23,24 @@ module.exports = class RemoteOperatedVehicle {
     }
 
     // uS Overview
-    this.minUS  = options && options.hasOwnProperty('minUS') ? options.minUS : 1000
+    this.minUS = options && options.hasOwnProperty('minUS') ? options.minUS : 1000
     this.idleUS = options && options.hasOwnProperty('idleUS') ? options.idleUS : 1550;
-    this.maxUS  = options && options.hasOwnProperty('maxUS') ? options.maxUS : 2000;
+    this.maxUS = options && options.hasOwnProperty('maxUS') ? options.maxUS : 2000;
 
     // Loop through and add all motors for thruster calculations
     this.motors = {}
 
-    if (options && options.hasOwnProperty('motors')) {    
+    if (options && options.hasOwnProperty('motors')) {
 
       for (let motor of options.motors) {
-        this.motors[motor.id] = { 
-          pwmPin: motor.pwmPin, 
+        this.motors[motor.id] = {
+          pwmPin: motor.pwmPin,
           rollFactor: motor.roll,
           pitchFactor: motor.pitch,
-          yawFactor: motor.yaw, 
-          ascendFactor: motor.ascend, 
-          forwardFactor: motor.forward, 
-          lateralFactor: motor.lateral 
+          yawFactor: motor.yaw,
+          ascendFactor: motor.ascend,
+          forwardFactor: motor.forward,
+          lateralFactor: motor.lateral
         }
       }
     }
@@ -87,7 +87,7 @@ module.exports = class RemoteOperatedVehicle {
       motor.output = output
     }
 
-    if(changes == true) {
+    if (changes == true) {
       this.eventEmitter.emit('thusterOutputChanged', this.getOutputUS())
     }
   }
@@ -96,14 +96,14 @@ module.exports = class RemoteOperatedVehicle {
 
     const ouputUS = [];
 
-    for(let id in this.motors) {
+    for (let id in this.motors) {
       const motor = this.motors[id]
       const pin = motor.pwmPin;
       const motorOutput = motor.output;
-      
+
       let us = this.map(motorOutput, -1, 1, this.minUS, this.maxUS);
-      if(motorOutput == 0 || !motorOutput) us = this.idleUS;
-     
+      if (motorOutput == 0 || !motorOutput) us = this.idleUS;
+
       us = Math.round(us)
 
       ouputUS.push({ pin, us })

@@ -1,8 +1,6 @@
-var gui = GUI();
-var player = new Player({});
-var rovData = {};
-var vacuumTest = false;
-var confirmWaterTight = false;
+const gui = GUI();
+const player = new Player({});
+const rovData = {};
 
 
 
@@ -13,15 +11,15 @@ var confirmWaterTight = false;
  *
  *
  ************************/
-player.ws = new Socket(location.hostname, 8282);
-player.ws.on('open', () => { player.ws.send("REQUESTSTREAM") })
-player.ws.on('message', (e) => {
-  if (typeof e.data == "string") console.log(e.data, Date.now())
-  if (player.skipMessages) return
-  var frame = new Uint8Array(e.data)
-  player.decode(frame)
-})
-$(".fvideo").html(player.canvas)
+// player.ws = new Socket(location.hostname, 8282);
+// player.ws.on('open', () => { player.ws.send("REQUESTSTREAM") })
+// player.ws.on('message', (e) => {
+//   if (typeof e.data == "string") console.log(e.data, Date.now())
+//   if (player.skipMessages) return
+//   var frame = new Uint8Array(e.data)
+//   player.decode(frame)
+// })
+// $(".fvideo").html(player.canvas)
 
 /************************
  *
@@ -94,16 +92,16 @@ const controls = new Controls()
   $("time:first").html(d.split('T')[1].split('.')[0] + " UTC");
   $("time:last").html(d.split('T')[0]);
 
-  // Detect controller
-  if(!controls.isGamepadDetected()) {
-    const gp = controls.detectPressedGamepad()
+  // // Detect controller
+  // if(!controls.isGamepadDetected()) {
+  //   const gp = controls.detectPressedGamepad()
 
-    if(gp == false) { popup("Detecting controller input", "Press the button of the gamepad to enable") }
-    else { popup("Detected controller", `Id: ${gp.id}`, "Confirm", "Detect again", popup_hide, () => controls.disconnectGamepad()) }
-  } 
-  else if (controls.inputChanged()) {
-    ws.send(`controls ${JSON.stringify(controls.getGamepad())}`)
-  }
+  //   if(gp == false) { popup("Detecting controller input", "Press the button of the gamepad to enable") }
+  //   else { popup("Detected controller", `Id: ${gp.id}`, "Confirm", "Detect again", popup_hide, () => controls.disconnectGamepad()) }
+  // } 
+  // else if (controls.inputChanged()) {
+  //   ws.send(`controls ${JSON.stringify(controls.getGamepad())}`)
+  // }
   requestAnimationFrame(systemLoop);
 }
 
