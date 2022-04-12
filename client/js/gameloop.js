@@ -1,40 +1,38 @@
 // * Jortenmilo's Class "Remodified"! ;D * //
 
-Gameloop = function( fps , tps , main ) {
-  var self = {
-    fps:fps,
-    tps:tps,
-    main:main,
-    fpsInterval:false,
-    tpsInterval:false,
-    then:performance.now(),
-    internalTimer:performance.now(),
-    fpsCount:0,
-    count:0
-  }
+class GameLoop {
 
-	self.start = function() {
-		//self.fpsInterval = setInterval(self.main.render, 1000/self.fps);
-		self.tpsInterval = setInterval(self.main.tick, 1000/self.tps);
-    self.renderLoop();
-
-	}
-
-  self.renderLoop = function() {
-    window.requestAnimationFrame( self.renderLoop );
-    let now = performance.now();
-    let elapsed = now-self.then;
-    if(elapsed >= 1000/self.fps) {
-      self.count ++;
-      if(now-self.internalTimer >= 1000) {
-        self.fpsCount = self.count;
-        self.count = 0;
-        self.internalTimer = now - ((now-self.internalTimer) % 1000/self.fps);
-      }
-      self.then = now - (elapsed % 1000/self.fps);
-      self.main.render();
+    constructor(fps, tps, main) {
+        this.fps = fps;
+        this.tps = tps;
+        this.main = main;
+        this.fpsInterval = false;
+        this.tpsInterval = false;
+        this.then = performance.now();
+        this.internalTimer = performance.now();
+        this.fpsCount = 0;
+        this.count = 0;
     }
-  }
 
-  return self;
+    start() {
+        //this.fpsInterval = setInterval(this.main.render, 1000 / this.fps);
+        this.tpsInterval = setInterval(this.main.tick, 1000 / this.tps);
+        this.renderLoop();
+    }
+
+    renderLoop() {
+        window.requestAnimationFrame(this.renderLoop);
+        let now = performance.now();
+        let elapsed = now - this.then;
+        if (elapsed >= 1000 / this.fps) {
+            this.count++;
+            if (now - this.internalTimer >= 1000) {
+                this.fpsCount = this.count;
+                this.count = 0;
+                this.internalTimer = now - ((now - this.internalTimer) % 1000 / this.fps);
+            }
+            this.then = now - (elapsed % 1000 / this.fps);
+            this.main.render();
+        }
+    }
 }

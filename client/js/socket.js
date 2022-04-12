@@ -1,74 +1,70 @@
-Socket = function() {
-  var self = {
-    ws : null,
-    callbacks : {},
-    reconnectTime : 5,
-    ip : null,
-    port : null,
-    
-  }
-  
-  self.log = function(data) {
-    console.log(data);
-  }
-  
-  self.connect = function(ip, port) {
-    self.ip = ip;
-    self.port = port;
-    self.ws = new WebSocket('ws://'+ip+':'+port)
-    self.ws.onopen = self.onopen;
-    self.ws.onclose = self.onclose;
-    self.ws.onerror = self.onerror;
-    self.ws.onmessage = self.onmessage;
-    self.ws.binaryType = 'arraybuffer';
+class Socket {
 
-  }
-  
-  self.reconnect = function() {
-    self.log('Reconnecting to '+self.ip+':'+self.port)
-    self.connect(self.ip, self.port);
-  }
-  
-  self.onerror = function(e) {
+  constructor() {
+    this.ws = null;
+    this.callbacks = {};
+    this.reconnectTime = 5;
+    this.ip = null;
+    this.port = null;
+  };
+
+  log(data) {
+    console.log(data);
+  };
+
+  connect(ip, port) {
+    this.ip = ip;
+    this.port = port;
+    this.ws = new WebSocket('wss://' + ip + ':' + port)
+    this.ws.onopen = (e) => this.onopen(e);
+    this.ws.onclose = (e) => this.onclose(e);
+    this.ws.onerror = (e) => this.onerror(e);
+    this.ws.onmessage = (e) => this.onmessage(e);
+    this.ws.binaryType = 'arraybuffer';
+
+  };
+
+  reconnect() {
+    this.log('Reconnecting to ' + this.ip + ':' + this.port)
+    this.connect(this.ip, this.port);
+  };
+
+  onerror(e) {
     // Error
-  }
-  
-  self.onopen = function(e) {
-    self.log('Connected to '+self.ip+':'+self.port)
-  }
-  
-  self.onclose = function(e) {   
-    if(self.reconnectTime > 0) {
-      setTimeout(self.reconnect, self.reconnectTime*1000); 
-      self.log('Lost connection with socket on '+self.ip+':'+self.port+', reconnecting in '+self.reconnectTime+' seconds.');
+  };
+
+  onopen(e) {
+    this.log('Connected to ' + this.ip + ':' + this.port)
+  };
+
+  onclose(e) {
+    if (this.reconnectTime > 0) {
+      setTimeout(this.reconnect, this.reconnectTime * 1000);
+      this.log('Lost connection with socket on ' + this.ip + ':' + this.port + ', reconnecting in ' + this.reconnectTime + ' seconds.');
     }
     else {
-      self.log('Lost connection with socket on '+self.ip+':'+self.port);
+      this.log('Lost connection with socket on ' + this.ip + ':' + this.port);
     }
-  }
-  
-  
-  
-  self.onmessage = function(e) {
-    if(typeof e.data == 'string') {
+  };
+
+  onmessage(e) {
+    if (typeof e.data == 'string') {
       var cmd = e.data.split(' ')[0];
-      var data = e.data.substr(cmd.length+1);
-      if (typeof self.callbacks[cmd] == 'function') {
-        self.callbacks[cmd](data);
+      var data = e.data.substr(cmd.length + 1);
+      if (typeof this.callbacks[cmd] == 'function') {
+        this.callbacks[cmd](data);
       }
-      else self.log('Unknown data: '+e.data);
+      else this.log('Unknown data: ' + e.data);
 
     }
-  }
-  
-  self.send = function(data) {
-    try { self.ws.send(data); }
-    catch(e) {}
-  }
-  
-  self.on = function(cmd, callback) {
-    self.callbacks[cmd] = callback;
-  }
-  
-  return self;
+  };
+
+  send(data) {
+    try { this.ws.send(data); }
+    catch (e) { }
+  };
+
+  on(cmd, callback) {
+    this.callbacks[cmd] = callback;
+  };
 }
