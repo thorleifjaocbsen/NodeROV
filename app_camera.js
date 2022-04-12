@@ -1,18 +1,27 @@
 
-// var config          = { width : 1296, height: 730, fps : 15, port : 8282 }
-var config          = { width : 320, height: 240, fps : 5, port : 8282 }
+const config          = { width : 1296, height: 730, fps : 15, port : 8282 }
 
-var spawn           = require('child_process').spawn;
-var Splitter        = require('stream-split');
-var ws              = require('ws');
-var fs              = require('fs');
-var exec            = require('child_process').exec;
-var wss             = new ws.WebSocketServer({ perMessageDeflate: false, port: config.port })
-var NALseparator    = Buffer.from([0,0,0,1]);//NAL break
-var streamer, readStream, sck = null;
+const spawn           = require('child_process').spawn;
+const Splitter        = require('stream-split');
+const fs              = require('fs');
+const exec            = require('child_process').exec;
+const WebSocketServer = require("ws").WebSocketServer;
+const HttpsServer     = require('https').createServer;
 
+const NALseparator    = Buffer.from([0,0,0,1]);//NAL break
+let streamer, readStream, sck = null;
+
+/* Start server */
+const cert = fs.readFileSync("assets/server.cert");
+const key = fs.readFileSync("assets/server.key");
+server = HttpsServer({ cert, key });
+wss = new WebSocketServer({ server });
+server.listen(config.port);
+
+/* Started */
 console.log("Video Streamer Service : Listning");
 
+/* On connection */
 wss.on('connection', function(socket) {
 
   console.log("Video Streamer Service : Incomming connection");
@@ -20,7 +29,7 @@ wss.on('connection', function(socket) {
   socket.send("Video Streamer Service - Connected");
   
   socket.on("message", function(data){
-    data = data.toString()
+    data = data.toString().trim();
     var cmd = "" + data, action = data.split(' ')[0];
     console.log("Video Streamer Service : Incomming data: %s",data);
   

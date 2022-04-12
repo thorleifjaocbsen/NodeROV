@@ -4,17 +4,18 @@
  * Credits: Myself, my family and my girlfriend and child.
  */
 
-const ws        = require('ws')
-const express   = require('express')
-const app       = express()
-const http      = require('http').Server(app)
-const log       = require('./js/Log.js')
-const hb        = require('./js/heartbeat.js')
+const ws = require('ws');
+const express = require('express');
+const app = express();
+const https = require('https');
+const log = require('./js/Log.js');
+const hb = require('./js/heartbeat.js');
+const fs = require('fs')
 
-const Configuration               = require('./configuration.json')
-const RemoteOperatedVehicleClass  = require('./js/RemoteOperatedVehicle.js');
-const ThrusterControllerClass     = require('./js/ThrusterController.js');
-const AuxiliaryControllerClass    = require('./js/AuxiliaryController.js')
+const Configuration = require('./configuration.json');
+const RemoteOperatedVehicleClass = require('./js/RemoteOperatedVehicle.js');
+const ThrusterControllerClass = require('./js/ThrusterController.js');
+const AuxiliaryControllerClass = require('./js/AuxiliaryController.js');
 
 //test
 // LOOP
@@ -28,9 +29,9 @@ const AuxiliaryControllerClass    = require('./js/AuxiliaryController.js')
  * Initialize scripts
  *
  ************************/
-const ThrusterController  = new ThrusterControllerClass(Configuration.thrusters)
+const ThrusterController = new ThrusterControllerClass(Configuration.thrusters)
 const AuxiliaryController = new AuxiliaryControllerClass(Configuration.auxiliary)
-const ROVController       = new RemoteOperatedVehicleClass(Configuration.rov)
+const ROVController = new RemoteOperatedVehicleClass(Configuration.rov)
 
 /************************
  *
@@ -39,7 +40,7 @@ const ROVController       = new RemoteOperatedVehicleClass(Configuration.rov)
  ************************/
 ROVController.on('arm', () => { log.info('ROV Armed') })
 ROVController.on('disarm', () => { log.info('ROV Disarmed') })
-ROVController.on('controlInputChange', (newInput) => { 
+ROVController.on('controlInputChange', (newInput) => {
   log.info("Controller input changed")
   ThrusterController.calculateOutput(newInput)
 })
@@ -72,7 +73,7 @@ AuxiliaryController.on('deviceOutputChange', (device) => {
 
 // TEST: Testing that everything works on paper for now.
 ROVController.arm();
-ROVController.setControlInput({climb: 1, yaw: 0.1})
+ROVController.setControlInput({ climb: 1, yaw: 0.1 })
 AuxiliaryController.calculateOutput("camera", 1)
 
 
@@ -81,24 +82,29 @@ AuxiliaryController.calculateOutput("camera", 1)
  * Web server start
  *
  ************************/
- log.log('info','Starting webserver')
- app.use('/', express.static(__dirname+'/client'))
- http.listen(Configuration.port, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
- 
+log.log('info', 'Starting webserver')
+app.use('/', express.static(__dirname + '/client'))
+
+const key = fs.readFileSync('assets/server.key');
+const cert = fs.readFileSync('assets/server.cert')
+const webServer = https.createServer({ key, cert }, app).listen(Configuration.port, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
+
 
 /************************
  *
  * Web socket start
  *
  ************************/
-const wss = new ws.WebSocketServer({ perMessageDeflate: false, port: Configuration.socketPort })
+//const wss = new ws.WebSocketServer({ perMessageDeflate: false, port: Configuration.socketPort })
+const wss = new ws.WebSocketServer({ server: webServer });
+
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
-wss.on('connection', function(c) {
+wss.on('connection', function (c) {
   client = c
   try { log.remove(log.transports.socketIO); }
-  catch(e) {  }
+  catch (e) { }
   log.info(`Websocket: Remote connection from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
-  log.add(log.socketIOTransport,client)
+  log.add(log.socketIOTransport, client)
   log.info('Websocket: Starting heartbeat')
   hb.start(client)
   client.on('message', wss.parseMessage)
@@ -222,17 +228,17 @@ wss.parseMessage = function (data) {
  *
  ************************/
 
- setInterval(function() { // Send data to client
+setInterval(function () { // Send data to client
   /************************
    *
    * Check client connectivity
    *
    ************************/
-  if(!hb.connected) {
+  if (!hb.connected) {
     // Warning lights!! Lost topsite connecton, do stop everything!
-    if(ROVController.armed) ROVController.disarm(); // Disarm
+    if (ROVController.armed) ROVController.disarm(); // Disarm
 
-    if((hb.offTime > 5) && (client != null)) {
+    if ((hb.offTime > 5) && (client != null)) {
       client.close(); // Kill connection
       client = null; // Allow new connection
     }
@@ -310,7 +316,7 @@ wss.parseMessage = function (data) {
   // }
   // else if(rov.heading.hold && !rov.armed) rov.heading.hold = false;
 
-  
+
   // /****************************
   //  * MOTOR THRUST CALCULATION *
   //  ****************************/
@@ -320,7 +326,7 @@ wss.parseMessage = function (data) {
   // rov.motors.frontright = base_command + fwd_factor*forward_command + strafe_factor*strafe_command + yaw_factor*yaw_command;
   // rov.motors.upleft     = base_command - climb_command;
   // rov.motors.upright    = base_command + climb_command;
-  
+
   // // Limit all motors to output of 1000 and 2000 maximum
   // for(var i in rov.motors) {
   //   if(rov.motors[i] > 1950) rov.motors[i] = 1950;
@@ -329,11 +335,11 @@ wss.parseMessage = function (data) {
 
   // // Sends thruster data to thrusters, will only happen if "armed"
   // rov.updateThrusters();
-  
+
   // // Reset gripper if its been over 2 seconds since update.
   // var lgm = Date.now() - rov.lastGripper;
   // if((lgm > 100) && ( rov.gripper != 0)) { rov.setGripper(0); }
-  
+
   // /************************
   //  *
   //  * Send telemetry data every 10tick (20*10 = 200ms)
