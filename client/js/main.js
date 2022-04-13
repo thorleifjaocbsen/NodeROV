@@ -102,9 +102,10 @@ gui.setButton("gui-controls-button-7", "RECORD", function (e) {
 
 
 gui.setButton("gui-controls-button-7", "FULLSCREEN", function (e) {
-    $("#video").toggleClass("fullscreen");
-    gui.buttonState("gui-controls-button-7", $("section.video").hasClass("fullscreen"));
-    $("#video").on("click", function () { gui.pressButton("gui-controls-button-7"); });
+    const videoEl = document.getElementById("video");
+    videoEl.classList.toggle("fullscreen");
+    gui.buttonState("gui-controls-button-7", videoEl.classList.contains("fullscreen"));
+    videoEl.onclick = () => { gui.pressButton("gui-controls-button-7"); };
 });
 gui.setButton("gui-controls-button-8", "SET FLAT", function (e) { socket.send("setflat"); });
 gui.setButton("gui-controls-button-9", "CALIBRATE GYRO", function (e) { socket.send("calibrategyro"); });
@@ -117,7 +118,7 @@ gui.setButton("gui-log-button-1", "ADD EVENT", function (e) {
     $("#eventmsg").focus();
 });
 gui.setButton("gui-log-button-2", "SCREENSHOT", function (e) {
-    var data = $(".fvideo canvas").get(0).toDataURL("image/jpeg", 1);
+    var data = player.canvas.toDataURL("image/jpeg", 1);
     var filename = "noderov_" + (Date.now() / 1000) + ".jpg";
     gui.log("Screenshot saved (" + filename + ")");
     $("<a download='" + filename + "' href='" + data + "'></a>")[0].click();
