@@ -73,14 +73,14 @@ gui.setButton("gui-controls-button-7", "RECORD", function (e) {
     }
 
 });
-gui.setButton("gui-controls-button-7", "FULLSCREEN", function (e) {
+gui.setButton("gui-controls-button-8", "FULLSCREEN", function (e) {
     const videoEl = document.getElementById("video");
     videoEl.classList.toggle("fullscreen");
     gui.buttonState("gui-controls-button-7", videoEl.classList.contains("fullscreen"));
     videoEl.onclick = () => { gui.pressButton("gui-controls-button-7"); };
 });
-gui.setButton("gui-controls-button-8", "SET FLAT", function (e) { socket.send("setflat"); });
-gui.setButton("gui-controls-button-9", "CALIBRATE GYRO", function (e) { socket.send("calibrategyro"); });
+gui.setButton("gui-controls-button-9", "SET FLAT", function (e) { socket.send("setflat"); });
+gui.setButton("gui-controls-button-10", "CALIBRATE GYRO", function (e) { socket.send("calibrategyro"); });
 gui.setButton("gui-log-button-1", "ADD EVENT", function (e) {
     var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
     popup("Add event", msg, "Add", "Cancel", function () {
@@ -112,30 +112,26 @@ gui.setInfo(11, "", "-");
 gui.setInfo(12, 0, "Latency:");
 
 /************************
- *
- *
- * Controls on press e.t.c
- *
- *
+  * Controls on press e.t.c
  ************************/
-controls.onPress(controls.map.gainUp, function () { socket.send("setgain " + (rovData.gain + 50)); });
-controls.onPress(controls.map.gainDown, function () { socket.send("setgain " + (rovData.gain - 50)); });
-controls.onPress(controls.map.lightsUp, function () {
+controls.onPress(controls.map.gainUp, () => { socket.send("setgain " + (rovData.gain + 50)); });
+controls.onPress(controls.map.gainDown, () => { socket.send("setgain " + (rovData.gain - 50)); });
+controls.onPress(controls.map.lightsUp, () => {
     socket.send("setlight 0 " + (rovData.lights[0] + 10));
     socket.send("setlight 1 " + (rovData.lights[1] + 10));
 }, 100);
-controls.onPress(controls.map.lightsDown, function () {
+controls.onPress(controls.map.lightsDown, () => {
     socket.send("setlight 0 " + (rovData.lights[0] - 10));
     socket.send("setlight 1 " + (rovData.lights[1] - 10));
 }, 100);
-controls.onPress(controls.map.cameraUp, function () { socket.send("setcamera " + (rovData.cameraPosition - 1)); }, 10);
-controls.onPress(controls.map.cameraDown, function () { socket.send("setcamera " + (rovData.cameraPosition + 1)); }, 10);
-controls.onPress(controls.map.fullscreen, function () { gui.pressButton(7); }, 1000)
-controls.onPress(controls.map.arm, function () { socket.send("arm"); });
-controls.onPress(controls.map.disarm, function () { socket.send("disarm"); });
-controls.onPress(controls.map.depthhold, function () { socket.send("depthhold"); });
-controls.onPress(controls.map.gripOpen, function () { socket.send("gripopen"); }, 50);
-controls.onPress(controls.map.gripClose, function () { socket.send("gripclose"); }, 50);
+controls.onPress(controls.map.cameraUp, () => { socket.send("setcamera " + (rovData.cameraPosition - 1)); }, 10);
+controls.onPress(controls.map.cameraDown, () => { socket.send("setcamera " + (rovData.cameraPosition + 1)); }, 10);
+controls.onPress(controls.map.fullscreen, () => { gui.pressButton("gui-controls-button-8"); }, 1000)
+controls.onPress(controls.map.arm, () => { socket.send("arm"); });
+controls.onPress(controls.map.disarm, () => { socket.send("disarm"); });
+controls.onPress(controls.map.depthhold, () => { socket.send("depthhold"); });
+controls.onPress(controls.map.gripOpen, () => { socket.send("gripopen"); }, 50);
+controls.onPress(controls.map.gripClose, () => { socket.send("gripclose"); }, 50);
 
 /************************
  *
@@ -148,10 +144,10 @@ controls.onPress(controls.map.gripClose, function () { socket.send("gripclose");
 var voltWarnLevel = 0;
 
 socket.connect(location.hostname, location.port);
-socket.on("hb", function (time) {
-    time = time.split(" ");
-    socket.send("hb " + time[0]);
-    gui.setInfo(12, time[1])
+socket.on("hb", (data) => {
+    const [sendtTime, latency] = data.split(" ");
+    socket.send("hb " + sendtTime);
+    gui.setInfo(12, latency)
 })
 socket.on("telemetryData", function (data) {
     rovData = JSON.parse(data);
