@@ -14,6 +14,12 @@
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
 }
 
+:root {
+    --gradient-background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
+    --border-color: #929ba8;
+    --primary-color: #fb6362;
+}
+
 body {
     width: 1920px;
     height: 1080px;
@@ -33,14 +39,27 @@ body {
     box-sizing: border-box;
     width: 1920px;
     height: 1080px;
-    padding: 20px;
 }
 
+
+section {
+    box-sizing: border-box;
+    border: 2px solid var(--border-color);
+    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
+}
+
+/******************************************************************************/
+/*                                                                            */
+/*  Video CSS                                                                 */
+/*                                                                            */
+/******************************************************************************/
 section#video {
-    position: relative;
+    position: absolute;
     float: left;
     width: 1260px;
     height: 709px;
+    left: 20px;
+    top: 20px;
     overflow: hidden;
     background-color: #0D0E1B;
 }
@@ -53,6 +72,333 @@ section#video.fullscreen {
     height: 100%;
     z-index: 999;
 }
+
+/******************************************************************************/
+/*                                                                            */
+/*  Info box CSS                                                              */
+/*                                                                            */
+/******************************************************************************/
+section.info {
+    height: 150px;
+    width: 600px;
+    position: absolute;
+    left: 1300px;
+    top: 20px;
+}
+
+section.info h1 {
+    font-size: 40px;
+    text-transform: uppercase;
+    font-weight: bold;
+    float: left;
+    padding: 20px;
+}
+
+section.info aside {
+    float: right;
+    padding: 20px;
+}
+
+section.info aside time {
+    color: var(--primary-color);
+}
+
+section.info aside time:last-of-type {
+    color: #ffffff;
+}
+
+section.info ul {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 20px;
+    width: 100%;
+}
+
+section.info li {
+    flex-grow: 1;
+    color: var(--primary-color);
+    text-transform: uppercase;
+}
+
+section.info li b {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/******************************************************************************/
+/*                                                                            */
+/*  Data Array CSS                                                            */
+/*                                                                            */
+/******************************************************************************/
+section.data {
+    height: 220px;
+    width: 600px;
+    position: absolute;
+    left: 1300px;
+    top: 190px;
+}
+
+section.data ul {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 20px;
+    width: 100%;
+}
+
+section.data li {
+    flex-grow: 1;
+    color: var(--primary-color);
+    padding: 0px 10px 0px 10px;
+    text-transform: uppercase;
+}
+
+section.data li b {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+
+/******************************************************************************/
+/*                                                                            */
+/*  Control Array CSS                                                         */
+/*                                                                            */
+/******************************************************************************/
+section.controls {
+    height: 290px;
+    width: 600px;
+    position: absolute;
+    left: 1300px;
+    top: 430px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    flex-flow: row wrap;
+    justify-content: space-between;
+}
+
+section.controls button {
+    flex-grow: 1;
+    width: 30%;
+    background: var(--primary-color);
+    border: 0px;
+    margin: 5px;
+    font-size: 15px;
+    display: block;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+section.controls button:hover {
+    background-color: #ffffff;
+    color: var(--primary-color);
+}
+
+section.controls button.selected {
+    background-color: #51861d;
+    color: #ffffff;
+}
+section.controls button.selected:hover {
+    background-color: #839472;
+    color: #ffffff;
+}
+
+/******************************************************************************/
+/*                                                                            */
+/*  data graphics Box CSS                                                               */
+/*                                                                            */
+/******************************************************************************/
+section.datagraphics {
+    position: absolute;
+    height: 320px;
+    left: 20px;
+    top: 740px;
+    width: 620px;
+}
+
+section.datagraphics canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/******************************************************************************/
+/*                                                                            */
+/*  Vitals Box CSS                                                               */
+/*                                                                            */
+/******************************************************************************/
+
+
+section.vitals {
+    border: none;
+    background: none;
+    position: absolute;
+    top: 740px;
+    left: 660px;
+    height: 320px;
+    width: 620px;
+}
+
+section.vitals #compass {
+    position: relative;
+    box-sizing: border-box;
+    border: 2px solid var(--border-color);
+    height: 35px;
+    width: 100%;
+    background-image: var(--gradient-background);
+}
+
+section.vitals #compass canvas {  
+    width: 100%;
+    height: 100%;
+}
+
+section.vitals #compass div {
+    position: absolute;
+    box-sizing: border-box;
+    width: 40px;
+    height: 40px;
+    top: -5px;
+    left: calc(50% - 20px);
+    text-align: center;
+    line-height: 40px;
+    font-weight: bold;
+    font-size: 19px;
+    background-color: var(--primary-color);
+    border: 1px solid var(--border-color);
+}
+
+section.vitals .accelerometer {
+    position: relative;
+    box-sizing: border-box;
+    border: 2px solid var(--border-color);
+    width: 100%;
+    height: 120px;
+    margin-top: 15px;
+    background-image: var(--gradient-background);
+}
+
+section.vitals .accelerometer canvas {
+    width: 100%;
+    height: 114px;
+}
+
+section.vitals .scale {
+    position: relative;
+    box-sizing: border-box;
+    border: 2px solid var(--border-color);
+    width: 100%;
+    height: 35px;
+    margin-top: 15px;
+    background: linear-gradient(90deg, #2c3b59 0%, #121a2d 49.7%, var(--primary-color) 50%, #121a2d 50.3%, #2c3b59 100%);
+}
+
+section.vitals .scale p,
+section.vitals .scale b {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-weight: bold;
+    padding: 0 20px;
+    height: 100%;
+    line-height: 32px;
+    color: #ffffff;
+}
+
+section.vitals .scale b {
+    color: var(--primary-color);
+    left: auto;
+    right: 0;
+}
+
+section.vitals .scale hr {
+    width: 0px;
+    height: 100%;
+    position: absolute;
+    border: none;
+    border-right: 2px solid var(--primary-color);
+    left: 50%;
+    top: 0px;
+}
+
+/******************************************************************************/
+/*                                                                            */
+/*  LOG Box CSS                                                               */
+/*                                                                            */
+/******************************************************************************/
+
+section.log {
+    position: absolute;
+    width: 600px;
+    height: 320px;
+    left: 1300px;
+    top: 740px;
+}
+section.log h1 {
+    font-size: 40px;
+    text-transform: uppercase;
+    font-weight: bold;
+    float: left;
+    padding: 20px;
+}
+
+section.log button {
+    border: 1px solid #fff;
+    color: #ffffff;
+    background: none;
+    border-radius: 3px;
+    padding: 10px 5px 10px 5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    min-width: 100px;
+    height: 38px;
+    float: right;
+    margin-top: 20px;
+    margin-right: 20px;
+}
+
+section.log button:hover {
+    background-color: #fff;
+    color: var(--primary-color);
+    cursor: pointer;
+}
+
+section.log button:active {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    cursor: pointer;
+}
+
+section.log div.logs {
+    margin: 20px;
+    height: 200px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+section.log div.logs table {
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+section.log div.logs table tr th {
+    text-align: left;
+    color: var(--primary-color);
+    width: 140px;
+}
+
+section.log div.logs table tr td {
+    padding-bottom: 10px;
+    line-height: 15px;
+}
+
+
+
+
+
 
 body>.container>header>aside {
     float: right;
@@ -88,7 +434,7 @@ body>.container>footer>section:last-of-type {
 hr {
     clear: both;
     border: none;
-    border-top: 1px solid #929ba8;
+    border-top: 1px solid var(--border-color);
     padding: 0;
     margin: 0;
 }
@@ -123,277 +469,8 @@ div.foverlay {
     text-transform: uppercase;
 }
 
-section.info {
-    height: 153px;
-}
-
-section.info h1 {
-    font-size: 40px;
-    text-transform: uppercase;
-    font-weight: bold;
-    float: left;
-    padding: 20px;
-}
-
-section.info aside {
-    float: right;
-    padding: 20px;
-}
-
-section.info aside time {
-    color: #fb6362;
-}
-
-section.info aside time:last-of-type {
-    color: #ffffff;
-}
-
-section.info ul {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 20px;
-    width: 100%;
-}
-
-section.info li {
-    flex-grow: 1;
-    color: #fb6362;
-    text-transform: uppercase;
-}
-
-section.info li b {
-    font-weight: bold;
-    color: #ffffff;
-}
-
-div.fdata {
-    height: 218px;
-}
-
-div.fdata ul {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 20px;
-    width: 100%;
-}
-
-div.fdata li {
-    flex-grow: 1;
-    color: #fb6362;
-    padding: 0px 10px 0px 10px;
-    text-transform: uppercase;
-}
-
-div.fdata li b {
-    font-weight: bold;
-    color: #ffffff;
-}
-
-section.controls {
-    height: 290px;
-    padding: 20px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    flex-flow: row wrap;
-    justify-content: space-between;
-}
-
-section.controls button {
-    flex-grow: 1;
-    width: 30%;
-    background: #fb6362;
-    border: 0px;
-    margin: 5px;
-    font-size: 15px;
-    display: block;
-    color: white;
-    text-transform: uppercase;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-section.controls button:hover {
-    background-color: #ffffff;
-    color: #fb6362;
-}
-
-section.controls button.selected {
-    background-color: #51861d;
-    color: #ffffff;
-}
-section.controls button.selected:hover {
-    background-color: #839472;
-    color: #ffffff;
-}
 
 
-div.flog h1 {
-    font-size: 40px;
-    text-transform: uppercase;
-    font-weight: bold;
-    float: left;
-    padding: 20px;
-}
-
-div.flog button {
-    border: 1px solid #fff;
-    color: #ffffff;
-    background: none;
-    border-radius: 3px;
-    padding: 10px 5px 10px 5px;
-    text-transform: uppercase;
-    font-weight: bold;
-    min-width: 100px;
-    height: 38px;
-    float: right;
-    margin-top: 20px;
-    margin-right: 20px;
-}
-
-div.flog button:hover {
-    background-color: #fff;
-    color: #fb6362;
-    cursor: pointer;
-}
-
-div.flog button:active {
-    background-color: #fb6362;
-    color: #ffffff;
-    cursor: pointer;
-}
-
-div.flog div {
-    margin: 20px;
-    height: 200px;
-    overflow-x: hidden;
-    overflow-y: scroll;
-}
-
-div.flog div table {
-    font-size: 12px;
-    text-transform: uppercase;
-}
-
-div.flog div table tr th {
-    text-align: left;
-    color: #fb6362;
-    width: 140px;
-}
-
-div.flog div table tr td {
-    padding-bottom: 10px;
-    line-height: 15px;
-}
-
-div.fvitals {
-    border: none;
-    background: none;
-}
-
-div.fvitals .compass {
-    border: 2px solid #929ba8;
-    height: 30px;
-    width: 100%;
-    position: relative;
-    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
-}
-
-div.fvitals .compass .rose {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-div.fvitals .compass .rose canvas {
-    width: 100%;
-    height: 30px;
-}
-
-div.fvitals .compass .heading {
-    width: 40px;
-    height: 34px;
-    text-align: center;
-    background-color: #fb6362;
-    font-weight: bold;
-    font-size: 19px;
-    line-height: 32px;
-    position: absolute;
-    top: 0px;
-    left: 50%;
-    margin-left: -20px;
-    margin-top: -3px;
-    border: 1px solid #fff;
-}
-
-div.fvitals .accelerometer {
-    position: relative;
-    border: 2px solid #929ba8;
-    width: 100%;
-    height: 114px;
-    margin-top: 15px;
-    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
-}
-
-div.fvitals .accelerometer canvas {
-    width: 100%;
-    height: 114px;
-}
-
-div.fvitals .scale {
-    position: relative;
-    border: 2px solid #929ba8;
-    width: 100%;
-    height: 30px;
-    margin-top: 15px;
-    background-color: #2d3c5a;
-    background-image: url(../gfx/scale_gradient.png);
-    background-position-x: -156px;
-    background-repeat: no-repeat;
-}
-
-div.fvitals .scale p,
-div.fvitals .scale b {
-    position: absolute;
-    left: 0;
-    top: 0;
-    font-weight: bold;
-    padding: 6px 20px 0px 20px;
-    color: #ffffff;
-}
-
-div.fvitals .scale b {
-    color: #fb6362;
-    left: auto;
-    right: 0;
-}
-
-div.fvitals .scale hr {
-    width: 0px;
-    height: 100%;
-    position: absolute;
-    border: none;
-    border-right: 2px solid #fb6362;
-    left: 0px;
-    top: 0px;
-}
-
-.fdatagraphics canvas {
-    width: 100%;
-    height: 100%;
-}
-
-.field {
-    border: 2px solid #929ba8;
-    width: 100%;
-    height: 100%;
-    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
-}
 
 div.container div.msgbox-bg {
     width: 100%;
@@ -417,7 +494,7 @@ div.container div.msgbox {
     margin-top: -250px;
     z-index: 10000;
     box-shadow: 0 0 30px 10px #000;
-    border: 2px solid #929ba8;
+    border: 2px solid var(--border-color);
     background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
     display: none;
 }
@@ -440,7 +517,7 @@ div.container div.msgbox div {
 div.container div.msgbox button {
     width: 25%;
     height: 50px;
-    background: #fb6362;
+    background: var(--primary-color);
     border: 0px;
     font-size: 15px;
     color: white;
@@ -456,11 +533,11 @@ div.container div.msgbox button:last-child {}
 
 div.container div.msgbox button:hover {
     background-color: #ffffff;
-    color: #fb6362;
+    color: var(--primary-color);
 }
 
 div.container div.msgbox button:active {
-    background-color: #fb6362;
+    background-color: var(--primary-color);
     color: #ffffff;
 }
 

@@ -43,112 +43,93 @@
       <div class="field foverlay">EMERGENCY DATA</div>
     </section>
 
-    <header>
-
+    <section class="field info">
+      <h1>NodeROV</h1>
       <aside>
-        <section class="field info">
-          <h1>NodeROV</h1>
-          <aside>
-            <time>00:00:00</time><br />
-            <time>0000-00-00</time>
-          </aside>
-          <hr>
-          <ul>
-            <li><b>Dive nr.:</b><br />#0</li>
-            <li><b>Dive time:</b><br />0 min</li>
-            <li><b>Pilot:</b><br />Thorleif</li>
-            <li><b>Location:</b><br />Unknown</li>
-          </ul>
-        </section>
-        <section>
-          <div class="field fdata">
-            <ul>
-              <li><b></b><br /><span></span></li>
-              <li><b></b><br /><span></span></li>
-              <li><b></b><br /><span></span></li>
-              <li><b></b><br /><span></span></li>
-            </ul>
-            <hr />
-            <ul>
-              <li><b></b><br /><span></span></li>
-              <li><b></b><br /><span></span></li>
-              <li><b></b><br /><span></span></li>
-              <li><b></b><br /><span></span></li>
-            </ul>
-            <hr />
-            <ul>
-              <li><b></b><br /><span></span></li>
-              <li><b></b><br /><span></span></li>
-              <li><b></b><br /><span></span></li>
-              <li><b></b><br /><span></span></li>
-            </ul>
-          </div>
-        </section>
-        <section class="field controls">
-          <button name="gui-controls-button-1">-</button>
-          <button name="gui-controls-button-2">-</button>
-          <button name="gui-controls-button-3">-</button>
-          <button name="gui-controls-button-4">-</button>
-          <button name="gui-controls-button-5">-</button>
-          <button name="gui-controls-button-6">-</button>
-          <button name="gui-controls-button-7">-</button>
-          <button name="gui-controls-button-8">-</button>
-          <button name="gui-controls-button-9">-</button>
-          <button name="gui-controls-button-10">-</button>
-          <button name="gui-controls-button-11">-</button>
-          <button name="gui-controls-button-12">-</button>
-        </section>
+        <time>00:00:00</time><br />
+        <time>0000-00-00</time>
       </aside>
-      <div class="clearfix">
-        <!-- -->
-      </div>
-    </header>
-    <footer>
-      <section>
-        <div class="field fdatagraphics">
-          <canvas>DataGraphics</canvas>
-        </div>
-      </section>
-      <section>
-        <div class="field fvitals">
-          <div class="compass">
+      <hr>
+      <ul>
+        <li><b>Dive nr.:</b><br />#0</li>
+        <li><b>Dive time:</b><br />0 min</li>
+        <li><b>Pilot:</b><br />Thorleif</li>
+        <li><b>Location:</b><br />Unknown</li>
+      </ul>
+    </section>
 
-            <div class="rose"><canvas>| N | NE | E | SE | S | SW | W | NW |</canvas></div>
-            <div class="heading"><b>1</b></div>
-          </div>
+    <section class="field data">
+      <ul>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+      </ul>
+      <hr />
+      <ul>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+      </ul>
+      <hr />
+      <ul>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+      </ul>
+    </section>
 
-          <div class="accelerometer">
-            <canvas>You'r browser does not support canvas, prick!</canvas>
-          </div>
-          <div class="scale scale1">
-            <hr />
-            <p>PRESSURE</p><b>9 PSI</b>
-          </div>
-          <div class="scale scale2">
-            <hr />
-            <p>DEPTH</p><b>90 M</b>
-          </div>
-          <div class="scale scale3">
-            <hr />
-            <p>TEMPERATURE</p><b>11.3 &deg;</b>
-          </div>
-        </div>
-      </section>
-      <section>
-        <div class="field flog">
-          <button name="gui-log-button-1">1</button>
-          <button name="gui-log-button-2">2</button>
-          <h1>LOG</h1>
-          <hr />
-          <div class="logs">
-            <table></table>
-          </div>
-        </div>
-      </section>
-      <div class="clearfix">
-        <!-- -->
+    <section class="field controls">
+      <button name="gui-controls-button-1">-</button>
+      <button name="gui-controls-button-2">-</button>
+      <button name="gui-controls-button-3">-</button>
+      <button name="gui-controls-button-4">-</button>
+      <button name="gui-controls-button-5">-</button>
+      <button name="gui-controls-button-6">-</button>
+      <button name="gui-controls-button-7">-</button>
+      <button name="gui-controls-button-8">-</button>
+      <button name="gui-controls-button-9">-</button>
+      <button name="gui-controls-button-10">-</button>
+      <button name="gui-controls-button-11">-</button>
+      <button name="gui-controls-button-12">-</button>
+    </section>
+
+    <section class="field datagraphics">
+      <canvas>DataGraphics</canvas>
+    </section>
+
+    <section class="field vitals">
+      <div id="compass">
+        <canvas>| N | NE | E | SE | S | SW | W | NW |</canvas>
+        <div><b>360</b></div>
       </div>
-    </footer>
+
+      <div class="accelerometer">
+        <canvas>You'r browser does not support canvas, prick!</canvas>
+      </div>
+
+      <div class="scale scale1">
+        <p>PRESSURE</p><b>9 PSI</b>
+      </div>
+      <div class="scale scale2">
+        <p>DEPTH</p><b>90 M</b>
+      </div>
+      <div class="scale scale3">
+        <p>TEMPERATURE</p><b>11.3 &deg;</b>
+      </div>
+    </section>
+
+    <section class="field log">
+      <button name="gui-log-button-1">1</button>
+      <button name="gui-log-button-2">2</button>
+      <h1>LOG</h1>
+      <hr />
+      <div class="logs">
+        <table></table>
+      </div>
+    </section>
   </div>
 </body>
 
