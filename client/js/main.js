@@ -301,13 +301,9 @@ function systemLoop() {
 
     /* Temp to show gui working */
     if(tempCounter > 30) {
-        // random number between 0 and 360
         var compass = Math.floor(Math.random() * 360);
-        // random number between -7 and 7
         var roll = Math.floor(Math.random() * 14) - 7;
-        // random number between -3 and 3
         var pitch = Math.floor(Math.random() * 6) - 3;
-        // random number between 0 and 100  
         var depth = Math.floor(Math.random() * 100);
 
         gui.animateDataGraph();
