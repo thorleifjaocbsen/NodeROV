@@ -1,14 +1,12 @@
 import GUI from './gui.js';
 import Socket from './socket.js';
 import Controls from './controls.js';
-import * as Decoder from './broadway/decoder.js';
-import './broadway/yuvcanvas.js';
-import './broadway/player.js';
+import Video from './video.js';
 
 const gui = new GUI();
 const controls = new Controls();
 const socket = new Socket();
-const player = new Player({});
+const video = new Video(document.getElementById("video"));
 const rovData = {};
 let vacuumTest = false;
 let confirmWaterTight = false;
@@ -20,34 +18,7 @@ let confirmWaterTight = false;
  *
  *
  ************************/
-
-player.socket = new Socket();
-player.socket.log = function (text) { gui.log("Video: " + text); }
-player.socket.onopen = function () { player.socket.send("REQUESTSTREAM"); };
-player.socket.onmessage = function (e) {
-    if (typeof e.data == "string") {
-        gui.log(e.data, Date.now());
-    };
-    if (player.skipMessages) { return; }
-    var frame = new Uint8Array(e.data);
-    player.decode(frame);
-};
-player.socket.connect(location.hostname, 8282);
-document.getElementById("video").appendChild(player.canvas);
-
-player.resizeToFit = () => {
-    let width = player.canvas.offsetWidth
-    let height = player.canvas.offsetHeight
-
-    const videoEl = document.getElementById('video');
-    const videoMaxWidth = videoEl.clientWidth; // Size excluding border
-    const videoMaxHeight = videoEl.clientHeight; // Size excluding border
-    const zoom = Math.min(videoMaxWidth / width, videoMaxHeight / height);
-
-    player.canvas.style.zoom = zoom;
-}
-new ResizeObserver(player.resizeToFit).observe(player.canvas)
-new ResizeObserver(player.resizeToFit).observe(player.canvas.parentNode)
+video.connect(location.hostname, 8282);
 
 
 /************************
