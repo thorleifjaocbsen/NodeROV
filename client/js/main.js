@@ -7,26 +7,21 @@ const gui = new GUI();
 const controls = new Controls();
 const socket = new Socket();
 const video = new Video(document.getElementById("video"));
+
 const rovData = {};
 let vacuumTest = false;
 let confirmWaterTight = false;
 
+console.log = gui.log
+
 /************************
- *
- *
  * Video Socket - Used for camera transmit
- *
- *
  ************************/
 video.connect(location.hostname, 8282);
 
 
 /************************
- *
- *
  * GUI Class - Initializing GUI functionality
- *
- *
  ************************/
 
 gui.log("Initializing NodeROV GUI");
@@ -311,7 +306,7 @@ function systemLoop() {
 systemLoop();
 
 
-
+/*
 
 function popup(title, message, button1, button2, button1_callback, button2_callback) {
     if (!button1_callback && button1) {
@@ -352,4 +347,4 @@ $(".msgbox").keyup(function (e) {
     e.preventDefault();
     if (e.keyCode == 13) $(".msgbox button:first").click();
     if (e.keyCode == 27) $(".msgbox button:last").click();
-});
+});*/
