@@ -27,10 +27,12 @@ export default class Video {
     }
 
     connect(ip, port) {
+
         this.ws.connect(ip, port);
     }
 
     onopen() {
+
         this.ws.send("REQUESTSTREAM");
     }
 
@@ -51,6 +53,7 @@ export default class Video {
     onclose() {}
 
     resizeToFit() {
+        
         let width = this.player.canvas.offsetWidth
         let height = this.player.canvas.offsetHeight
     
