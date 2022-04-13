@@ -1,4 +1,4 @@
-class Socket {
+export default class Socket {
 
   constructor() {
     this.ws = null;

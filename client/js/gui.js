@@ -1,4 +1,4 @@
-class GUI {
+export default class GUI {
 
     constructor() {
         this.accelCanvas = null;
@@ -16,14 +16,17 @@ class GUI {
     log(text, time, dontsend) {
         if (time == undefined) time = Date.now();
 
-        if (socket != null && !dontsend) {
+      /*  if (socket != null && !dontsend) {
             socket.send("clog " + time + " " + text);
-        }
+        }*/
 
         let d = new Date(time).toISOString();
         let timestamp = d.split('T')[1].split('.')[0] + " | " + d.split('T')[0];
-        $(".logs table").prepend("<tr><th>" + timestamp + "</th><td>" + text + "</td></tr>");
 
+        const table = document.getElementById("logTable")
+        const tr = document.createElement("tr")
+        tr.innerHTML = "<th>" + timestamp + "</th><td>" + text + "</td>";
+        table.prepend(tr);
     };
 
     drawAccelerometer(pitch, roll) {
@@ -99,7 +102,8 @@ class GUI {
     };
 
     animateDataGraph() {
-        if (rovData.motors == undefined) return;
+        return
+        //if (rovData.motors == undefined) return;
 
         let canvas = this.dataGraphCanvasContext;
         let ctx = canvas.getContext("2d");

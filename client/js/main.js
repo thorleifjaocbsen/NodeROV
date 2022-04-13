@@ -1,3 +1,10 @@
+import GUI from './gui.js';
+import Socket from './socket.js';
+import Controls from './controls.js';
+import * as Decoder from './broadway/decoder.js';
+import './broadway/yuvcanvas.js';
+import './broadway/player.js';
+
 const gui = new GUI();
 const controls = new Controls();
 const socket = new Socket();
@@ -300,7 +307,7 @@ function systemLoop() {
     }
 
     /* Temp to show gui working */
-    if(tempCounter > 30) {
+    if (tempCounter > 30) {
         var compass = Math.floor(Math.random() * 360);
         var roll = Math.floor(Math.random() * 14) - 7;
         var pitch = Math.floor(Math.random() * 6) - 3;
@@ -314,7 +321,7 @@ function systemLoop() {
         gui.animateScale("scale3", depth, depth);
         tempCounter = 0;
     }
-    else tempCounter ++;
+    else tempCounter++;
 
     if (rovData.outside) {
         var PSI = parseFloat(rovData.outside.pressure / 1000 * 14.5037738).toFixed(2);
@@ -324,9 +331,8 @@ function systemLoop() {
     }
 
     let d = new Date().toISOString();
-    $("time:first").html(d.split('T')[1].split('.')[0] + " UTC");
-    $("time:last").html(d.split('T')[0]);
-
+    document.getElementsByTagName("time")[0].innerHTML = d.split('T')[1].split('.')[0] + " UTC";
+    document.getElementsByTagName("time")[1].innerHTML = d.split('T')[0];
 
     requestAnimationFrame(systemLoop);
 }

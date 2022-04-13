@@ -1,4 +1,4 @@
-class Controls {
+export default class Controls {
 
     constructor() {
 
