@@ -83,7 +83,6 @@ class GUI {
     };
 
     drawCompass(degrees) {
-        if (rovData.heading == undefined) return;
         let canvas = this.compassCanvas;
         let ctx = canvas.getContext("2d");
         let width = canvas.width;
@@ -96,7 +95,7 @@ class GUI {
         ctx.drawImage(this.compassRose, 1200 + left, 0);
 
         var ans = "000".substring(0, 3 - degrees.toString().length) + degrees
-        $(".fvitals .compass .heading").html(ans);
+        this.compassCanvas.parentNode.getElementsByTagName("div")[0].innerHTML = ans;
     };
 
     animateDataGraph() {
@@ -272,10 +271,11 @@ class GUI {
     };
 
     animateScale(id, percentage, value) {
-        $(".scale" + id + " hr").animate({ left: percentage + "%" }, 500);
-        var backgroundX = ($(".scale" + id).width() / 100 * percentage);
-        $(".scale" + id).animate({ "background-position-x": backgroundX - 130 }, 500);
-        $(".scale" + id + " b").html(value);
+        let scale = document.getElementById(id);
+        let gradient = `linear-gradient(90deg, #2c3b59 0%, #121a2d ${percentage-0.3}%, var(--primary-color) ${percentage}%, #121a2d ${percentage+0.3}%, #2c3b59 100%)`;
+
+        scale.style.background = gradient;
+        scale.getElementsByTagName('b')[0].innerHTML = value;
     }
 
     setButton(name, text, callback) {
@@ -296,9 +296,7 @@ class GUI {
 
     pressButton(name) {
         const btn = document.getElementsByName(name)[0];
-        if (!btn) return false;
-        btn.click();
-        return true;
+        return btn && btn.click();
     };
 
     overlayText(message, time) {
@@ -309,11 +307,15 @@ class GUI {
         }, time * 1000);
     };
 
-    setInfo(no, text, title = false) {
-        var ulNo = Math.ceil(no / 4);
-        var liNo = no - (4 * (ulNo - 1));
-        if (title) $(".fdata ul:nth-of-type(" + ulNo + "n) li:nth-child(" + liNo + "n) b").html(title);
-        $(".fdata ul:nth-of-type(" + ulNo + "n) li:nth-child(" + liNo + "n) span").html(text);
+    setInfo(no, value, titleText = false) {
+        no--;
+        let parent = document.getElementsByClassName("field data")[0];
+        let child = parent.getElementsByTagName("li")[no];
+        let title = child.getElementsByTagName("b")[0];
+        let text = child.getElementsByTagName("span")[0];
+
+        if(titleText) title.innerHTML = titleText;
+        text.innerHTML = value;
     };
 
 }

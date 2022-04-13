@@ -37,9 +37,7 @@ player.resizeToFit = () => {
     const videoMaxHeight = videoEl.clientHeight; // Size excluding border
     const zoom = Math.min(videoMaxWidth / width, videoMaxHeight / height);
 
-    console.log(videoMaxWidth, videoMaxHeight, width, height, zoom);
     player.canvas.style.zoom = zoom;
-//    player.canvas.style.marginLeft = (videoMaxWidth - (width*zoom)) / 2 + 'px';
 }
 new ResizeObserver(player.resizeToFit).observe(player.canvas)
 new ResizeObserver(player.resizeToFit).observe(player.canvas.parentNode)
@@ -56,9 +54,9 @@ new ResizeObserver(player.resizeToFit).observe(player.canvas.parentNode)
 gui.log("Initializing NodeROV GUI");
 gui.socket = socket;
 
-gui.accelCanvas = $(".fvitals .accelerometer canvas").get(0);
-gui.compassCanvas = $(".fvitals .compass .rose canvas").get(0);
-gui.dataGraphCanvasContext = $(".fdatagraphics canvas").get(0);
+gui.accelCanvas = document.getElementById("accelerometerCanvas");
+gui.compassCanvas = document.getElementById("compassCanvas");
+gui.dataGraphCanvas = document.getElementById("dataGraphicsCanvas");
 
 gui.setButton("gui-controls-button-1", "LEFT LIGHT", function (e) {
     if (gui.getButtonState(0)) {
@@ -84,6 +82,9 @@ gui.setButton("gui-controls-button-4", "TEST", function (e) {
     } else {
         gui.buttonState("gui-controls-button-4", true);;
     }
+    // Generate random number between 0 and 100
+    let randomNumber = Math.floor(Math.random() * 100);
+    gui.animateScale("scale1", randomNumber, randomNumber);
 });
 
 gui.setButton("gui-controls-button-2", "ARM", function (e) { socket.send("armtoggle"); });
@@ -99,8 +100,6 @@ gui.setButton("gui-controls-button-7", "RECORD", function (e) {
     }
 
 });
-
-
 gui.setButton("gui-controls-button-7", "FULLSCREEN", function (e) {
     const videoEl = document.getElementById("video");
     videoEl.classList.toggle("fullscreen");
@@ -137,7 +136,7 @@ gui.setInfo(8, 0, "Turns:");
 gui.setInfo(9, 0, "Heading Hold:");
 gui.setInfo(10, 0, "Depth Hold:");
 gui.setInfo(11, "", "-");
-gui.setInfo(12, 0, "Ping:");
+gui.setInfo(12, 0, "Latency:");
 
 /************************
  *
@@ -176,7 +175,6 @@ controls.onPress(controls.map.gripClose, function () { socket.send("gripclose");
 var voltWarnLevel = 0;
 
 socket.connect(location.hostname, location.port);
-socket.on("log", (data) => gui.log);
 socket.on("hb", function (time) {
     time = time.split(" ");
     socket.send("hb " + time[0]);
@@ -262,8 +260,10 @@ socket.on("telemetryData", function (data) {
 
 });
 socket.on("log", function (data) {
-    data = JSON.parse(data);
-    gui.log(data.message, data.time, true);
+    try {
+        data = JSON.parse(data);
+        gui.log(data.message, data.time, true);
+    } catch (e) { }
 })
 
 
@@ -274,6 +274,8 @@ socket.on("log", function (data) {
  *
  *
  ************************/
+
+let tempCounter = 0;
 
 function systemLoop() {
     if (controls.changedSinceReturn) {
@@ -293,11 +295,30 @@ function systemLoop() {
     }
 
     if (controls.checkGamepad()) controls.update();
-    gui.animateDataGraph();
     if (rovData.heading) {
         gui.drawCompass(rovData.heading.current);
     }
 
+    /* Temp to show gui working */
+    if(tempCounter > 30) {
+        // random number between 0 and 360
+        var compass = Math.floor(Math.random() * 360);
+        // random number between -7 and 7
+        var roll = Math.floor(Math.random() * 14) - 7;
+        // random number between -3 and 3
+        var pitch = Math.floor(Math.random() * 6) - 3;
+        // random number between 0 and 100  
+        var depth = Math.floor(Math.random() * 100);
+
+        gui.animateDataGraph();
+        gui.drawCompass(compass);
+        gui.drawAccelerometer(pitch, roll);
+        gui.animateScale("scale1", depth, depth);
+        gui.animateScale("scale2", depth, depth);
+        gui.animateScale("scale3", depth, depth);
+        tempCounter = 0;
+    }
+    else tempCounter ++;
 
     if (rovData.outside) {
         var PSI = parseFloat(rovData.outside.pressure / 1000 * 14.5037738).toFixed(2);
@@ -310,7 +331,6 @@ function systemLoop() {
     $("time:first").html(d.split('T')[1].split('.')[0] + " UTC");
     $("time:last").html(d.split('T')[0]);
 
-    gui.drawAccelerometer(rovData.pitch, rovData.roll);
 
     requestAnimationFrame(systemLoop);
 }

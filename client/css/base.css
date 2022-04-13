@@ -318,7 +318,7 @@ section.vitals .scale {
     width: 100%;
     height: 35px;
     margin-top: 15px;
-    background: linear-gradient(90deg, #2c3b59 0%, #121a2d 49.7%, var(--primary-color) 50%, #121a2d 50.3%, #2c3b59 100%);
+    background: linear-gradient(90deg, #2c3b59 0%, #121a2d 38.7%, var(--primary-color) 39%, #121a2d 39.3%, #2c3b59 100%);
 }
 
 section.vitals .scale p,

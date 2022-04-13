@@ -9,7 +9,9 @@ class Socket {
   };
 
   log(data) {
-    console.log(data);
+    if(!this.emit("log", data)) {
+      console.log(data);
+    }
   };
 
   connect(ip, port) {
@@ -21,7 +23,6 @@ class Socket {
     this.ws.onerror = (e) => this.onerror(e);
     this.ws.onmessage = (e) => this.onmessage(e);
     this.ws.binaryType = 'arraybuffer';
-
   };
 
   reconnect() {
@@ -30,7 +31,7 @@ class Socket {
   };
 
   onerror(e) {
-    // Error
+    this.log("Error on socket: " + e);
   };
 
   onopen(e) {
@@ -49,12 +50,11 @@ class Socket {
 
   onmessage(e) {
     if (typeof e.data == 'string') {
-      var cmd = e.data.split(' ')[0];
-      var data = e.data.substr(cmd.length + 1);
-      if (typeof this.callbacks[cmd] == 'function') {
-        this.callbacks[cmd](data);
+      var event = e.data.split(' ')[0];
+      var data = e.data.substr(event.length + 1);
+      if (!this.emit(event, data)) {
+        this.log('Unknown data: ' + e.data);
       }
-      else this.log('Unknown data: ' + e.data);
 
     }
   };
@@ -64,7 +64,15 @@ class Socket {
     catch (e) { }
   };
 
-  on(cmd, callback) {
-    this.callbacks[cmd] = callback;
+  on(event, callback) {
+    this.callbacks[event] = callback;
   };
+
+  emit(event, data) {
+    if (typeof this.callbacks[event] == 'function') {
+      this.callbacks[event](data);
+      return true;
+    }
+    return false;
+  }
 }
