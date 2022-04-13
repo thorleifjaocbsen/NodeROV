@@ -33,7 +33,7 @@
         module.exports = factory();
     } else {
         // Browser globals (root is window)
-        root.YUVCanvas = factory();
+        window.YUVCanvas = factory();
     }
 }(this, function () {
 

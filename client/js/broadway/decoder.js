@@ -10,7 +10,7 @@
         module.exports = factory();
     } else {
         // Browser globals (root is window)
-        root.Decoder = factory();
+        window.Decoder = factory();
     }
 }(this, function () {
   
