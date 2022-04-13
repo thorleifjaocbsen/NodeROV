@@ -1,5 +1,5 @@
 
-const config          = { width : 1296, height: 730, fps : 15, port : 8282 }
+const config          = { width : 1280, height: 720, fps : 15, port : 8282 }
 
 const spawn           = require('child_process').spawn;
 const Splitter        = require('stream-split');

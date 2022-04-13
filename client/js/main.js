@@ -1,10 +1,10 @@
-var gui = new GUI();
-var controls = new Controls();
-var socket = new Socket();
-var player = new Player({});
-var rovData = {};
-var vacuumTest = false;
-var confirmWaterTight = false;
+const gui = new GUI();
+const controls = new Controls();
+const socket = new Socket();
+const player = new Player({});
+const rovData = {};
+let vacuumTest = false;
+let confirmWaterTight = false;
 
 /************************
  *
@@ -26,8 +26,11 @@ player.socket.onmessage = function(e) {
     player.decode(frame);
 };
 player.socket.connect(location.hostname, 8282);
-$(".fvideo").html(player.canvas);
-
+document.getElementById("video").appendChild(player.canvas);
+player.onPictureDecoded = (buffer, width, height, infos) => {
+    // Todo: Should not resize every freaking frame. Only fix scaling
+    window.dispatchEvent(new Event('resize'));
+}
 /************************
  *
  *
@@ -36,7 +39,6 @@ $(".fvideo").html(player.canvas);
  *
  ************************/
 
-gui.init();
 gui.log("Initializing NodeROV GUI");
 gui.socket = socket;
 
@@ -44,8 +46,7 @@ gui.accelCanvas = $(".fvitals .accelerometer canvas").get(0);
 gui.compassCanvas = $(".fvitals .compass .rose canvas").get(0);
 gui.dataGraphCanvasContext = $(".fdatagraphics canvas").get(0);
 
-
-gui.setButton(0, "LEFT LIGHT", function(e) {
+gui.setButton("gui-controls-button-1", "LEFT LIGHT", function(e) {
     if (gui.getButtonState(0)) {
         socket.send("setlight 0 0");
     } else {
@@ -53,7 +54,7 @@ gui.setButton(0, "LEFT LIGHT", function(e) {
         socket.send("setlight 0 100");
     }
 });
-gui.setButton(2, "RIGHT LIGHT", function(e) {
+gui.setButton("gui-controls-button-3", "RIGHT LIGHT", function(e) {
     if (gui.getButtonState(2)) {
         socket.send("setlight 1 0");
     } else {
@@ -62,10 +63,19 @@ gui.setButton(2, "RIGHT LIGHT", function(e) {
     }
 });
 
-gui.setButton(1, "ARM", function(e) { socket.send("armtoggle"); });
-gui.setButton(4, "HEADING HOLD", function(e) { socket.send("headinghold"); });
-gui.setButton(5, "DEPTH HOLD", function(e) { socket.send("depthhold"); });
-gui.setButton(6, "RECORD", function(e) {
+
+gui.setButton("gui-controls-button-4", "TEST", function(e) {
+    if (gui.buttonState("gui-controls-button-4")) {
+        gui.buttonState("gui-controls-button-4", false);
+    } else {
+        gui.buttonState("gui-controls-button-4", true);;
+    }
+});
+
+gui.setButton("gui-controls-button-2", "ARM", function(e) { socket.send("armtoggle"); });
+gui.setButton("gui-controls-button-5", "HEADING HOLD", function(e) { socket.send("headinghold"); });
+gui.setButton("gui-controls-button-6", "DEPTH HOLD", function(e) { socket.send("depthhold"); });
+gui.setButton("gui-controls-button-7", "RECORD", function(e) {
     if (gui.getButtonState(6)) {
         player.socket.send("REQUESTSTREAM");
         gui.setButtonState(6, false);
@@ -77,17 +87,14 @@ gui.setButton(6, "RECORD", function(e) {
 });
 
 
-gui.setButton(7, "FULLSCREEN", function(e) {
+gui.setButton("gui-controls-button-7", "FULLSCREEN", function(e) {
     $("section.video").toggleClass("fullscreen");
     gui.setButtonState(7, $("section.video").hasClass("fullscreen"));
     $("section.video").on("click", function() { gui.pressButton(7); });
 });
-gui.setButton(11, "NEXT ROW ->", function(e) { $(".buttonarray").toggleClass("nextRow"); });
-gui.setButton(21, "<- PREV ROW", function(e) { $(".buttonarray").toggleClass("nextRow"); });
-gui.setButton(12, "<- PREV ROW", function(e) { $(".buttonarray").toggleClass("nextRow"); });
-gui.setButton(13, "SET FLAT", function(e) { socket.send("setflat"); });
-gui.setButton(14, "CALIBRATE GYRO", function(e) { socket.send("calibrategyro"); });
-gui.setButton(24, "ADD EVENT", function(e) {
+gui.setButton("gui-controls-button-8", "SET FLAT", function(e) { socket.send("setflat"); });
+gui.setButton("gui-controls-button-9", "CALIBRATE GYRO", function(e) { socket.send("calibrategyro"); });
+gui.setButton("gui-log-button-1", "ADD EVENT", function(e) {
     var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
     popup("Add event", msg, "Add", "Cancel", function() {
         gui.log("Custom event: " + $("#eventmsg").val());
@@ -95,7 +102,7 @@ gui.setButton(24, "ADD EVENT", function(e) {
     });
     $("#eventmsg").focus();
 });
-gui.setButton(25, "SCREENSHOT", function(e) {
+gui.setButton("gui-log-button-2", "SCREENSHOT", function(e) {
     var data = $(".fvideo canvas").get(0).toDataURL("image/jpeg", 1);
     var filename = "noderov_" + (Date.now() / 1000) + ".jpg";
     gui.log("Screenshot saved (" + filename + ")");

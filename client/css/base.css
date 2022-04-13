@@ -22,27 +22,30 @@ body {
     overflow: hidden;
 }
 
-body .clearfix {
+.clearfix {
     clear: both;
 }
 
-body>.container {
+#container {
     background-image: url("../gfx/background.png");
     background-size: cover;
     background-repeat: no-repeat;
-    width: 1880px;
-    height: 1040px;
+    box-sizing: border-box;
+    width: 1920px;
+    height: 1080px;
     padding: 20px;
 }
 
-body>.container>header>section.video {
+section#video {
     position: relative;
     float: left;
     width: 1260px;
     height: 709px;
+    overflow: hidden;
+    background-color: #0D0E1B;
 }
 
-body>.container>header>section.video.fullscreen {
+section#video.fullscreen {
     position: absolute;
     left: 0px;
     top: 0px;
@@ -120,11 +123,11 @@ div.foverlay {
     text-transform: uppercase;
 }
 
-div.finfo {
+section.info {
     height: 153px;
 }
 
-div.finfo h1 {
+section.info h1 {
     font-size: 40px;
     text-transform: uppercase;
     font-weight: bold;
@@ -132,20 +135,20 @@ div.finfo h1 {
     padding: 20px;
 }
 
-div.finfo aside {
+section.info aside {
     float: right;
     padding: 20px;
 }
 
-div.finfo aside time {
+section.info aside time {
     color: #fb6362;
 }
 
-div.finfo aside time:last-of-type {
+section.info aside time:last-of-type {
     color: #ffffff;
 }
 
-div.finfo ul {
+section.info ul {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -153,13 +156,13 @@ div.finfo ul {
     width: 100%;
 }
 
-div.finfo li {
+section.info li {
     flex-grow: 1;
     color: #fb6362;
     text-transform: uppercase;
 }
 
-div.finfo li b {
+section.info li b {
     font-weight: bold;
     color: #ffffff;
 }
@@ -188,59 +191,44 @@ div.fdata li b {
     color: #ffffff;
 }
 
-div.fcontrols {
+section.controls {
     height: 290px;
-}
-
-div.fcontrols .buttonarray {
     padding: 20px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: row;
     flex-flow: row wrap;
     justify-content: space-between;
-    height: 250px;
 }
 
-div.fcontrols .buttonarray button {
+section.controls button {
     flex-grow: 1;
     width: 30%;
     background: #fb6362;
     border: 0px;
     margin: 5px;
     font-size: 15px;
-    display: none;
+    display: block;
     color: white;
     text-transform: uppercase;
     font-weight: bold;
     cursor: pointer;
 }
 
-div.fcontrols .buttonarray button.selected {
-    background-color: #51861d;
-    color: #ffffff;
-}
-
-div.fcontrols .buttonarray button:hover {
+section.controls button:hover {
     background-color: #ffffff;
     color: #fb6362;
 }
 
-div.fcontrols .buttonarray button:active {
-    background-color: #fb6362;
+section.controls button.selected {
+    background-color: #51861d;
+    color: #ffffff;
+}
+section.controls button.selected:hover {
+    background-color: #839472;
     color: #ffffff;
 }
 
-div.fcontrols .buttonarray button:nth-child(-n+12) {
-    display: block;
-}
-
-div.fcontrols .buttonarray.nextRow button:nth-child(-n+12) {
-    display: none;
-}
-
-div.fcontrols .buttonarray.nextRow button:nth-child(n+13) {
-    display: block;
-}
 
 div.flog h1 {
     font-size: 40px;

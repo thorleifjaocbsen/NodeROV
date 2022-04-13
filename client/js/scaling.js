@@ -2,15 +2,23 @@
  * Scaling
  ************************/
 
-const container = document.getElementById('container');
-const maxWidth = container.offsetWidth;
-const maxHeight = container.offsetHeight;
-
+const containerEl = document.getElementById('container');
+const videoEl = document.getElementById('video');
+const containerMaxWidth = containerEl.offsetWidth;
+const containerMaxHeight = containerEl.offsetHeight;
+const videoMaxWidth = videoEl.offsetWidth;
+const videoMaxHeight = videoEl.offsetHeight;
 function resize() {
     const sWidth = window.innerWidth;
     const sHeight = window.innerHeight;
-    const scale = Math.min(sWidth / maxWidth, sHeight / maxHeight);
-    container.style.zoom = scale;
+    containerEl.style.zoom = Math.min(sWidth / containerMaxWidth, sHeight / containerMaxHeight);
+
+    // Get canvas inside of video element
+    const canvasEl = videoEl.getElementsByTagName('canvas')[0];
+
+    if (canvasEl) {
+        canvasEl.style.zoom = Math.min(videoMaxWidth / canvasEl.width, videoMaxHeight / canvasEl.height);
+    }
 };
 
 resize();

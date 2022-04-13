@@ -1,19 +1,16 @@
 class GUI {
 
     constructor() {
-        this.accelCanvas = null,
-            this.compassCanvas = null,
-            this.compassRose = new Image(),
-            this.dataGraphCanvasContext = null,
-            this.socket = null
+        this.accelCanvas = null;
+        this.compassCanvas = null;
+        this.compassRose = new Image();
+        this.dataGraphCanvasContext = null;
+        this.socket = null;
+        this.compassRose.src = 'gfx/compass_rose.png';
     };
 
     map(x, in_min, in_max, out_min, out_max) {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-    };
-
-    init() {
-        this.compassRose.src = 'gfx/compass_rose.png';
     };
 
     log(text, time, dontsend) {
@@ -279,35 +276,35 @@ class GUI {
         var backgroundX = ($(".scale" + id).width() / 100 * percentage);
         $(".scale" + id).animate({ "background-position-x": backgroundX - 130 }, 500);
         $(".scale" + id + " b").html(value);
-    };
-
-    setButton(no, text, callback) {
-        if (no <= 23) { var btn = $(".buttonarray button:nth-child(" + (no + 1) + ")"); } else { var btn = $(".flog button:nth-child(" + (no - 23) + ")"); }
-
-        btn.html(text);
-        btn.on("click", callback);
-    };
-
-    setButtonState(no, state) {
-        if (state) state = "selected";
-        else state = "";
-        if (no <= 11) { var btn = $(".buttonarray button:nth-child(" + (no + 1) + ")"); } else return;
-        btn.get(0).className = state;
     }
-    getButtonState(no) {
-        if (no <= 11) { var btn = $(".buttonarray button:nth-child(" + (no + 1) + ")"); } else return;
-        return btn.get(0).className == "selected";
-    };
 
-    pressButton(no) {
-        if (no <= 11) { var btn = $(".buttonarray button:nth-child(" + (no + 1) + ")"); } else return;
+    setButton(name, text, callback) {
+        const btn = document.getElementsByName(name)[0];
+        if (!btn) return false;
+        btn.innerHTML = text;
+        btn.onclick = (e) => callback(e);
+        return true;
+    }
+
+    buttonState(name, newState) {
+        const btn = document.getElementsByName(name)[0];
+        if (!btn) return null;
+        else if (newState === true) { btn.classList.add("selected"); } 
+        else if (newState === false) { btn.classList.remove("selected"); }
+        return btn.classList.contains("selected");
+    }
+
+    pressButton(name) {
+        const btn = document.getElementsByName(name)[0];
+        if (!btn) return false;
         btn.click();
+        return true;
     };
 
     overlayText(message, time) {
         $(".foverlay").html(message);
         $(".foverlay").fadeIn();
-        setTimeout(function() {
+        setTimeout(function () {
             $(".foverlay").fadeOut();
         }, time * 1000);
     };
