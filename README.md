@@ -1,3 +1,5 @@
+# WORK IN PROGRESS / NOT TESTED
+
 # NodeROV
 
 NodeROV is a project created by me (Thorleif Jacobsen) to run and control an underwater remote controlled vehicle easily with and Raspberry PI, some sensors and a gamepad.
