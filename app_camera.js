@@ -15,7 +15,7 @@ let streamer, readStream, sck = null;
 const cert = fs.readFileSync("assets/server.cert");
 const key = fs.readFileSync("assets/server.key");
 server = HttpsServer({ cert, key });
-wss = new WebSocketServer({ server });
+wss = new WebSocketServer({ perMessageDeflate: false, server });
 server.listen(config.port);
 
 /* Started */

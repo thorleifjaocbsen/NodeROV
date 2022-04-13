@@ -96,7 +96,7 @@ const webServer = https.createServer({ key, cert }, app).listen(Configuration.po
  *
  ************************/
 //const wss = new ws.WebSocketServer({ perMessageDeflate: false, port: Configuration.socketPort })
-const wss = new ws.WebSocketServer({ server: webServer });
+const wss = new ws.WebSocketServer({ perMessageDeflate: false, server: webServer });
 
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
 wss.on('connection', function (c) {
