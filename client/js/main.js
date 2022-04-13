@@ -15,9 +15,9 @@ let confirmWaterTight = false;
  ************************/
 
 player.socket = new Socket();
-player.socket.log = function(text) { gui.log("Video: " + text); }
-player.socket.onopen = function() { player.socket.send("REQUESTSTREAM"); };
-player.socket.onmessage = function(e) {
+player.socket.log = function (text) { gui.log("Video: " + text); }
+player.socket.onopen = function () { player.socket.send("REQUESTSTREAM"); };
+player.socket.onmessage = function (e) {
     if (typeof e.data == "string") {
         gui.log(e.data, Date.now());
     };
@@ -27,10 +27,24 @@ player.socket.onmessage = function(e) {
 };
 player.socket.connect(location.hostname, 8282);
 document.getElementById("video").appendChild(player.canvas);
-player.onPictureDecoded = (buffer, width, height, infos) => {
-    // Todo: Should not resize every freaking frame. Only fix scaling
-    window.dispatchEvent(new Event('resize'));
+
+player.resizeToFit = () => {
+    let width = player.canvas.offsetWidth
+    let height = player.canvas.offsetHeight
+
+    const videoEl = document.getElementById('video');
+    const videoMaxWidth = videoEl.clientWidth; // Size excluding border
+    const videoMaxHeight = videoEl.clientHeight; // Size excluding border
+    const zoom = Math.min(videoMaxWidth / width, videoMaxHeight / height);
+
+    console.log(videoMaxWidth, videoMaxHeight, width, height, zoom);
+    player.canvas.style.zoom = zoom;
+//    player.canvas.style.marginLeft = (videoMaxWidth - (width*zoom)) / 2 + 'px';
 }
+new ResizeObserver(player.resizeToFit).observe(player.canvas)
+new ResizeObserver(player.resizeToFit).observe(player.canvas.parentNode)
+
+
 /************************
  *
  *
@@ -46,7 +60,7 @@ gui.accelCanvas = $(".fvitals .accelerometer canvas").get(0);
 gui.compassCanvas = $(".fvitals .compass .rose canvas").get(0);
 gui.dataGraphCanvasContext = $(".fdatagraphics canvas").get(0);
 
-gui.setButton("gui-controls-button-1", "LEFT LIGHT", function(e) {
+gui.setButton("gui-controls-button-1", "LEFT LIGHT", function (e) {
     if (gui.getButtonState(0)) {
         socket.send("setlight 0 0");
     } else {
@@ -54,7 +68,7 @@ gui.setButton("gui-controls-button-1", "LEFT LIGHT", function(e) {
         socket.send("setlight 0 100");
     }
 });
-gui.setButton("gui-controls-button-3", "RIGHT LIGHT", function(e) {
+gui.setButton("gui-controls-button-3", "RIGHT LIGHT", function (e) {
     if (gui.getButtonState(2)) {
         socket.send("setlight 1 0");
     } else {
@@ -64,7 +78,7 @@ gui.setButton("gui-controls-button-3", "RIGHT LIGHT", function(e) {
 });
 
 
-gui.setButton("gui-controls-button-4", "TEST", function(e) {
+gui.setButton("gui-controls-button-4", "TEST", function (e) {
     if (gui.buttonState("gui-controls-button-4")) {
         gui.buttonState("gui-controls-button-4", false);
     } else {
@@ -72,10 +86,10 @@ gui.setButton("gui-controls-button-4", "TEST", function(e) {
     }
 });
 
-gui.setButton("gui-controls-button-2", "ARM", function(e) { socket.send("armtoggle"); });
-gui.setButton("gui-controls-button-5", "HEADING HOLD", function(e) { socket.send("headinghold"); });
-gui.setButton("gui-controls-button-6", "DEPTH HOLD", function(e) { socket.send("depthhold"); });
-gui.setButton("gui-controls-button-7", "RECORD", function(e) {
+gui.setButton("gui-controls-button-2", "ARM", function (e) { socket.send("armtoggle"); });
+gui.setButton("gui-controls-button-5", "HEADING HOLD", function (e) { socket.send("headinghold"); });
+gui.setButton("gui-controls-button-6", "DEPTH HOLD", function (e) { socket.send("depthhold"); });
+gui.setButton("gui-controls-button-7", "RECORD", function (e) {
     if (gui.getButtonState(6)) {
         player.socket.send("REQUESTSTREAM");
         gui.setButtonState(6, false);
@@ -87,22 +101,22 @@ gui.setButton("gui-controls-button-7", "RECORD", function(e) {
 });
 
 
-gui.setButton("gui-controls-button-7", "FULLSCREEN", function(e) {
-    $("section.video").toggleClass("fullscreen");
-    gui.setButtonState(7, $("section.video").hasClass("fullscreen"));
-    $("section.video").on("click", function() { gui.pressButton(7); });
+gui.setButton("gui-controls-button-7", "FULLSCREEN", function (e) {
+    $("#video").toggleClass("fullscreen");
+    gui.buttonState("gui-controls-button-7", $("section.video").hasClass("fullscreen"));
+    $("#video").on("click", function () { gui.pressButton("gui-controls-button-7"); });
 });
-gui.setButton("gui-controls-button-8", "SET FLAT", function(e) { socket.send("setflat"); });
-gui.setButton("gui-controls-button-9", "CALIBRATE GYRO", function(e) { socket.send("calibrategyro"); });
-gui.setButton("gui-log-button-1", "ADD EVENT", function(e) {
+gui.setButton("gui-controls-button-8", "SET FLAT", function (e) { socket.send("setflat"); });
+gui.setButton("gui-controls-button-9", "CALIBRATE GYRO", function (e) { socket.send("calibrategyro"); });
+gui.setButton("gui-log-button-1", "ADD EVENT", function (e) {
     var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
-    popup("Add event", msg, "Add", "Cancel", function() {
+    popup("Add event", msg, "Add", "Cancel", function () {
         gui.log("Custom event: " + $("#eventmsg").val());
         popup_hide();
     });
     $("#eventmsg").focus();
 });
-gui.setButton("gui-log-button-2", "SCREENSHOT", function(e) {
+gui.setButton("gui-log-button-2", "SCREENSHOT", function (e) {
     var data = $(".fvideo canvas").get(0).toDataURL("image/jpeg", 1);
     var filename = "noderov_" + (Date.now() / 1000) + ".jpg";
     gui.log("Screenshot saved (" + filename + ")");
@@ -131,24 +145,24 @@ gui.setInfo(12, 0, "Ping:");
  *
  *
  ************************/
-controls.onPress(controls.map.gainUp, function() { socket.send("setgain " + (rovData.gain + 50)); });
-controls.onPress(controls.map.gainDown, function() { socket.send("setgain " + (rovData.gain - 50)); });
-controls.onPress(controls.map.lightsUp, function() {
+controls.onPress(controls.map.gainUp, function () { socket.send("setgain " + (rovData.gain + 50)); });
+controls.onPress(controls.map.gainDown, function () { socket.send("setgain " + (rovData.gain - 50)); });
+controls.onPress(controls.map.lightsUp, function () {
     socket.send("setlight 0 " + (rovData.lights[0] + 10));
     socket.send("setlight 1 " + (rovData.lights[1] + 10));
 }, 100);
-controls.onPress(controls.map.lightsDown, function() {
+controls.onPress(controls.map.lightsDown, function () {
     socket.send("setlight 0 " + (rovData.lights[0] - 10));
     socket.send("setlight 1 " + (rovData.lights[1] - 10));
 }, 100);
-controls.onPress(controls.map.cameraUp, function() { socket.send("setcamera " + (rovData.cameraPosition - 1)); }, 10);
-controls.onPress(controls.map.cameraDown, function() { socket.send("setcamera " + (rovData.cameraPosition + 1)); }, 10);
-controls.onPress(controls.map.fullscreen, function() { gui.pressButton(7); }, 1000)
-controls.onPress(controls.map.arm, function() { socket.send("arm"); });
-controls.onPress(controls.map.disarm, function() { socket.send("disarm"); });
-controls.onPress(controls.map.depthhold, function() { socket.send("depthhold"); });
-controls.onPress(controls.map.gripOpen, function() { socket.send("gripopen"); }, 50);
-controls.onPress(controls.map.gripClose, function() { socket.send("gripclose"); }, 50);
+controls.onPress(controls.map.cameraUp, function () { socket.send("setcamera " + (rovData.cameraPosition - 1)); }, 10);
+controls.onPress(controls.map.cameraDown, function () { socket.send("setcamera " + (rovData.cameraPosition + 1)); }, 10);
+controls.onPress(controls.map.fullscreen, function () { gui.pressButton(7); }, 1000)
+controls.onPress(controls.map.arm, function () { socket.send("arm"); });
+controls.onPress(controls.map.disarm, function () { socket.send("disarm"); });
+controls.onPress(controls.map.depthhold, function () { socket.send("depthhold"); });
+controls.onPress(controls.map.gripOpen, function () { socket.send("gripopen"); }, 50);
+controls.onPress(controls.map.gripClose, function () { socket.send("gripclose"); }, 50);
 
 /************************
  *
@@ -162,12 +176,12 @@ var voltWarnLevel = 0;
 
 socket.connect(location.hostname, location.port);
 socket.on("log", (data) => gui.log);
-socket.on("hb", function(time) {
+socket.on("hb", function (time) {
     time = time.split(" ");
     socket.send("hb " + time[0]);
     gui.setInfo(12, time[1])
 })
-socket.on("telemetryData", function(data) {
+socket.on("telemetryData", function (data) {
     rovData = JSON.parse(data);
 
     gui.setInfo(1, parseFloat(rovData.inside.temp).toFixed(2))
@@ -181,8 +195,8 @@ socket.on("telemetryData", function(data) {
     gui.setInfo(8, parseInt(rovData.heading.turns))
 
     gui.setInfo(9, rovData.heading.hold ? parseInt(rovData.heading.totalHeading) + "/" + parseInt(rovData.heading.wanted) : "OFF")
-        //gui.setInfo(11, "Unused")
-        //gui.setInfo(12, "Unused")
+    //gui.setInfo(11, "Unused")
+    //gui.setInfo(12, "Unused")
 
 
     // Update lights gui
@@ -218,14 +232,14 @@ socket.on("telemetryData", function(data) {
             vacuumTest = 3;
             gui.log("Vacuum Test: Passed, pressure after 15 minutes are " + insidePressure + " PSI");
 
-            popup("Vacuum test - Passed", "<p>ROV seems tight, internal pressure did not go above 5PSI in the period of 60 seconds.<br /><br />Release pressure before you continue then press 'Confirm'</p>", "Confirm", false, function() {
+            popup("Vacuum test - Passed", "<p>ROV seems tight, internal pressure did not go above 5PSI in the period of 60 seconds.<br /><br />Release pressure before you continue then press 'Confirm'</p>", "Confirm", false, function () {
                 vacuumTest = false;
                 popup_hide();
             });
         } else if (insidePressure > 5) {
             vacuumTest = 3;
             gui.log("Vacuum Test: FAILED, pressure after " + (passed / 60) + " minutes are " + insidePressure + " PSI");
-            popup("Vacuum test - Fail", "<p>ROV seems leaky, internal pressure did pass 4.5PSI during the test period.<br />It hit " + insidePressure + " in only " + passed + " seconds..<br /><br />Release pressure before you continue then press 'Confirm' then check for leaks</p>", "Confirm", false, function() {
+            popup("Vacuum test - Fail", "<p>ROV seems leaky, internal pressure did pass 4.5PSI during the test period.<br />It hit " + insidePressure + " in only " + passed + " seconds..<br /><br />Release pressure before you continue then press 'Confirm' then check for leaks</p>", "Confirm", false, function () {
                 popup_hide();
                 vacuumTest = false;
             });
@@ -246,7 +260,7 @@ socket.on("telemetryData", function(data) {
 
 
 });
-socket.on("log", function(data) {
+socket.on("log", function (data) {
     data = JSON.parse(data);
     gui.log(data.message, data.time, true);
 })
@@ -340,7 +354,7 @@ function popup_hide() {
     $(".msgbox-bg").fadeOut();
 }
 
-$(".msgbox").keyup(function(e) {
+$(".msgbox").keyup(function (e) {
     e.preventDefault();
     if (e.keyCode == 13) $(".msgbox button:first").click();
     if (e.keyCode == 27) $(".msgbox button:last").click();
