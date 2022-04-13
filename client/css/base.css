@@ -32,6 +32,15 @@ body {
     clear: both;
 }
 
+hr {
+    clear: both;
+    border: none;
+    border-top: 1px solid var(--border-color);
+    padding: 0;
+    margin: 0;
+}
+
+
 #container {
     background-image: url("../gfx/background.png");
     background-size: cover;
@@ -48,11 +57,11 @@ section {
     background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
 }
 
-/******************************************************************************/
-/*                                                                            */
-/*  Video CSS                                                                 */
-/*                                                                            */
-/******************************************************************************/
+/***********************/
+/*                     */
+/*   Video Container   */
+/*                     */
+/***********************/
 section#video {
     position: absolute;
     float: left;
@@ -73,11 +82,24 @@ section#video.fullscreen {
     z-index: 999;
 }
 
-/******************************************************************************/
-/*                                                                            */
-/*  Info box CSS                                                              */
-/*                                                                            */
-/******************************************************************************/
+section#video div.overlay {
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 50px;
+    top: calc(50% - 25px);
+    z-index: 999;
+    text-align: center;
+    line-height: 50px;
+    font-size: 45px;
+    text-transform: uppercase;
+}
+
+/***********************/
+/*                     */
+/*       Infobox       */
+/*                     */
+/***********************/
 section.info {
     height: 150px;
     width: 600px;
@@ -126,11 +148,11 @@ section.info li b {
     color: #ffffff;
 }
 
-/******************************************************************************/
-/*                                                                            */
-/*  Data Array CSS                                                            */
-/*                                                                            */
-/******************************************************************************/
+/***********************/
+/*                     */
+/*     Data array      */
+/*                     */
+/***********************/
 section.data {
     height: 220px;
     width: 600px;
@@ -160,11 +182,11 @@ section.data li b {
 }
 
 
-/******************************************************************************/
-/*                                                                            */
-/*  Control Array CSS                                                         */
-/*                                                                            */
-/******************************************************************************/
+/***********************/
+/*                     */
+/*   Control buttons   */
+/*                     */
+/***********************/
 section.controls {
     height: 290px;
     width: 600px;
@@ -207,11 +229,11 @@ section.controls button.selected:hover {
     color: #ffffff;
 }
 
-/******************************************************************************/
-/*                                                                            */
-/*  data graphics Box CSS                                                               */
-/*                                                                            */
-/******************************************************************************/
+/***********************/
+/*                     */
+/*  Data Graphics box  */
+/*                     */
+/***********************/
 section.datagraphics {
     position: absolute;
     height: 320px;
@@ -225,13 +247,11 @@ section.datagraphics canvas {
     height: 100%;
 }
 
-/******************************************************************************/
-/*                                                                            */
-/*  Vitals Box CSS                                                               */
-/*                                                                            */
-/******************************************************************************/
-
-
+/***********************/
+/*                     */
+/*     Vitals box      */
+/*                     */
+/***********************/
 section.vitals {
     border: none;
     background: none;
@@ -324,12 +344,11 @@ section.vitals .scale hr {
     top: 0px;
 }
 
-/******************************************************************************/
-/*                                                                            */
-/*  LOG Box CSS                                                               */
-/*                                                                            */
-/******************************************************************************/
-
+/***********************/
+/*                     */
+/*      Log box        */
+/*                     */
+/***********************/
 section.log {
     position: absolute;
     width: 600px;
@@ -395,82 +414,11 @@ section.log div.logs table tr td {
     line-height: 15px;
 }
 
-
-
-
-
-
-body>.container>header>aside {
-    float: right;
-    width: 600px;
-    height: 709px;
-}
-
-body>.container>header>aside>section {
-    width: 600px;
-    margin-bottom: 20px;
-}
-
-body>.container>header>aside>section:last-of-type {
-    margin-bottom: 0px;
-}
-
-body>.container>footer {
-    margin-top: 20px;
-}
-
-body>.container>footer>section {
-    float: left;
-    margin-right: 20px;
-    width: 620px;
-    height: 310px;
-}
-
-body>.container>footer>section:last-of-type {
-    margin: 0;
-    width: 600px;
-}
-
-hr {
-    clear: both;
-    border: none;
-    border-top: 1px solid var(--border-color);
-    padding: 0;
-    margin: 0;
-}
-
-div.fvideo {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-}
-
-div.fvideo canvas {
-    width: 100%;
-    height: 100%;
-    background-color: black;
-    z-index: 1;
-}
-
-div.foverlay {
-    display: none;
-    position: absolute;
-    background: none;
-    border: none;
-    display: none;
-    width: 100%;
-    height: 50px;
-    top: 304px;
-    left: 0px;
-    z-index: 2;
-    text-align: center;
-    vertical-align: middle;
-    font-size: 45px;
-    text-transform: uppercase;
-}
-
-
-
+/***********************/
+/*                     */
+/*     Message Box     */
+/*                     */
+/***********************/
 
 div.container div.msgbox-bg {
     width: 100%;
@@ -526,10 +474,6 @@ div.container div.msgbox button {
     cursor: pointer;
     margin: 10px;
 }
-
-div.container div.msgbox button:first-child {}
-
-div.container div.msgbox button:last-child {}
 
 div.container div.msgbox button:hover {
     background-color: #ffffff;
