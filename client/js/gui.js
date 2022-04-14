@@ -304,18 +304,16 @@ export default class GUI extends EventEmitter {
         return btn && btn.click();
     };
 
-    // TODO: Fix this
     overlayText(message, time) {
         const overlay = document.getElementById("overlay");
         console.log(overlay)
 
         overlay.innerHTML = message;
-        overlay.style.display = block;
+        overlay.style.display = "block";
         overlay.style.opacity = 1;
         setTimeout(() => {
             overlay.style.opacity = 0;
-            overlay.style.display = none;
-        }, time * 1000);
+        }, time);
     };
 
     setInfo(no, value, titleText = false) {
