@@ -8,10 +8,11 @@
 		}
 	},
 	"video": {
-		"width": 320,
-		"height": 240,
-		"fps": 5,
-		"port": 8282
+		"width": 1280,
+		"height": 720,
+		"fps": 15,
+		"port": 8282,
+		"ip": "0.0.0.0"
 	},
 	"rov": {
 		"minUS": 1000,
