@@ -1,401 +1,502 @@
-/* latin-ext */
-
 @font-face {
-	font-family: 'Open Sans';
-	font-style: normal;
-	font-weight: 700;
-	src: local('Open Sans Bold'), local('OpenSans-Bold'), url(../assets/opensansnormal.woff2) format('woff2');
-	unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Open Sans Bold'), local('OpenSans-Bold'), url(../assets/opensansnormal.woff2) format('woff2');
+    unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
 }
 
-
-/* latin */
-
 @font-face {
-	font-family: 'Open Sans';
-	font-style: normal;
-	font-weight: 700;
-	src: local('Open Sans Bold'), local('OpenSans-Bold'), url(../assets/opensansbold.woff2) format('woff2');
-	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Open Sans Bold'), local('OpenSans-Bold'), url(../assets/opensansbold.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+}
+
+:root {
+    --gradient-background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
+    --border-color: #929ba8;
+    --primary-color: #fb6362;
 }
 
 body {
-	width: 1920px;
-	height: 1080px;
-	font-family: "Open Sans", sans-serif;
-	color: #ffffff;
-	overflow: hidden;
+    width: 1920px;
+    height: 1080px;
+    font-family: "Open Sans", sans-serif;
+    color: #ffffff;
+    overflow: hidden;
 }
 
-body .clearfix {
-	clear: both;
-}
-
-body>.container {
-	background-image: url("../gfx/background.png");
-	background-size: cover;
-	background-repeat: no-repeat;
-	width: 1880px;
-	height: 1040px;
-	padding: 20px;
-}
-
-body>.container>header>section.video {
-	position: relative;
-	float: left;
-	width: 1260px;
-	height: 709px;
-}
-
-body>.container>header>section.video.fullscreen {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	width: 100%;
-	height: 100%;
-	z-index: 999;
-}
-
-body>.container>header>aside {
-	float: right;
-	width: 600px;
-	height: 709px;
-}
-
-body>.container>header>aside>section {
-	width: 600px;
-	margin-bottom: 20px;
-}
-
-body>.container>header>aside>section:last-of-type {
-	margin-bottom: 0px;
-}
-
-body>.container>footer {
-	margin-top: 20px;
-}
-
-body>.container>footer>section {
-	float: left;
-	margin-right: 20px;
-	width: 620px;
-	height: 310px;
-}
-
-body>.container>footer>section:last-of-type {
-	margin: 0;
-	width: 600px;
+.clearfix {
+    clear: both;
 }
 
 hr {
-	clear: both;
-	border: none;
-	border-top: 1px solid #929ba8;
-	padding: 0;
-	margin: 0;
+    clear: both;
+    border: none;
+    border-top: 1px solid var(--border-color);
+    padding: 0;
+    margin: 0;
 }
 
-div.fvideo {
-	position: absolute;
-	height: 100%;
-	width: 100%;
+
+#container {
+    background-image: url("../gfx/background.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    box-sizing: border-box;
+    width: 1920px;
+    height: 1080px;
 }
 
-div.fvideo canvas {
-	width: 100%;
-	height: 100%;
-	background-color: black;
-	z-index: 1;
+
+section {
+    box-sizing: border-box;
+    border: 2px solid var(--border-color);
+    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
 }
 
-div.foverlay {
-	display: none;
-	position: absolute;
-	background: none;
-	border: none;
-	display: none;
-	width: 100%;
-	height: 50px;
-	top: 304px;
-	left: 0px;
-	z-index: 2;
-	text-align: center;
-	vertical-align: middle;
-	font-size: 45px;
-	text-transform: uppercase;
+/***********************/
+/*                     */
+/*   Video Container   */
+/*                     */
+/***********************/
+section#video {
+    position: absolute;
+    float: left;
+    width: 1260px;
+    height: 709px;
+    left: 20px;
+    top: 20px;
+    overflow: hidden;
+    background-color: #0D0E1B;
+    border: none;
 }
 
-div.finfo {
-	height: 153px;
+section#video.fullscreen {
+    left: 0px;
+    top: 0px;
+    width: 1920px;
+    height: 1080px;
+    z-index: 2;
 }
 
-div.finfo h1 {
-	font-size: 40px;
-	text-transform: uppercase;
-	font-weight: bold;
-	float: left;
-	padding: 20px;
+section#video canvas {
+    display: block;
+    margin: 0 auto;
 }
 
-div.finfo aside {
-	float: right;
-	padding: 20px;
+section#video div#overlay {
+    display: block;
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+    height: 50px;
+    top: calc(50% - 25px);
+    z-index: 999;
+    text-align: center;
+    line-height: 50px;
+    font-size: 45px;
+    text-transform: uppercase;
+    transition: opacity 1s;
 }
 
-div.finfo aside time {
-	color: #fb6362;
+/***********************/
+/*                     */
+/*       Infobox       */
+/*                     */
+/***********************/
+section.info {
+    height: 150px;
+    width: 600px;
+    position: absolute;
+    left: 1300px;
+    top: 20px;
 }
 
-div.finfo aside time:last-of-type {
-	color: #ffffff;
+section.info h1 {
+    font-size: 40px;
+    text-transform: uppercase;
+    font-weight: bold;
+    float: left;
+    padding: 20px;
 }
 
-div.finfo ul {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	padding: 20px;
-	width: 100%;
+section.info aside {
+    float: right;
+    padding: 20px;
 }
 
-div.finfo li {
-	flex-grow: 1;
-	color: #fb6362;
-	text-transform: uppercase;
+section.info aside time {
+    color: var(--primary-color);
 }
 
-div.finfo li b {
-	font-weight: bold;
-	color: #ffffff;
+section.info aside time:last-of-type {
+    color: #ffffff;
 }
 
-div.fdata {
-	height: 218px;
+section.info ul {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 20px;
+    width: 100%;
 }
 
-div.fdata ul {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	padding: 20px;
-	width: 100%;
+section.info li {
+    flex-grow: 1;
+    color: var(--primary-color);
+    text-transform: uppercase;
 }
 
-div.fdata li {
-	flex-grow: 1;
-	color: #fb6362;
-	padding: 0px 10px 0px 10px;
-	text-transform: uppercase;
+section.info li b {
+    font-weight: bold;
+    color: #ffffff;
 }
 
-div.fdata li b {
-	font-weight: bold;
-	color: #ffffff;
+/***********************/
+/*                     */
+/*     Data array      */
+/*                     */
+/***********************/
+section.data {
+    height: 220px;
+    width: 600px;
+    position: absolute;
+    left: 1300px;
+    top: 190px;
 }
 
-div.fcontrols {
-	height: 290px;
+section.data ul {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 20px;
+    width: 100%;
 }
 
-div.fcontrols .buttonarray {
-	padding: 20px;
-	display: flex;
-	flex-direction: row;
-	flex-flow: row wrap;
-	justify-content: space-between;
-	height: 250px;
+section.data li {
+    flex-grow: 1;
+    color: var(--primary-color);
+    padding: 0px 10px 0px 10px;
+    text-transform: uppercase;
 }
 
-div.fcontrols .buttonarray button {
-	flex-grow: 1;
-	width: 30%;
-	background: #fb6362;
-	border: 0px;
-	margin: 5px;
-	font-size: 15px;
-	display: none;
-	color: white;
-	text-transform: uppercase;
-	font-weight: bold;
-	cursor: pointer;
+section.data li b {
+    font-weight: bold;
+    color: #ffffff;
 }
 
-div.fcontrols .buttonarray button.selected {
-	background-color: #51861d;
-	color: #ffffff;
+
+/***********************/
+/*                     */
+/*   Control buttons   */
+/*                     */
+/***********************/
+section.controls {
+    height: 290px;
+    width: 600px;
+    position: absolute;
+    left: 1300px;
+    top: 430px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    flex-flow: row wrap;
+    justify-content: space-between;
 }
 
-div.fcontrols .buttonarray button:hover {
-	background-color: #ffffff;
-	color: #fb6362;
+section.controls button {
+    flex-grow: 1;
+    width: 30%;
+    background: var(--primary-color);
+    border: 0px;
+    margin: 5px;
+    font-size: 15px;
+    display: block;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
 }
 
-div.fcontrols .buttonarray button:active {
-	background-color: #fb6362;
-	color: #ffffff;
+section.controls button:hover {
+    background-color: #ffffff;
+    color: var(--primary-color);
 }
 
-div.fcontrols .buttonarray button:nth-child(-n+12) {
-	display: block;
+section.controls button.selected {
+    background-color: #51861d;
+    color: #ffffff;
+}
+section.controls button.selected:hover {
+    background-color: #839472;
+    color: #ffffff;
 }
 
-div.fcontrols .buttonarray.nextRow button:nth-child(-n+12) {
-	display: none;
+/***********************/
+/*                     */
+/*  Data Graphics box  */
+/*                     */
+/***********************/
+section.datagraphics {
+    position: absolute;
+    height: 320px;
+    left: 20px;
+    top: 740px;
+    width: 620px;
 }
 
-div.fcontrols .buttonarray.nextRow button:nth-child(n+13) {
-	display: block;
+section.datagraphics canvas {
+    width: 100%;
+    height: 100%;
 }
 
-div.flog h1 {
-	font-size: 40px;
-	text-transform: uppercase;
-	font-weight: bold;
-	float: left;
-	padding: 20px;
+/***********************/
+/*                     */
+/*     Vitals box      */
+/*                     */
+/***********************/
+section.vitals {
+    border: none;
+    background: none;
+    position: absolute;
+    top: 740px;
+    left: 660px;
+    height: 320px;
+    width: 620px;
 }
 
-div.flog button {
-	border: 1px solid #fff;
-	color: #ffffff;
-	background: none;
-	border-radius: 3px;
-	padding: 10px 5px 10px 5px;
-	text-transform: uppercase;
-	font-weight: bold;
-	min-width: 100px;
-	height: 38px;
-	float: right;
-	margin-top: 20px;
-	margin-right: 20px;
+section.vitals #compass {
+    position: relative;
+    box-sizing: border-box;
+    border: 2px solid var(--border-color);
+    height: 35px;
+    width: 100%;
+    background-image: var(--gradient-background);
 }
 
-div.flog button:hover {
-	background-color: #fff;
-	color: #fb6362;
-	cursor: pointer;
+section.vitals #compass canvas {  
+    width: 100%;
+    height: 100%;
 }
 
-div.flog button:active {
-	background-color: #fb6362;
-	color: #ffffff;
-	cursor: pointer;
+section.vitals #compass div {
+    position: absolute;
+    box-sizing: border-box;
+    width: 40px;
+    height: 40px;
+    top: -5px;
+    left: calc(50% - 20px);
+    text-align: center;
+    line-height: 40px;
+    font-weight: bold;
+    font-size: 19px;
+    background-color: var(--primary-color);
+    border: 1px solid var(--border-color);
 }
 
-div.flog div {
-	margin: 20px;
-	height: 200px;
-	overflow-x: hidden;
-	overflow-y: scroll;
+section.vitals .accelerometer {
+    position: relative;
+    box-sizing: border-box;
+    border: 2px solid var(--border-color);
+    width: 100%;
+    height: 120px;
+    margin-top: 15px;
+    background-image: var(--gradient-background);
 }
 
-div.flog div table {
-	font-size: 12px;
-	text-transform: uppercase;
+section.vitals .accelerometer canvas {
+    width: 100%;
+    height: 114px;
 }
 
-div.flog div table tr th {
-	text-align: left;
-	color: #fb6362;
-	width: 140px;
+section.vitals .scale {
+    position: relative;
+    box-sizing: border-box;
+    border: 2px solid var(--border-color);
+    width: 100%;
+    height: 35px;
+    margin-top: 15px;
+    background: linear-gradient(90deg, #2c3b59 0%, #121a2d 38.7%, var(--primary-color) 39%, #121a2d 39.3%, #2c3b59 100%);
 }
 
-div.flog div table tr td {
-	padding-bottom: 10px;
-	line-height: 15px;
+section.vitals .scale p,
+section.vitals .scale b {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-weight: bold;
+    padding: 0 20px;
+    height: 100%;
+    line-height: 32px;
+    color: #ffffff;
 }
 
-div.fvitals canvas {
-	width: 100%;
-	height: 100%;
+section.vitals .scale b {
+    color: var(--primary-color);
+    left: auto;
+    right: 0;
 }
 
-.fdatagraphics canvas {
-	width: 100%;
-	height: 100%;
+section.vitals .scale hr {
+    width: 0px;
+    height: 100%;
+    position: absolute;
+    border: none;
+    border-right: 2px solid var(--primary-color);
+    left: 50%;
+    top: 0px;
 }
 
-.field {
-	border: 2px solid #929ba8;
-	width: 100%;
-	height: 100%;
-	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
+/***********************/
+/*                     */
+/*      Log box        */
+/*                     */
+/***********************/
+section.log {
+    position: absolute;
+    width: 600px;
+    height: 320px;
+    left: 1300px;
+    top: 740px;
 }
+section.log h1 {
+    font-size: 40px;
+    text-transform: uppercase;
+    font-weight: bold;
+    float: left;
+    padding: 20px;
+}
+
+section.log button {
+    border: 1px solid #fff;
+    color: #ffffff;
+    background: none;
+    border-radius: 3px;
+    padding: 10px 5px 10px 5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    min-width: 100px;
+    height: 38px;
+    float: right;
+    margin-top: 20px;
+    margin-right: 20px;
+}
+
+section.log button:hover {
+    background-color: #fff;
+    color: var(--primary-color);
+    cursor: pointer;
+}
+
+section.log button:active {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    cursor: pointer;
+}
+
+section.log div.logs {
+    margin: 20px;
+    height: 200px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+section.log div.logs table {
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+section.log div.logs table tr th {
+    text-align: left;
+    color: var(--primary-color);
+    width: 140px;
+}
+
+section.log div.logs table tr td {
+    padding-bottom: 10px;
+    line-height: 15px;
+}
+
+/***********************/
+/*                     */
+/*     Message Box     */
+/*                     */
+/***********************/
 
 div.container div.msgbox-bg {
-	width: 100%;
-	height: 100%;
-	background-color: black;
-	opacity: 0.4;
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: 999;
-	display: none;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    opacity: 0.4;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 999;
+    display: none;
 }
 
 div.container div.msgbox {
-	width: 800px;
-	background-color: red;
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	margin-left: -400px;
-	margin-top: -250px;
-	z-index: 10000;
-	box-shadow: 0 0 30px 10px #000;
-	border: 2px solid #929ba8;
-	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
-	display: none;
+    width: 800px;
+    background-color: red;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -400px;
+    margin-top: -250px;
+    z-index: 10000;
+    box-shadow: 0 0 30px 10px #000;
+    border: 2px solid var(--border-color);
+    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
+    display: none;
 }
 
 div.container div.msgbox h1 {
-	font-size: 40px;
-	text-transform: uppercase;
-	font-weight: bold;
-	text-align: center;
-	padding: 20px;
-	width: 760px;
+    font-size: 40px;
+    text-transform: uppercase;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+    width: 760px;
 }
 
 div.container div.msgbox div {
-	clear: both;
-	text-align: center;
-	margin-bottom: 20px;
+    clear: both;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 div.container div.msgbox button {
-	width: 25%;
-	height: 50px;
-	background: #fb6362;
-	border: 0px;
-	font-size: 15px;
-	color: white;
-	text-transform: uppercase;
-	font-weight: bold;
-	cursor: pointer;
-	margin: 10px;
+    width: 25%;
+    height: 50px;
+    background: var(--primary-color);
+    border: 0px;
+    font-size: 15px;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 10px;
 }
 
-div.container div.msgbox button:first-child {}
-
-div.container div.msgbox button:last-child {}
-
 div.container div.msgbox button:hover {
-	background-color: #ffffff;
-	color: #fb6362;
+    background-color: #ffffff;
+    color: var(--primary-color);
 }
 
 div.container div.msgbox button:active {
-	background-color: #fb6362;
-	color: #ffffff;
+    background-color: var(--primary-color);
+    color: #ffffff;
 }
 
 div.container div.msgbox input {
-	width: 80%;
-	height: 30px;
-	display: block;
-	text-align: center;
-	margin: 20px auto;
-	font-size: 16px;
+    width: 80%;
+    height: 30px;
+    display: block;
+    text-align: center;
+    margin: 20px auto;
+    font-size: 16px;
 }
