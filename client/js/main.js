@@ -12,7 +12,7 @@ const rovData = {};
 let vacuumTest = false;
 let confirmWaterTight = false;
 
-console.log = gui.log
+//console.log = gui.log
 
 /************************
  * Video Socket - Used for camera transmit
@@ -25,7 +25,11 @@ video.connect(location.hostname, 8282);
  ************************/
 
 gui.log("Initializing NodeROV GUI");
-gui.socket = socket;
+
+gui.on("log", (data) => {
+    socket.send(`clog ${data}`);
+})
+
 
 gui.accelCanvas = document.getElementById("accelerometerCanvas");
 gui.compassCanvas = document.getElementById("compassCanvas");
@@ -48,6 +52,7 @@ gui.setButton("gui-controls-button-3", "RIGHT LIGHT", function (e) {
     }
 });
 
+gui.overlayText("Connecting to NodeROV...", 2000);
 
 gui.setButton("gui-controls-button-4", "TEST", function (e) {
     if (gui.buttonState("gui-controls-button-4")) {

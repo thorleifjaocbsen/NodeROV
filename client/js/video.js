@@ -45,7 +45,7 @@ export default class Video extends EventEmitter {
             switch (e.data.split(' ')[0].toLowerCase()) {
                 case 'recordstate':
                     this.recordState = e.data.split(' ')[1].toLowerCase();
-                    this.emit('recordStateChange', this.recordState);
+                    super.emit('recordStateChange', this.recordState);
                     break;
                 case 'stopped':
                     console.log("Somehow the software stopped!");

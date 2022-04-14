@@ -1,11 +1,14 @@
-export default class GUI {
+import EventEmitter from './EventEmitter.js';
+
+export default class GUI extends EventEmitter {
 
     constructor() {
+        super();
+       
         this.accelCanvas = null;
         this.compassCanvas = null;
         this.compassRose = new Image();
         this.dataGraphCanvasContext = null;
-        this.socket = null;
         this.compassRose.src = 'gfx/compass_rose.png';
     };
 
@@ -13,12 +16,10 @@ export default class GUI {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     };
 
-    log(text, time, dontsend) {
+    log(text, time, doNotEmit) {
         if (time == undefined) time = Date.now();
 
-      /*  if (socket != null && !dontsend) {
-            socket.send("clog " + time + " " + text);
-        }*/
+        if(!doNotEmit) super.emit("log", text, time);
 
         let d = new Date(time).toISOString();
         let timestamp = d.split('T')[1].split('.')[0] + " | " + d.split('T')[0];
@@ -303,11 +304,17 @@ export default class GUI {
         return btn && btn.click();
     };
 
+    // TODO: Fix this
     overlayText(message, time) {
-        $(".foverlay").html(message);
-        $(".foverlay").fadeIn();
-        setTimeout(function () {
-            $(".foverlay").fadeOut();
+        const overlay = document.getElementById("overlay");
+        console.log(overlay)
+
+        overlay.innerHTML = message;
+        overlay.style.display = block;
+        overlay.style.opacity = 1;
+        setTimeout(() => {
+            overlay.style.opacity = 0;
+            overlay.style.display = none;
         }, time * 1000);
     };
 

@@ -12,3 +12,5 @@ https://forums.raspberrypi.com/viewtopic.php?t=44104
 https://forums.raspberrypi.com/viewtopic.php?t=44104
 
 https://github.com/AndyA/psips/blob/master/examples/hls.sh
+
+https://medium.com/beginners-guide-to-mobile-web-development/super-and-extends-in-javascript-es6-understanding-the-tough-parts-6120372d3420
