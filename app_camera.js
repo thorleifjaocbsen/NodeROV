@@ -163,6 +163,19 @@ function startRecording() {
   recordingFile = new Date().toJSON().replaceAll(/(:|-)/g, "").split(".").shift() + '.h264';
   writeStream = fs.createWriteStream('./recordings/' + recordingFile, { flags: 'a' });
 
+  writeStream.on('error', (error) => {
+    switch (error.code) {
+      case "ENOSPC":
+        console.log("Video Streamer Service : No space left on disk");
+        wss.broadcast("disk full");
+        stopRecording();
+        break;
+      default:
+        console.log("Video Streamer Service : Error while recording: " + error.code);
+        break;
+    }
+  });
+
   console.log('Video Streamer Service : Waiting for IDR frame to record');
 }
 
