@@ -2,10 +2,12 @@ import Socket from './socket.js';
 import './broadway/decoder.js';
 import './broadway/yuvcanvas.js';
 import './broadway/player.js';
+import EventEmitter from './EventEmitter.js';
 
-export default class Video {
+export default class Video extends EventEmitter {
 
     constructor(videoElement) {
+        super();
 
         this.ws = new Socket();
         this.ws.onopen = this.onopen.bind(this);
@@ -18,8 +20,9 @@ export default class Video {
         this.skipFrames = false;
 
         this.videoElement = videoElement;
-        
         videoElement.appendChild(this.canvas);
+
+        this.recordState = null;
 
         new ResizeObserver(() => this.resizeToFit()).observe(this.canvas)
         new ResizeObserver(() => this.resizeToFit()).observe(this.videoElement)
@@ -31,12 +34,28 @@ export default class Video {
         this.ws.connect(ip, port);
     }
 
-    onopen() {}
+    onopen() {
+
+        this.updateRecordState();
+    }
 
     onmessage(e) {
 
         if (typeof e.data == "string") {
-            console.log(e.data, Date.now());
+            switch (e.data.split(' ')[0].toLowerCase()) {
+                case 'recordstate':
+                    this.recordState = e.data.split(' ')[1].toLowerCase();
+                    this.emit('recordStateChange', this.recordState);
+                    break;
+                case 'stopped':
+                    console.log("Somehow the software stopped!");
+                    break;
+                default:
+                    console.log(e.data, Date.now());
+                    return false;
+            }
+
+            
         };
         if (this.skipFrames) { return; }
         try {
@@ -71,7 +90,7 @@ export default class Video {
         return this.ws.send('record stop');
     }
 
-    isRecording() {
+    updateRecordState() {
         return this.ws.send('record state');
     }
 }

@@ -73,6 +73,11 @@ gui.setButton("gui-controls-button-7", "RECORD", function (e) {
     }
 
 });
+video.on("recordStateChange", (state) => {
+    gui.buttonState("gui-controls-button-7", state == "recording");
+    gui.log(`Recording state changed to ${state}`);
+})
+
 gui.setButton("gui-controls-button-8", "FULLSCREEN", function (e) {
     const videoEl = document.getElementById("video");
     videoEl.classList.toggle("fullscreen");
@@ -96,6 +101,8 @@ gui.setButton("gui-log-button-2", "SCREENSHOT", function (e) {
     $("<a download='" + filename + "' href='" + data + "'></a>")[0].click();
 
 });
+
+
 
 
 gui.setInfo(1, 0, "Int. temp:");

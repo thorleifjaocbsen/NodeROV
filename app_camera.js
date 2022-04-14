@@ -1,7 +1,7 @@
   // // Free memory
   // exec('sudo /sbin/sysctl vm.drop_caches=3');
 
-const config = { width: 1280, height: 720, fps: 15, port: 8282 }
+const config = { width: 1280, height: 720, fps: 15, port: 8282, ip: "0.0.0.0" }
 
 const spawn = require('child_process').spawn;
 const Splitter = require('stream-split');
@@ -16,7 +16,7 @@ const cert = fs.readFileSync("assets/server.cert");
 const key = fs.readFileSync("assets/server.key");
 server = HttpsServer({ cert, key });
 wss = new WebSocketServer({ perMessageDeflate: false, server });
-server.listen(config.port);
+server.listen(config.port, config.ip);
 console.log("Video Streamer Service : Listning");
 
 /* On connection */
@@ -42,7 +42,7 @@ wss.on('connection', (client) => {
         stopRecording();
         break;
       case "record state":
-        client.send(recordState);
+        client.send(`recordState ${recordState}`);
         break;
     }
   });
