@@ -6,9 +6,10 @@
 
 const EventEmitter = require('events')
 
-module.exports = class RemoteOperatedVehicle {
+module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
   constructor(options) {
+    super()
 
     this.battery = { voltage: 0, current: 0, mahUsed: 0 }
     this.attitude = { roll: 0, pitch: 0, heading: 0 }
@@ -45,12 +46,10 @@ module.exports = class RemoteOperatedVehicle {
       }
     }
 
-    this.eventEmitter = new EventEmitter()
     this.armed = false
     this.controlData = {}
   }
 
-  on(event, callback) { this.eventEmitter.on(event, callback) }
   constrain(value, min, max) { return Math.max(Math.min(value, max), min) }
   map(x, in_min, in_max, out_min, out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min }
 
@@ -88,7 +87,7 @@ module.exports = class RemoteOperatedVehicle {
     }
 
     if (changes == true) {
-      this.eventEmitter.emit('thusterOutputChanged', this.getOutputUS())
+      super.emit('thusterOutputChanged', this.getOutputUS())
     }
   }
 
@@ -148,7 +147,7 @@ module.exports = class RemoteOperatedVehicle {
 
     if (this.armed || value != 0) return
     this.armed = true
-    this.eventEmitter.emit("arm")
+    super.emit("arm")
   }
 
   disarm(value) {
@@ -159,7 +158,7 @@ module.exports = class RemoteOperatedVehicle {
     // Set all motors off
     this.calculateThrusterOutput()
 
-    this.eventEmitter.emit("disarm")
+    super.emit("disarm")
   }
 
   toggleArm(value) {

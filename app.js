@@ -25,6 +25,11 @@ const InternalPressureSensor  = require('./js/InternalPressureSensor')
 const AnalogDigitalConverter  = require('./js/AnalogDigitalConverter')
 const InertialMeasurementUnit = require('./js/InertialMeasurementUnit')
 
+const PCA9685 = require('./js/drivers/PCA9685.js');
+const pca9685 = new PCA9685();
+pca9685.init();
+
+
 /************************
  *
  * Initialize scripts
