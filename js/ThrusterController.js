@@ -5,24 +5,25 @@
  * https://github.com/bluerobotics/ardusub/blob/master/libraries/AP_Motors/AP_Motors6DOF.cpp
  */
 
-const EventEmitter = require('events')
-const DEFAULT_CONTROL_INPUT = { roll: 0, pitch: 0, yaw: 0, climb: 0, forward: 0, lateral: 0 }
+const EventEmitter = require('events');
+const DEFAULT_CONTROL_INPUT = { roll: 0, pitch: 0, yaw: 0, climb: 0, forward: 0, lateral: 0 };
 
-module.exports = class ThrusterController {
+module.exports = class ThrusterController extends EventEmitter {
 
   constructor(options) {
 
-    this.eventEmitter = new EventEmitter()
+    super();
+
     let default_values = {
       minUS: 1000,
       idleUS: 1500,
       maxUS: 2000,
       motors: []
-    }
+    };
 
     options = {...default_values, ...options};
 
-    this.motors = []
+    this.motors = [];
     
     this.minUS = options.minUS;
     this.idleUS = options.idleUS;
@@ -30,22 +31,22 @@ module.exports = class ThrusterController {
 
     for(let motor of options.motors) {
 
-      this.addMotor(motor.id, motor.pwmPin, motor.roll, motor.pitch, motor.yaw, motor.climb, motor.forward, motor.lateral)
+      this.addMotor(motor.id, motor.pwmPin, motor.roll, motor.pitch, motor.yaw, motor.climb, motor.forward, motor.lateral);
     }
 
-    this.calculateOutput()
+    this.calculateOutput();
   }
 
 
   on(event, callback) {
 
-    this.eventEmitter.on(event, callback)
+    this.eventEmitter.on(event, callback);
   }
 
 
   constrain(value, min, max) {
 
-    return Math.max(Math.min(value, max), min)
+    return Math.max(Math.min(value, max), min);
   }
 
 
@@ -84,7 +85,7 @@ module.exports = class ThrusterController {
       motor.output = this.constrain(output, -1, 1);
     }
 
-    this.eventEmitter.emit("thrusterOutputChange", this.getOutputUS())
+    super.emit("thrusterOutputChange", this.getOutputUS());
 
   }
 
@@ -107,9 +108,9 @@ module.exports = class ThrusterController {
   }
 
 
-  addMotor(id, pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor) {
+  addMotor(pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor, testingOrder) {
 
-    this.motors[id] = { pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor }
+    this.motors.push({ pwmPin, rollFactor, pitchFactor, yawFactor, climbFactor, forwardFactor, lateralFactor, testingOrder })
   }
 
 }
