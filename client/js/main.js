@@ -65,10 +65,10 @@ gui.setButton("gui-controls-button-5", "HEADING HOLD", function (e) { socket.sen
 gui.setButton("gui-controls-button-6", "DEPTH HOLD", function (e) { socket.send("depthhold"); });
 gui.setButton("gui-controls-button-7", "RECORD", function (e) {
     if (gui.buttonState("gui-controls-button-7")) {
-        video.ws.send("SREC");
+        video.stopRecord();
         gui.buttonState("gui-controls-button-7", false);
     } else {
-        video.ws.send("REC");
+        video.startRecord();
         gui.buttonState("gui-controls-button-7", true);
     }
 

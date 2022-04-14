@@ -31,10 +31,7 @@ export default class Video {
         this.ws.connect(ip, port);
     }
 
-    onopen() {
-
-        this.ws.send("REQUESTSTREAM");
-    }
+    onopen() {}
 
     onmessage(e) {
 
@@ -64,5 +61,17 @@ export default class Video {
         const zoom = Math.min(videoMaxWidth / width, videoMaxHeight / height);
     
         this.canvas.style.zoom = zoom;
+    }
+
+    startRecord() {
+        return this.ws.send('record start');
+    }
+
+    stopRecord() {
+        return this.ws.send('record stop');
+    }
+
+    isRecording() {
+        return this.ws.send('record state');
     }
 }
