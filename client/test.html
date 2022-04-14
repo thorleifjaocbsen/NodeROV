@@ -151,7 +151,7 @@
   </div>
   
   <script>
-    const ws = new WebSocket(`ws://${location.hostname}:8080`)
+    const ws = new WebSocket(`wss://${location.hostname}:${location.port}`)
     ws.onmessage = (event) => {
       if (typeof event.data != 'string') {
         console.log("Unknown data")
@@ -175,23 +175,23 @@
 
         $("#gamepadid").html(gp.id)
 
-        $("#gamepad #Bbottom > path").attr('fill', `rgba(0,0,0,${gp.buttons[0].value})`)
-        $("#gamepad #BRight > path").attr('fill', `rgba(0,0,0,${gp.buttons[1].value})`)
-        $("#gamepad #BLeft > path").attr('fill', `rgba(0,0,0,${gp.buttons[2].value})`)
-        $("#gamepad #Btop > path").attr('fill', `rgba(0,0,0,${gp.buttons[3].value})`)
-        $("#gamepad #L1").attr('fill', `rgba(0,0,0,${gp.buttons[4].value})`)
-        $("#gamepad #R1").attr('fill', `rgba(0,0,0,${gp.buttons[5].value})`)
-        $("#gamepad #L2").attr('fill', `rgba(0,0,0,${gp.buttons[6].value})`)
-        $("#gamepad #R2").attr('fill', `rgba(0,0,0,${gp.buttons[7].value})`)
-        $("#gamepad #LMeta > circle").attr('fill', `rgba(0,0,0,${gp.buttons[8].value})`)
-        $("#gamepad #Rmeta > circle").attr('fill', `rgba(0,0,0,${gp.buttons[9].value})`)
-        $("#gamepad #LeftStick").attr('fill', `rgba(0,0,0,${gp.buttons[10].value})`)
-        $("#gamepad #RightStick").attr('fill', `rgba(0,0,0,${gp.buttons[11].value})`)
-        $("#gamepad #DUp > path").attr('fill', `rgba(0,0,0,${gp.buttons[12].value})`)
-        $("#gamepad #DDown > path").attr('fill', `rgba(0,0,0,${gp.buttons[13].value})`)
-        $("#gamepad #DLeft > path").attr('fill', `rgba(0,0,0,${gp.buttons[14].value})`)
-        $("#gamepad #DRight > path").attr('fill', `rgba(0,0,0,${gp.buttons[15].value})`)
-        $("#gamepad #MMeta > circle").attr('fill', `rgba(0,0,0,${gp.buttons[16].value})`)
+        $("#gamepad #Bbottom > path").attr('fill', `rgba(0,0,0,${gp.buttons[0] ? gp.buttons[0].value : 0})`)
+        $("#gamepad #BRight > path").attr('fill', `rgba(0,0,0,${gp.buttons[1] ? gp.buttons[1].value : 0})`)
+        $("#gamepad #BLeft > path").attr('fill', `rgba(0,0,0,${gp.buttons[2] ? gp.buttons[2].value : 0})`)
+        $("#gamepad #Btop > path").attr('fill', `rgba(0,0,0,${gp.buttons[3] ? gp.buttons[3].value : 0})`)
+        $("#gamepad #L1").attr('fill', `rgba(0,0,0,${gp.buttons[4] ? gp.buttons[4].value : 0})`)
+        $("#gamepad #R1").attr('fill', `rgba(0,0,0,${gp.buttons[5] ? gp.buttons[5].value : 0})`)
+        $("#gamepad #L2").attr('fill', `rgba(0,0,0,${gp.buttons[6] ? gp.buttons[6].value : 0})`)
+        $("#gamepad #R2").attr('fill', `rgba(0,0,0,${gp.buttons[7] ? gp.buttons[7].value : 0})`)
+        $("#gamepad #LMeta > circle").attr('fill', `rgba(0,0,0,${gp.buttons[8] ? gp.buttons[8].value : 0})`)
+        $("#gamepad #Rmeta > circle").attr('fill', `rgba(0,0,0,${gp.buttons[9] ? gp.buttons[9].value : 0})`)
+        $("#gamepad #LeftStick").attr('fill', `rgba(0,0,0,${gp.buttons[10] ? gp.buttons[10].value : 0})`)
+        $("#gamepad #RightStick").attr('fill', `rgba(0,0,0,${gp.buttons[11] ? gp.buttons[11].value : 0})`)
+        $("#gamepad #DUp > path").attr('fill', `rgba(0,0,0,${gp.buttons[12] ? gp.buttons[12].value : 0})`)
+        $("#gamepad #DDown > path").attr('fill', `rgba(0,0,0,${gp.buttons[13] ? gp.buttons[13].value : 0})`)
+        $("#gamepad #DLeft > path").attr('fill', `rgba(0,0,0,${gp.buttons[14] ? gp.buttons[14].value : 0})`)
+        $("#gamepad #DRight > path").attr('fill', `rgba(0,0,0,${gp.buttons[15] ? gp.buttons[15].value : 0})`)
+        $("#gamepad #MMeta > circle").attr('fill', `rgba(0,0,0,${gp.buttons[16] ? gp.buttons[16].value : 0})`)
 
         $("#gamepad #LeftStick").attr('cx', 113 + gp.axes[0] * 12)
         $("#gamepad #LeftStick").attr('cy', 160 + gp.axes[1] * 12)
