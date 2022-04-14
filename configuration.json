@@ -1,6 +1,6 @@
 {
+	"ip": "0.0.0.0",
 	"port": 8000,
-	"socketPort": 8080,
 	"calibration": {
 		"adc": {
 			"voltageDividor": 0.1760299625468165,

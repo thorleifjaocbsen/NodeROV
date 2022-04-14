@@ -7,9 +7,10 @@
 require('./ascii')
 
 const ws        = require('ws')
+const fs        = require('fs')
 const express   = require('express')
 const app       = express()
-const http      = require('http').Server(app)
+const https     = require('https')
 const log       = require('./js/Log.js')
 
 console.log   = log.warn
@@ -112,8 +113,11 @@ aux.on('deviceOutputChange', (device) => {
  *
  ************************/
  log.log('info','Starting webserver')
+ const key = fs.readFileSync('assets/server.key');
+ const cert = fs.readFileSync('assets/server.cert');
+ 
  app.use('/', express.static(__dirname+'/client'))
- http.listen(Configuration.port, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
+ const webServer = https.createServer({ key, cert }, app).listen(Configuration.port, Configuration.ip, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
  
 
 /************************
@@ -121,7 +125,7 @@ aux.on('deviceOutputChange', (device) => {
  * Web socket start
  *
  ************************/
-const wss = new ws.WebSocketServer({ perMessageDeflate: false, port: Configuration.socketPort })
+const wss = new ws.WebSocketServer({ perMessageDeflate: false, server: webServer })
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
 wss.on('connection', function(ws, req) {
 
