@@ -306,7 +306,6 @@ export default class GUI extends EventEmitter {
 
     overlayText(message, time) {
         const overlay = document.getElementById("overlay");
-        console.log(overlay)
 
         overlay.innerHTML = message;
         overlay.style.display = "block";
