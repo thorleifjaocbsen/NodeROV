@@ -45,7 +45,9 @@ export default class Video {
         try {
             const frame = new Uint8Array(e.data);
             this.player.decode(frame);
-        } catch (e) {}
+        } catch (e) {
+            console.log(e)
+        }
 
     }
 

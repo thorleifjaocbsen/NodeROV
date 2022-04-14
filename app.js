@@ -4,18 +4,18 @@
  * Credits: Myself, my family and my girlfriend and child.
  */
 
+const https = require('https');
 const ws = require('ws');
+const fs = require('fs')
 const express = require('express');
 const app = express();
-const https = require('https');
 const log = require('./js/Log.js');
-const hb = require('./js/heartbeat.js');
-const fs = require('fs')
 
 const Configuration = require('./configuration.json');
 const RemoteOperatedVehicleClass = require('./js/RemoteOperatedVehicle.js');
 const ThrusterControllerClass = require('./js/ThrusterController.js');
 const AuxiliaryControllerClass = require('./js/AuxiliaryController.js');
+const Hearthbeat = require('./js/Hearthbeat.js');
 
 //test
 // LOOP
@@ -82,12 +82,12 @@ AuxiliaryController.calculateOutput("camera", 1)
  * Web server start
  *
  ************************/
-log.log('info', 'Starting webserver')
-app.use('/', express.static(__dirname + '/client'))
+log.log('info', 'Starting webserver');
+app.use('/', express.static(__dirname + '/client'));
 
 const key = fs.readFileSync('assets/server.key');
-const cert = fs.readFileSync('assets/server.cert')
-const webServer = https.createServer({ key, cert }, app).listen(Configuration.port, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
+const cert = fs.readFileSync('assets/server.cert');
+const webServer = https.createServer({ key, cert }, app).listen(Configuration.port, Configuration.ip, () => { log.info(`Webserver started on port: ${Configuration.port}`) });
 
 
 /************************
@@ -95,20 +95,25 @@ const webServer = https.createServer({ key, cert }, app).listen(Configuration.po
  * Web socket start
  *
  ************************/
-//const wss = new ws.WebSocketServer({ perMessageDeflate: false, port: Configuration.socketPort })
 const wss = new ws.WebSocketServer({ perMessageDeflate: false, server: webServer });
 
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
-wss.on('connection', function (c) {
-  client = c
-  try { log.remove(log.transports.socketIO); }
-  catch (e) { }
-  log.info(`Websocket: Remote connection from: ${client._socket.remoteAddress}:${client._socket.remotePort}`)
+wss.on('connection', function (client) {
+  client.ip = client._socket.remoteAddress;
+  client.port = client._socket.remotePort;
+
+  log.info(`Websocket: Remote connection from: ${client.ip}:${client.port}`)
   log.add(log.socketIOTransport, client)
   log.info('Websocket: Starting heartbeat')
-  hb.start(client)
-  client.on('message', wss.parseMessage)
 
+  client.heartbeat = new Hearthbeat(client);
+  client.heartbeat.on("log", (level, message) => { log.log(level, `(${client.ip}) ${message}`); })
+  client.on('message', (data) => parseWebsocketMessage(client, data))
+  client.on('close',  (code, reason) => {
+    log.info(`Websocket: Remote connection closed: ${client.ip}:${client.port}`)
+    log.remove(log.transports.socketIO, client)
+    client.heartbeat.stop()
+    })
 });
 
 
@@ -119,16 +124,16 @@ wss.on('connection', function (c) {
  *
  *
  ************************/
-wss.parseMessage = function (data) {
-  log.debug("WS Data: " + data);
+function parseWebsocketMessage(client, data) {
+  log.debug(`Data from ${client.ip}: ${data}`);
   data = data.toString()
   if (typeof data == "string") {
     var cmd = data.split(" ")[0];
-    var data = data.substr(cmd.length + 1);
+    var data = data.substring(cmd.length + 1);
 
     switch (cmd) {
       case "hb":
-        hb.pulse(data.split(" ")[0]);
+        client.heartbeat.pulse(data.split(" ")[0]);
         break;
 
       case "clog":
@@ -234,16 +239,16 @@ setInterval(function () { // Send data to client
    * Check client connectivity
    *
    ************************/
-  if (!hb.connected) {
-    // Warning lights!! Lost topsite connecton, do stop everything!
-    if (ROVController.armed) ROVController.disarm(); // Disarm
+  // if (!hb.connected) {
+  //   // Warning lights!! Lost topsite connecton, do stop everything!
+  //   if (ROVController.armed) ROVController.disarm(); // Disarm
 
-    if ((hb.offTime > 5) && (client != null)) {
-      client.close(); // Kill connection
-      client = null; // Allow new connection
-    }
-    return;
-  }
+  //   if ((hb.offTime > 5) && (client != null)) {
+  //     client.close(); // Kill connection
+  //     client = null; // Allow new connection
+  //   }
+  //   return;
+  // }
 
 
   // /************************

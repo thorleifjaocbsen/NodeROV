@@ -64,20 +64,20 @@ gui.setButton("gui-controls-button-2", "ARM", function (e) { socket.send("armtog
 gui.setButton("gui-controls-button-5", "HEADING HOLD", function (e) { socket.send("headinghold"); });
 gui.setButton("gui-controls-button-6", "DEPTH HOLD", function (e) { socket.send("depthhold"); });
 gui.setButton("gui-controls-button-7", "RECORD", function (e) {
-    if (gui.getButtonState(6)) {
-        player.socket.send("REQUESTSTREAM");
-        gui.setButtonState(6, false);
+    if (gui.buttonState("gui-controls-button-7")) {
+        video.ws.send("SREC");
+        gui.buttonState("gui-controls-button-7", false);
     } else {
-        player.socket.send("REQUESTSTREAM RECORD");
-        gui.setButtonState(6, true);
+        video.ws.send("REC");
+        gui.buttonState("gui-controls-button-7", true);
     }
 
 });
 gui.setButton("gui-controls-button-8", "FULLSCREEN", function (e) {
     const videoEl = document.getElementById("video");
     videoEl.classList.toggle("fullscreen");
-    gui.buttonState("gui-controls-button-7", videoEl.classList.contains("fullscreen"));
-    videoEl.onclick = () => { gui.pressButton("gui-controls-button-7"); };
+    gui.buttonState("gui-controls-button-8", videoEl.classList.contains("fullscreen"));
+    videoEl.onclick = () => { gui.pressButton("gui-controls-button-8"); };
 });
 gui.setButton("gui-controls-button-9", "SET FLAT", function (e) { socket.send("setflat"); });
 gui.setButton("gui-controls-button-10", "CALIBRATE GYRO", function (e) { socket.send("calibrategyro"); });

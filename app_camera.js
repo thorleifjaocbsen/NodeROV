@@ -1,15 +1,13 @@
 
-const config          = { width : 1280, height: 720, fps : 15, port : 8282 }
+const config = { width: 1280, height: 720, fps: 15, port: 8282 }
 
-const spawn           = require('child_process').spawn;
-const Splitter        = require('stream-split');
-const fs              = require('fs');
-const exec            = require('child_process').exec;
+const spawn = require('child_process').spawn;
+const Splitter = require('stream-split');
+const fs = require('fs');
+const exec = require('child_process').exec;
 const WebSocketServer = require("ws").WebSocketServer;
-const HttpsServer     = require('https').createServer;
-
-const NALseparator    = Buffer.from([0,0,0,1]);//NAL break
-let streamer, readStream, sck = null;
+const HttpsServer = require('https').createServer;
+const NALseparator = Buffer.from([0, 0, 0, 1]);//NAL break
 
 /* Start server */
 const cert = fs.readFileSync("assets/server.cert");
@@ -22,91 +20,139 @@ server.listen(config.port);
 console.log("Video Streamer Service : Listning");
 
 /* On connection */
-wss.on('connection', function(socket) {
+wss.on('connection', (socket) => {
 
-  console.log("Video Streamer Service : Incomming connection");
-  console.log("Video Streamer Service : Accepted connection");
+  console.log(`Video Streamer Service : Incomming connection from`);
   socket.send("Video Streamer Service - Connected");
-  
-  socket.on("message", function(data){
+
+  startFrames.forEach((frame) => {
+    socket.send(frame);
+  });
+
+  socket.on("message", function (data) {
     data = data.toString().trim();
     var cmd = "" + data, action = data.split(' ')[0];
-    console.log("Video Streamer Service : Incomming data: %s",data);
-  
-    if(action == "REQUESTSTREAM") {
-      console.log("Video Streamer Service : Starting data stream");
-      start_stream(data == "REQUESTSTREAM RECORD");      
+    console.log("Video Streamer Service : Incomming data: %s", data);
+    if(action == "REC") {
+      startRecording();
     }
-    if(action == "STOPSTREAM")
-      readStream.pause();
+    if(action == "SREC") {
+      stopRecording();
+    }
   });
-  
-  socket.on('close', function() {
-    readStream.end();
-    streamer.kill('SIGHUP');
+
+  socket.on('close', function () {
     console.log('Video Streamer Service : Client Closed Connection');
-    sck.close();
-    sck = null;
   });
-  
-  sck = socket;
-  sck.buzy = false;
+
 });
 
+let cameraSoftware = null;
+let pipe = null;
 
-function start_stream(record) {
-  try {
-    readStream.end();
-    streamer.kill('SIGHUP');
-    sck.buzy = false;
-  }
-  catch(e) { }
-  
-  
-  
-  streamer = spawn('raspivid', ['-t', '0', 
-                                '-awb', 'auto',
-                                '-ex', 'auto',
-                                //'-ISO', '800',
-                                //'-b', 10 * 1000000, //2bps bitrate
-                                //'-ss', 1/250 * 1000000, //1/20s shutter speed
-                                '-mm', 'average',
-                                '-o', '-', 
-                                '-w', config.width, 
-                                '-h', config.height, 
-                                '-fps', config.fps, 
-                                '-vf', '-hf', 
-                                '-pf', 'baseline']);
-                                  
-  streamer.on("exit", function(code){ if(code != null) console.log("Failure", code); });
-  readStream = streamer.stdout.pipe(new Splitter(NALseparator));
-  
-  //  
-  
-  var file = new Date().toISOString().split('T')[0]+'_'+new Date().toISOString().split('T')[1].split('.')[0]+'.h264';
-  if(record) {
-    streamer.stdout.pipe(fs.createWriteStream('./recordings/' + file, {flags: 'a'}))
-    console.log('Video Streamer Service : Started recording ('+file+')');
-    sck.send('Video Streamer Service: Starting data stream and recording ('+file+')');
-  }
-  else {
-    sck.send("Video Streamer Service: Starting data stream without recording");
-  }
-  
-  // Free memory
-  exec('sudo /sbin/sysctl vm.drop_caches=3');
+let recordState = false;
+let writeStream = null;
+let startFrames = [];
 
-  
-  readStream.on("data", function(data) {  
-    if(sck.buzy && data.length > 10) { 
-      console.log("Video Streamer Service : Dropping frame, TCP socket busy");
-      return; 
+  // // Free memory
+  // exec('sudo /sbin/sysctl vm.drop_caches=3');
+
+function startCameraSoftware() {
+
+  console.log("Video Streamer Service : Starting Camera Software");
+
+  cameraSoftware = spawn('raspivid', ['-t', '0',
+    '-awb', 'auto',
+    '-ex', 'auto',
+    '-mm', 'average',
+    '-o', '-',
+    '-w', config.width,
+    '-h', config.height,
+    '-fps', config.fps,
+    '-vf', '-hf', '-pf', 'baseline']);
+
+  cameraSoftware.on("error", (error) => {
+    if (error.code == "ENOENT") {
+      console.log("Video Streamer Service : Camera Software not found");
     }
-
-    sck.buzy = true;
-    sck.send(Buffer.concat([NALseparator, data]), { binary: true}, function(error) { sck.buzy = false; });
   });
 
+  cameraSoftware.on("close", (code, signal) => {
+    console.log("Video Streamer Service : Camera Software closed");
+
+    // Stop recording if it is running
+    stopRecording()
+
+    // Reset variables
+    cameraSoftware = null;
+    pipe = null;
+
+    // Try to restart in 5 seconds
+    setTimeout(startCameraSoftware, 5000);
+    console.log("Video Streamer Service : Restarting Streamer in 5 seconds");
+  });
+
+
+  pipe = cameraSoftware.stdout.pipe(new Splitter(NALseparator));
+
+  pipe.on("data", (data) => {
+    const package = Buffer.concat([NALseparator, data]);
+
+    // If recording
+    if(recordState == "recording") {
+      writeStream.write(package);
+    }
+
+    // Save start frames for later initialization for new clients
+    if (package[4] == 0x27) {
+      startFrames[0] = package;
+    }
+    else if (package[4] == 0x28) {
+      startFrames[1] = package;
+    }
+    else if(package[4] == 0x25) {
+      startFrames[2] = package;
+
+      if(recordState == "idr") {
+        // Send SPS and PPS IDR frames
+        startFrames.forEach((frame) => { writeStream.write(frame); });
+        recordState = "recording";
+        console.log('Video Streamer Service : IDR frame received, starting recording');
+      }
+    }
+
+
+    wss.clients.forEach((client) => {
+      if (client.bufferedAmount > 0) {
+        console.log("Video Streamer Service : Dropping frame, TCP socket still sending");
+        return;
+      }
+      client.send(package, { binary: true });
+    });
+  });
+}
+
+// Start video software
+startCameraSoftware();
+
+function startRecording() {
+  if (recordState) { console.log("Video Streamer Service : Already recording"); return; }
+  if (!pipe) { console.log("Video Streamer Service : Could not start recording, camera software pipe is not set"); return; }
+
+  recordState = "idr";
+  recordingFile = new Date().toJSON().replaceAll(/(:|-)/g, "").split(".").shift() + '.h264';
+  writeStream = fs.createWriteStream('./recordings/' + recordingFile, { flags: 'a' });
+
+  console.log('Video Streamer Service : Waiting for IDR frame to record');
+}
+
+function stopRecording() {
+  if (!recordState) { console.log("Video Streamer Service : Not recording"); return; }
+
+  recordState = false;
+  if (writeStream) { writeStream.close(); writeStream = null; }
+
+  console.log('Video Streamer Service : Stopped recording ('+recordingFile+')');
 }
 
 
