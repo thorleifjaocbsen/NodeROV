@@ -7,11 +7,11 @@
 
 const EventEmitter = require('events')
 
-module.exports = class AuxiliaryController {
+module.exports = class AuxiliaryController extends EventEmitter {
 
   constructor(options) {
 
-    this.eventEmitter = new EventEmitter()
+    super();
 
     let default_values = {
       minUS: 1000,
@@ -24,11 +24,6 @@ module.exports = class AuxiliaryController {
 
     this.devices = options.devices
     this.devices.forEach(device => { device.us = device.idleUS });
-  }
-
-  on(event, callback) {
-
-    this.eventEmitter.on(event, callback)
   }
 
   constrain(value, min, max) {
@@ -61,7 +56,7 @@ module.exports = class AuxiliaryController {
     device.us = this.map(input, -1, 1, device.minUS, device.maxUS)
     
     // Emit event for change
-    this.eventEmitter.emit('deviceOutputChange', device)    
+    super.emit('deviceOutputChange', device)    
   }
 
 

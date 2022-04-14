@@ -2,7 +2,23 @@
 	"port": 8000,
 	"ip": "0.0.0.0",
 	"rov": {
+		"headingPID": {
+			"kp": 0.5,
+			"ki": 0.0,
+			"kd": 0.0,
+			"deadband": 0.0,
+			"max": 2000,
+			"min": 1000
+		},
+		"depthPID": {
+			"kp": 0.5,
+			"ki": 0.0,
+			"kd": 0.0,
+			"deadband": 5,
+			"max": 2000,
+			"min": 1000
 
+		}
 	},
 	"thrusters": {
 		"minUS": 1000,

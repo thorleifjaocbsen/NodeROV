@@ -30,7 +30,7 @@ module.exports = class PIDController {
     return this.output = 0;
   }
 
-
+  // Calculate output based on setPoint vs actuallly measured value (pV)
   update(setPoint, processVariable) {
 
     const now = Date.now();

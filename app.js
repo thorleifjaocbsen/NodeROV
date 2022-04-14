@@ -17,7 +17,11 @@ const ThrusterControllerClass = require('./js/ThrusterController.js');
 const AuxiliaryControllerClass = require('./js/AuxiliaryController.js');
 const Hearthbeat = require('./js/Hearthbeat.js');
 
-//test
+const PCA9685 = require('./js/drivers/PCA9685.js');
+const pca9685 = new PCA9685();
+pca9685.init();
+
+
 // LOOP
 // 1hz - Update ping
 // 10hz - Update gyro
@@ -54,6 +58,7 @@ ThrusterController.on('thrusterOutputChange', (thrusters) => {
   thrusters.forEach(thruster => {
     log.debug(`Setting PWM for pin ${thruster.pin} to ${thruster.us}uS`)
     // TODO: Add PWM Controller to SET PWM
+    pca9685.setPWM(thruster.pin, thruster.us);
   });
 })
 
@@ -66,6 +71,7 @@ ThrusterController.on('thrusterOutputChange', (thrusters) => {
 AuxiliaryController.on('deviceOutputChange', (device) => {
   log.debug(`PWM Signal change on ${device.id} (pin: ${device.pin}, us: ${device.us})`)
   // TODO: Add PWM Controller to SET PWM
+  pca9685.setPWM(device.pin, device.us);
 })
 
 
@@ -73,7 +79,8 @@ AuxiliaryController.on('deviceOutputChange', (device) => {
 
 // TEST: Testing that everything works on paper for now.
 ROVController.arm();
-ROVController.setControlInput({ climb: 1, yaw: 0.1 })
+ROVController.setControlInput({ forward: 1, yaw: 0.1 })
+
 AuxiliaryController.calculateOutput("camera", 1)
 
 

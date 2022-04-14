@@ -4,18 +4,20 @@
  * Credits: Myself, my family and my girlfriend and child.
  */
 
-const EventEmitter = require('events')
-const DEFAULT_CONTROL_INPUT = { roll: 0, pitch: 0, yaw: 0, climb: 0, forward: 0, lateral: 0 }
+const EventEmitter = require('events');
+const PIDController = require('./PIDController');
 
-module.exports = class RemoteOperatedVehicle {
+const DEFAULT_CONTROL_INPUT = { roll: 0, pitch: 0, yaw: 0, climb: 0, forward: 0, lateral: 0 };
+
+module.exports = class RemoteOperatedVehicle extends EventEmitter {
   constructor(config) {
-    this.eventEmitter = new EventEmitter()
+    super();
     this.armed = false
     this.controlInput = this.DEFAULT_CONTROL_INPUT
     this.depth = {
       hold: false,
       wanted: 0,
-      PID: false
+      PID: new PIDController()
     }
     this.heading = {
       hold: false,
@@ -30,14 +32,10 @@ module.exports = class RemoteOperatedVehicle {
     this.gain = 100
   }
 
-  on(event, callback) {
-    this.eventEmitter.on(event, callback)
-  }
-
   arm() {
     if (this.armed) return
     this.armed = true
-    this.eventEmitter.emit("arm")
+    super.emit("arm")
   }
 
 
@@ -45,7 +43,7 @@ module.exports = class RemoteOperatedVehicle {
     if (!this.armed) return
     this.setControlInput(DEFAULT_CONTROL_INPUT)
     this.armed = false
-    this.eventEmitter.emit("disarm")
+    super.emit("disarm")
   }
 
   toggleArm() {
@@ -56,7 +54,7 @@ module.exports = class RemoteOperatedVehicle {
   setControlInput(newInput) {
     if (!this.armed) return false
     this.controlInput = {...DEFAULT_CONTROL_INPUT, ...newInput}
-    this.eventEmitter.emit("controlInputChange", newInput)
+    super.emit("controlInputChange", newInput)
   }
   
 }
