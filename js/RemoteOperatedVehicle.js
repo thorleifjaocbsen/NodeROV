@@ -50,6 +50,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     this.controlData = {}
   }
 
+
   constrain(value, min, max) { return Math.max(Math.min(value, max), min) }
   map(x, in_min, in_max, out_min, out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min }
 
@@ -143,16 +144,16 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
   forward(value) { this.calculateThrusterOutput() }
   lateral(value) { this.calculateThrusterOutput() }
 
-  arm(value) {
+  arm() {
 
-    if (this.armed || value != 0) return
+    if (this.armed) return
     this.armed = true
     super.emit("arm")
   }
 
-  disarm(value) {
+  disarm() {
 
-    if (!this.armed || value != 0) return
+    if (!this.armed) return
     this.armed = false
 
     // Set all motors off
@@ -161,9 +162,8 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     super.emit("disarm")
   }
 
-  toggleArm(value) {
+  toggleArm() {
 
-    if (!value) return
     if (this.armed) this.disarm()
     else this.arm()
   }

@@ -4,7 +4,7 @@
  * Credits: Myself, my family and my girlfriend and child.
  */
 
-class Dashboard {
+export default class Dashboard {
 
   constructor(canvas) {
 
@@ -15,12 +15,11 @@ class Dashboard {
     this.scales = []
 
     this.setScale(0, "PRESSURE", 40, 160, 30)
-    this.setScale(1, "DEPTH", 90, 110, 30)
+    this.setScale(1, "DEPTH", 73, 100, 30)
     this.setScale(2, "TEMPERATURE", 4, 30, 0)
     this.setScale(3, "VOLTAGE", 11, 16.8, -6.8)
     this.setScale(4, "CURRENT", 20, 90, 10)
     this.setScale(5, "MAH USED", 3214, 5500, 1000)
-      // 45, 315, 0, 0, 135, 225
 
     this.thrusters = []
 

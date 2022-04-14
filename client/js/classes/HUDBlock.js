@@ -4,7 +4,7 @@
  * Credits: Myself, my family and my girlfriend and child.
  */
 
-class HUDBlock {
+export default class HUDBlock {
   
   constructor(canvas) {
 
@@ -14,7 +14,7 @@ class HUDBlock {
   }
 
 
-  draw() {
+  draw(pitch = 0, roll = 0, heading = 0) {
 
     const width = this.canvas.width
     const height = this.canvas.height
@@ -22,8 +22,8 @@ class HUDBlock {
 
     ctx.clearRect(0, 0, width, height);
     ctx.save()
-    this.drawArtificialHorizon(8,9)
-    this.drawCompass(0)
+    this.drawArtificialHorizon(pitch, roll)
+    this.drawCompass(heading)
     ctx.restore()
   }
 

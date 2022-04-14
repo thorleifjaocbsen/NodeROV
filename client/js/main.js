@@ -1,18 +1,26 @@
-import GUI from './gui.js';
-import Socket from './socket.js';
-import Controls from './controls.js';
-import Video from './video.js';
+import GUI from './classes/GUI.js';
+import Socket from './classes/Socket.js';
+import Controls from './classes/Controls.js';
+import Video from './classes/Video.js';
+import HUDBlock from './classes/HUDBlock.js';
+import Dashboard from './classes/Dashboard.js';
 
 const gui = new GUI();
 const controls = new Controls();
 const socket = new Socket();
 const video = new Video(document.getElementById("video"));
-
 const rovData = {};
 let vacuumTest = false;
 let confirmWaterTight = false;
 
 //console.log = gui.log
+
+const dashboard = new Dashboard(document.getElementById("dataGraphicsCanvas"))
+setTimeout(() => { dashboard.draw() }, 100)
+
+const hudBlock = new HUDBlock(document.getElementById("HUD"))
+setTimeout(() => { hudBlock.draw() }, 100)
+
 
 /************************
  * Video Socket - Used for camera transmit
@@ -65,7 +73,7 @@ gui.setButton("gui-controls-button-4", "TEST", function (e) {
     gui.animateScale("scale1", randomNumber, randomNumber);
 });
 
-gui.setButton("gui-controls-button-2", "ARM", function (e) { socket.send("armtoggle"); });
+gui.setButton("gui-controls-button-2", "ARM", function (e) { socket.send("togglearm"); });
 gui.setButton("gui-controls-button-5", "HEADING HOLD", function (e) { socket.send("headinghold"); });
 gui.setButton("gui-controls-button-6", "DEPTH HOLD", function (e) { socket.send("depthhold"); });
 gui.setButton("gui-controls-button-7", "RECORD", function (e) {
@@ -126,24 +134,24 @@ gui.setInfo(12, 0, "Latency:");
 /************************
   * Controls on press e.t.c
  ************************/
-controls.onPress(controls.map.gainUp, () => { socket.send("setgain " + (rovData.gain + 50)); });
-controls.onPress(controls.map.gainDown, () => { socket.send("setgain " + (rovData.gain - 50)); });
-controls.onPress(controls.map.lightsUp, () => {
-    socket.send("setlight 0 " + (rovData.lights[0] + 10));
-    socket.send("setlight 1 " + (rovData.lights[1] + 10));
-}, 100);
-controls.onPress(controls.map.lightsDown, () => {
-    socket.send("setlight 0 " + (rovData.lights[0] - 10));
-    socket.send("setlight 1 " + (rovData.lights[1] - 10));
-}, 100);
-controls.onPress(controls.map.cameraUp, () => { socket.send("setcamera " + (rovData.cameraPosition - 1)); }, 10);
-controls.onPress(controls.map.cameraDown, () => { socket.send("setcamera " + (rovData.cameraPosition + 1)); }, 10);
-controls.onPress(controls.map.fullscreen, () => { gui.pressButton("gui-controls-button-8"); }, 1000)
-controls.onPress(controls.map.arm, () => { socket.send("arm"); });
-controls.onPress(controls.map.disarm, () => { socket.send("disarm"); });
-controls.onPress(controls.map.depthhold, () => { socket.send("depthhold"); });
-controls.onPress(controls.map.gripOpen, () => { socket.send("gripopen"); }, 50);
-controls.onPress(controls.map.gripClose, () => { socket.send("gripclose"); }, 50);
+// controls.onPress(controls.map.gainUp, () => { socket.send("setgain " + (rovData.gain + 50)); });
+// controls.onPress(controls.map.gainDown, () => { socket.send("setgain " + (rovData.gain - 50)); });
+// controls.onPress(controls.map.lightsUp, () => {
+//     socket.send("setlight 0 " + (rovData.lights[0] + 10));
+//     socket.send("setlight 1 " + (rovData.lights[1] + 10));
+// }, 100);
+// controls.onPress(controls.map.lightsDown, () => {
+//     socket.send("setlight 0 " + (rovData.lights[0] - 10));
+//     socket.send("setlight 1 " + (rovData.lights[1] - 10));
+// }, 100);
+// controls.onPress(controls.map.cameraUp, () => { socket.send("setcamera " + (rovData.cameraPosition - 1)); }, 10);
+// controls.onPress(controls.map.cameraDown, () => { socket.send("setcamera " + (rovData.cameraPosition + 1)); }, 10);
+// controls.onPress(controls.map.fullscreen, () => { gui.pressButton("gui-controls-button-8"); }, 1000)
+// controls.onPress(controls.map.arm, () => { socket.send("arm"); });
+// controls.onPress(controls.map.disarm, () => { socket.send("disarm"); });
+// controls.onPress(controls.map.depthhold, () => { socket.send("depthhold"); });
+// controls.onPress(controls.map.gripOpen, () => { socket.send("gripopen"); }, 50);
+// controls.onPress(controls.map.gripClose, () => { socket.send("gripclose"); }, 50);
 
 /************************
  *
@@ -259,43 +267,46 @@ socket.on("log", function (data) {
 let tempCounter = 0;
 
 function systemLoop() {
-    if (controls.changedSinceReturn) {
-        socket.send('controls ' + JSON.stringify(controls.returnObject()));
+
+    controls.detectPressedGamepad();
+    if(controls.inputChanged()) {
+        let gpData = controls.getGamepad();
+        socket.send('controls ' + JSON.stringify(gpData))
     }
 
-    // ! < add it below to enable gp warning again (before controls.warned)
-    if (!controls.checkGamepad() && controls.warned) {
-        popup("Connect Gamepad", "Please connect the gamepad to continue.");
-        controls.warned = true;
-    } else if (controls.checkGamepad() && controls.warned) {
-        popup_hide();
-        controls.warned = false;
-    } else if (confirmWaterTight == false && controls.warned == false) {
-        //popup("Confirm water tightness of chambers", "Check for loose connectors and that vacuum plugs are connected before pressing confirm!", "Confirm");
-        confirmWaterTight = true;
-    }
+    // // ! < add it below to enable gp warning again (before controls.warned)
+    // if (!controls.checkGamepad() && controls.warned) {
+    //     popup("Connect Gamepad", "Please connect the gamepad to continue.");
+    //     controls.warned = true;
+    // } else if (controls.checkGamepad() && controls.warned) {
+    //     popup_hide();
+    //     controls.warned = false;
+    // } else if (confirmWaterTight == false && controls.warned == false) {
+    //     //popup("Confirm water tightness of chambers", "Check for loose connectors and that vacuum plugs are connected before pressing confirm!", "Confirm");
+    //     confirmWaterTight = true;
+    // }
 
-    if (controls.checkGamepad()) controls.update();
+    // if (controls.checkGamepad()) controls.update();
     if (rovData.heading) {
         gui.drawCompass(rovData.heading.current);
     }
 
-    /* Temp to show gui working */
-    if (tempCounter > 30) {
-        var compass = Math.floor(Math.random() * 360);
-        var roll = Math.floor(Math.random() * 14) - 7;
-        var pitch = Math.floor(Math.random() * 6) - 3;
-        var depth = Math.floor(Math.random() * 100);
+    // /* Temp to show gui working */
+    // if (tempCounter > 30) {
+    //     var compass = Math.floor(Math.random() * 360);
+    //     var roll = Math.floor(Math.random() * 14) - 7;
+    //     var pitch = Math.floor(Math.random() * 6) - 3;
+    //     var depth = Math.floor(Math.random() * 100);
 
-        gui.animateDataGraph();
-        gui.drawCompass(compass);
-        gui.drawAccelerometer(pitch, roll);
-        gui.animateScale("scale1", depth, depth);
-        gui.animateScale("scale2", depth, depth);
-        gui.animateScale("scale3", depth, depth);
-        tempCounter = 0;
-    }
-    else tempCounter++;
+    //     gui.animateDataGraph();
+    //     gui.drawCompass(compass);
+    //     gui.drawAccelerometer(pitch, roll);
+    //     gui.animateScale("scale1", depth, depth);
+    //     gui.animateScale("scale2", depth, depth);
+    //     gui.animateScale("scale3", depth, depth);
+    //     tempCounter = 0;
+    // }
+    // else tempCounter++;
 
     if (rovData.outside) {
         var PSI = parseFloat(rovData.outside.pressure / 1000 * 14.5037738).toFixed(2);

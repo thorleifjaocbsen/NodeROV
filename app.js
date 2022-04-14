@@ -50,7 +50,8 @@ rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('thusterOutputChanged', (ouputInUs) => { 
   ouputInUs.forEach((output) => {
-    log.info(`Pin: ${output.pin} = ${output.us}us`)
+    log.info(`Pin: ${output.pin} = ${output.us}us`);
+    pca9685.setPWM(output.pin, output.us);
   })
 })
 rov.controllerInputUpdate(defaultControls)
@@ -132,42 +133,34 @@ aux.on('deviceOutputChange', (device) => {
  ************************/
 const wss = new ws.WebSocketServer({ perMessageDeflate: false, server: webServer })
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
-wss.on('connection', function(ws, req) {
+wss.on('connection', function(client) {
 
-  try { log.remove(log.transports.socketIO); }
-  catch(e) {  }
+  client.ip = client._socket.remoteAddress;
+  client.port = client._socket.remotePort;
 
-  const ip = ws._socket.remoteAddress.split(":").pop()
-  const port = ws._socket.remotePort
-
-
-  log.info(`Websocket: Connection from: ${ip}:${port}`)
-  log.add(log.socketIOTransport,ws)
+  log.info(`Websocket: Remote connection from: ${client.ip}:${client.port}`)
+  log.add(log.socketIOTransport, client)
   log.info('Websocket: Starting heartbeat')
 
-  const hb = new HeartbeatController()
-  hb.on("timeout", () => {
-  
-    log.warn(`Heartbeat timeout, disarm ROV (${ip}:${port})`)
+
+  client.heartbeat = new HeartbeatController();
+
+  client.heartbeat.on("timeout", () => {
+    log.warn(`Heartbeat timeout, disarm ROV (${client.ip}:${client.port})`)
     rov.disarm()
-    hb.stop()
-  })
- 
-  const sendHeartbeat = (data, latency) => { ws.send(`hb ${data} ${latency}`) }
+  });
+  client.heartbeat.on('beat', (data, latency) => { client.send(`hb ${data} ${latency}`) });
+  client.heartbeat.start();
 
-  hb.on('beat', sendHeartbeat)
-  hb.start()
-
-  ws.on('message', parseWebsocketData)
-  ws.on('close', () => {
-    log.info(`Websocket: Close from ${ip}:${port}`)
+  client.on('message', parseWebsocketData)
+  client.on('close', () => {
+    log.info(`Websocket: Close from ${client.ip}:${client.port}`)
 
     rov.disarm()
-    hb.stop()
-    hb.removeListener('beat', sendHeartbeat)
+    log.remove(log.transports.socketIO, client)
+    client.heartbeat.stop()
+    client.heartbeat.removeAllListeners();
   })
-
-  ws.hb = hb
 });
 
 
@@ -180,112 +173,47 @@ wss.on('connection', function(ws, req) {
  ************************/
 function parseWebsocketData(data) {
 
-
   data = data.toString().split(" ")
   const cmd = data.shift(1)
+  const client = this;
 
-  if (cmd == "hb") { this.hb.pulse(data[0]) }
-  else if (cmd == "controls") { 
-    // Data json object?
-    data = JSON.parse(data.join(' '))
-    data = {...{ axes: defaultControls.axes }, ...data}
-    rov.controllerInputUpdate(data)
-    
+  switch(cmd) {
+
+    case "clog":
+      log.info(`Websocket: Client data:  ${cmd} (${JSON.stringify(data)}`);
+      break;
+
+    case 'arm':
+      log.info(`Websocket: Arm command from ${client.ip}:${client.port}`);
+      rov.arm();
+      break;
+
+    case 'disarm':
+      log.info(`Websocket: Disarm command from ${client.ip}:${client.port}`);
+      rov.disarm();
+      break;
+
+    case 'togglearm':
+      log.info(`Websocket: Arm toggle command from ${client.ip}:${client.port}`);
+      rov.toggleArm();
+      break;
+
+    case 'hb':
+      client.heartbeat.pulse(data[0]);
+      break;
+
+    case 'controls':
+      log.info(`Websocket: Controls command from ${client.ip}:${client.port}`);
+      data = JSON.parse(data.join(' '));
+      data = {...{ axes: defaultControls.axes }, ...data};
+      rov.controllerInputUpdate(data);
+      break;
+
+    default:
+      log.warn(`Websocket: Unknown command from ${client.ip}:${client.port}`);
+      log.warn(`Websocket: Unknown command: ${cmd} (${JSON.stringify(data)})`);
+      break;
   }
-  else {
-    log.warn(`Websocket: Unknown command: ${cmd} (${JSON.stringify(data)})`);
-  }
-
-    // switch (cmd) {
-
-
-    //   case "clog":
-    //     log.log('info', 'CLIENT: ' + data);
-    //     break;
-
-    //   case "setlight":
-    //     var d = data.split(" ");
-    //     rovController.setLight(d[0], parseInt(d[1]));
-    //     break;
-
-    //   case "armtoggle":
-    //     rovController.toggleArm()
-    //     break;
-
-    //   case "arm":
-    //     rovController.arm()
-    //     break;
-
-    //   case "disarm":
-    //     rovController.disarm()
-    //     break;
-
-    //   case "depthhold":
-    //     if (!rovController.armed) { log.info('Depth hold not activated, ROV not armed'); break; }
-    //     rovController.depth.PID.reset();
-    //     rovController.depth.wanted = parseInt(ptSensorExt.pressure);
-    //     if (rovController.depth.hold) rovController.depth.hold = false;
-    //     else rovController.depth.hold = true;
-    //     log.log('info', 'Depth hold is: ' + (rovController.depth.hold ? 'Activated' : 'Deactivated'));
-    //     break;
-
-    //   case "headinghold":
-    //     if (!rovController.armed) {
-    //       log.log('info', 'Heading hold not activated, ROV not armed');
-    //       return;
-    //     }
-    //     rovController.heading.PID.reset();
-    //     rovController.heading.wanted = rovController.heading.totalHeading * 10;
-    //     if (rovController.heading.hold) rovController.heading.hold = false;
-    //     else rovController.heading.hold = true;
-    //     log.log('info', 'Heading hold is: ' + (rovController.heading.hold ? 'Activated' : 'Deactivated'));
-    //     break;
-
-    //   case "setdepth":
-    //     rovController.depth.wanted = parseInt(data);
-    //     break;
-
-    //   case "setgain":
-    //     rovController.gain = parseInt(data);
-    //     if (rovController.gain > 400) rovController.gain = 400;
-    //     if (rovController.gain < 50) rovController.gain = 50;
-    //     break;
-
-    //   case "setflat":
-    //     accmag.setFlat();
-    //     config.acc.flat = accmag.acc.flat;
-    //     utils.writeConfig(config);
-    //     log.log('info', 'ROV Flat calibration set');
-    //     break;
-
-    //   case "calibrategyro":
-    //     gyro.calibrate(100, 10);
-    //     log.log('info', 'ROV Gyro Calibration starting. Do not move ROV');
-    //     break;
-
-    //   case "setcamera":
-    //     rovController.setCamera(data);
-    //     break;
-
-    //   case "gripopen":
-    //     rovController.setGripper(1);
-    //     break;
-    //   case "gripclose":
-    //     rovController.setGripper(-1);
-    //     break;
-
-    //   case "controls":
-    //     controls = JSON.parse(data);
-    //     break;
-
-    //   default:
-    //     
-    //     break;
-    // }
-  
-  // else {
-  //   log.log('warn', 'Websocket: Bad data received: ' + data);
-  // }
 }
 
 
