@@ -34,7 +34,7 @@ p.decode(<binary>);
         module.exports = factory(require("./Decoder"), require("./YUVCanvas"));
     } else {
         // Browser globals (root is window)
-        root.Player = factory(root.Decoder, root.YUVCanvas);
+        window.Player = factory(window.Decoder, window.YUVCanvas);
     }
 }(this, function (Decoder, WebGLCanvas) {
   "use strict";
