@@ -18,12 +18,12 @@ console.error = log.error
 
 const Configuration           = require('./configuration.json')
 const defaultControls         = require('./controls.json')
-const RemoteOperatedVehicle   = require('./js/RemoteOperatedVehicle.js');
-const AuxiliaryController     = require('./js/AuxiliaryController.js')
-const HeartbeatController     = require('./js/Heartbeat.js')
-const InternalPressureSensor  = require('./js/InternalPressureSensor')
-const AnalogDigitalConverter  = require('./js/AnalogDigitalConverter')
-const InertialMeasurementUnit = require('./js/InertialMeasurementUnit')
+const RemoteOperatedVehicle   = require('./js/classes/RemoteOperatedVehicle.js');
+const AuxiliaryController     = require('./js/classes/AuxiliaryController.js')
+const HeartbeatController     = require('./js/classes/Heartbeat.js')
+const InternalPressureSensor  = require('./js/classes/InternalPressureSensor')
+const AnalogDigitalConverter  = require('./js/classes/AnalogDigitalConverter')
+const InertialMeasurementUnit = require('./js/classes/InertialMeasurementUnit')
 
 const PCA9685 = require('./js/drivers/PCA9685.js');
 const pca9685 = new PCA9685();
@@ -57,9 +57,6 @@ rov.on('thusterOutputChanged', (ouputInUs) => {
     log.info(`Pin: ${output.pin} = ${output.us}us`);
     pca9685.setPWM(output.pin, output.us);
   })
-
-  //wss.broadcast(`thrusterOutput ${JSON.stringify(ouputInUs)}`);
-
 })
 rov.controllerInputUpdate(defaultControls)
 
