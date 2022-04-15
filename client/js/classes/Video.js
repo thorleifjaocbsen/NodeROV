@@ -2,7 +2,7 @@ import Socket from './Socket.js';
 import '../broadway/decoder.js';
 import '../broadway/yuvcanvas.js';
 import '../broadway/player.js';
-import EventEmitter from '../EventEmitter.js';
+import EventEmitter from './EventEmitter.js';
 
 export default class Video extends EventEmitter {
 

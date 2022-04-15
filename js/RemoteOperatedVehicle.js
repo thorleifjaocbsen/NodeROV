@@ -54,6 +54,21 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
   constrain(value, min, max) { return Math.max(Math.min(value, max), min) }
   map(x, in_min, in_max, out_min, out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min }
 
+  // Generate telemetry data
+  getTelemetry() {
+    const motors = [];
+
+    for (let id in this.motors) {
+      motors.push(this.motors[id].output * 100);
+    };
+
+    return {
+      battery: this.battery,
+      attitude: this.attitude,
+      environment: this.environment,
+      motors
+    }
+  }
 
   calculateThrusterOutput() {
 

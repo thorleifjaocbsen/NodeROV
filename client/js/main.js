@@ -16,10 +16,7 @@ let confirmWaterTight = false;
 //console.log = gui.log
 
 const dashboard = new Dashboard(document.getElementById("dataGraphicsCanvas"))
-setTimeout(() => { dashboard.draw() }, 100)
-
 const hudBlock = new HUDBlock(document.getElementById("HUD"))
-setTimeout(() => { hudBlock.draw() }, 100)
 
 
 /************************
@@ -120,10 +117,10 @@ gui.setButton("gui-log-button-2", "SCREENSHOT", function (e) {
 
 gui.setInfo(1, 0, "Int. temp:");
 gui.setInfo(2, 0, "Int. pressure:");
-gui.setInfo(3, 0, "Ext. temp:");
-gui.setInfo(4, 0, "Ext. pressure:");
+gui.setInfo(3, 0, "Int. humidity:");
+gui.setInfo(4, 0, "Leak:");
 gui.setInfo(5, 0, "Core temp:");
-gui.setInfo(6, 0, "mAh:");
+gui.setInfo(6, 0, "-");
 gui.setInfo(7, 0, "Gain:");
 gui.setInfo(8, 0, "Turns:");
 gui.setInfo(9, 0, "Heading Hold:");
@@ -168,7 +165,55 @@ socket.on("hb", (data) => {
     const [sendtTime, latency] = data.split(" ");
     socket.send("hb " + sendtTime);
     gui.setInfo(12, latency)
+});
+
+socket.on("enviromentUpdate", (data) => {
+    const env = JSON.parse(data);
+    console.log(data);
+
+});
+
+socket.on("telemetry", (data) => {
+    data = JSON.parse(data);
+
+    hudBlock.draw(data.attitude.pitch, data.attitude.roll, data.attitude.heading);
+
+    // Math
+    const internalPressureInPSI = (data.environment.internalPressure * 0.0145037738).toFixed(1);
+    const externalPressureInPSI = (data.environment.externalPressure * 0.0145037738);
+    const depth = (externalPressureInPSI * 1.4219702063247);
+
+    gui.setInfo(1, data.environment.internalTemp.toFixed(1));
+    gui.setInfo(2, internalPressureInPSI);
+    gui.setInfo(3, parseInt(data.environment.humidity)+ "%");
+    gui.setInfo(4, data.environment.leak);
+
+    dashboard.setScale(0, "DEPTH", depth.toFixed(1), 100, 30)
+    dashboard.setScale(1, "PRESSURE", externalPressureInPSI.toFixed(1), 1300, 30)
+    dashboard.setScale(2, "TEMPERATURE", data.environment.internalTemp, 30, 0)
+    dashboard.setScale(3, "VOLTAGE", data.battery.voltage.toFixed(2), 16.8, -6.8)
+    dashboard.setScale(4, "CURRENT", data.battery.current.toFixed(2), 90, 10)
+    dashboard.setScale(5, "MAH USED", parseInt(data.battery.voltage), 5500, 1000)
+
+    //  setThruster(number, value, offsetX = false, offsetY = false, rotation = false) {
+    for(let id in data.motors) {
+        console.log(data.motors[id]);
+
+        dashboard.setThruster(id, data.motors[id]);
+    }
+        
+    
+    dashboard.draw();
+
+});
+
+socket.on("log", function (data) {
+    try {
+        data = JSON.parse(data);
+        gui.log(data.message, data.time, true);
+    } catch (e) { }
 })
+
 socket.on("telemetryData", function (data) {
     rovData = JSON.parse(data);
 
@@ -248,12 +293,6 @@ socket.on("telemetryData", function (data) {
 
 
 });
-socket.on("log", function (data) {
-    try {
-        data = JSON.parse(data);
-        gui.log(data.message, data.time, true);
-    } catch (e) { }
-})
 
 
 /************************

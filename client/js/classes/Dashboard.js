@@ -14,21 +14,21 @@ export default class Dashboard {
     this.warningColor = 'rgba(231,96,98,1)'
     this.scales = []
 
-    this.setScale(0, "PRESSURE", 40, 160, 30)
-    this.setScale(1, "DEPTH", 73, 100, 30)
-    this.setScale(2, "TEMPERATURE", 4, 30, 0)
-    this.setScale(3, "VOLTAGE", 11, 16.8, -6.8)
-    this.setScale(4, "CURRENT", 20, 90, 10)
-    this.setScale(5, "MAH USED", 3214, 5500, 1000)
+    this.setScale(0, "PRESSURE", 0, 160, 30)
+    this.setScale(1, "DEPTH", 0, 100, 30)
+    this.setScale(2, "TEMPERATURE", 0, 30, 0)
+    this.setScale(3, "VOLTAGE", 0, 16.8, -6.8)
+    this.setScale(4, "CURRENT", 0, 90, 10)
+    this.setScale(5, "MAH USED", 0, 5500, 1000)
 
     this.thrusters = []
 
-    this.setThruster(0, -10, 0, 0, 45)
-    this.setThruster(1, -10, 100, 0, 315)
-    this.setThruster(2, 10, 20, 100, 0)
-    this.setThruster(3, 10, 80, 100, 0)
-    this.setThruster(4, 10, 0, 200, 135)
-    this.setThruster(5, 10, 100, 200, 225)
+    this.setThruster(0, 0, 0, 0, 45)
+    this.setThruster(1, 0, 100, 0, 315)
+    this.setThruster(4, 0, 20, 100, 180)
+    this.setThruster(5, 0, 80, 100, 0)
+    this.setThruster(2, 0, 0, 200, 135+180)
+    this.setThruster(3, 0, 100, 200, 225+180)
   }
 
   setScale(scale, desc, value, maxValue, warningDiff) {
@@ -41,8 +41,7 @@ export default class Dashboard {
   }
 
   setThruster(number, value, offsetX = false, offsetY = false, rotation = false) {
-
-    const defValues = { value: 0, offsetX: 0, offsetY: 0, rotation: 0 }
+    let defValues = { value: 0, offsetX: 0, offsetY: 0, rotation: 0 }
 
     if (this.thrusters[number]) {
 
@@ -50,12 +49,14 @@ export default class Dashboard {
     }
 
     const newValues = {}
-    if(value) newValues.value = parseInt(value)
-    if(offsetX) newValues.offsetX = parseInt(offsetX)
-    if(offsetY) newValues.offsetY = parseInt(offsetY)
-    if(rotation) newValues.rotation = parseInt(rotation)
+    newValues.value = parseInt(value)
+    
+    if(offsetX != false) newValues.offsetX = parseInt(offsetX)
+    if(offsetY != false) newValues.offsetY = parseInt(offsetY)
+    if(rotation != false) newValues.rotation = parseInt(rotation)
 
     this.thrusters[number] = {...defValues, ...newValues}
+
   }
 
   draw() {

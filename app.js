@@ -29,6 +29,10 @@ const PCA9685 = require('./js/drivers/PCA9685.js');
 const pca9685 = new PCA9685();
 pca9685.init();
 
+// Create interval every 1 second to update the telemtry from rov
+setInterval(() => {
+  wss.broadcast("telemetry " + JSON.stringify(rov.getTelemetry()));
+}, 1000);
 
 /************************
  *
@@ -53,6 +57,9 @@ rov.on('thusterOutputChanged', (ouputInUs) => {
     log.info(`Pin: ${output.pin} = ${output.us}us`);
     pca9685.setPWM(output.pin, output.us);
   })
+
+  //wss.broadcast(`thrusterOutput ${JSON.stringify(ouputInUs)}`);
+
 })
 rov.controllerInputUpdate(defaultControls)
 
@@ -64,10 +71,11 @@ rov.controllerInputUpdate(defaultControls)
 ips.on('initError', (err) => { log.error(`IPS initializing failed (${err})`) })
 ips.on('readError', (err) => { log.error(`IPS read failed (${err})`) })
 ips.on('init', () => { log.info("IPS successfully initialized") })
-ips.on('read', () => { 
+ips.on('change', () => { 
 
-  log.debug(`IPS Read: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
+  log.info(`IPS Change: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
   rov.environment.internalPressure = ips.pressure
+  rov.environment.internalTemp = ips.temperature
   rov.environment.humidity = ips.humidity
 })
 
@@ -162,6 +170,8 @@ wss.on('connection', function(client) {
     client.heartbeat.removeAllListeners();
   })
 });
+
+wss.broadcast = (package) => wss.clients.forEach((client) => { client.send(package); });
 
 
 /************************
