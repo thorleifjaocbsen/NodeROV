@@ -70,7 +70,7 @@ ips.on('readError', (err) => { log.error(`IPS read failed (${err})`) })
 ips.on('init', () => { log.info("IPS successfully initialized") })
 ips.on('change', () => { 
 
-  log.info(`IPS Change: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
+  log.debug(`IPS Change: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
   rov.environment.internalPressure = ips.pressure
   rov.environment.internalTemp = ips.temperature
   rov.environment.humidity = ips.humidity
