@@ -96,6 +96,7 @@ adc.on('read', () => {
  * Inertial Measurement Unit (IMU)
  *
  ************************/
+imu.on('initError', (err) => { log.error(`IMU initializing failed (${err})`) })
 imu.on('init', () => { log.info("IMU successfully initialized") })
 imu.on('read', () => {
 

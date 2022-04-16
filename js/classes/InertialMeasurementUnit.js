@@ -6,18 +6,19 @@
 const EventEmitter = require('events')
 const LSM9DS1 = require('lsm9ds1-sensor')
  
-module.exports = class InertialMeasurementUnit {
+module.exports = class InertialMeasurementUnit extends EventEmitter {
 
   constructor(options) {
 
-    this.eventEmitter = new EventEmitter()
+    super();
 
     this.sensor = new LSM9DS1();
-
     this.sensor.init().then(() => {
-      this.eventEmitter.emit('init')
+      super.emit('init')
       this.readSensorData()
-    })
+    }).catch((err) => {
+      super.emit('initError', err);
+    });
 
     this.roll = 0
     this.pitch = 0
@@ -27,13 +28,6 @@ module.exports = class InertialMeasurementUnit {
     this.autoRead = true
     this.readInterval = 200
   }
-
-
-  on(event, callback) {
-
-    this.eventEmitter.on(event, callback)
-  }
-
 
   readSensorData() {
     this.sensor.readAccel()
@@ -102,6 +96,6 @@ module.exports = class InertialMeasurementUnit {
     this.pitch   = Theta.toFixed(2)
     this.heading = Psi.toFixed(2)
 
-    this.eventEmitter.emit('read')
+    super.emit('read')
   }
 }
