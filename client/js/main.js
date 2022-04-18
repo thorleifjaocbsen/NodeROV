@@ -3,6 +3,7 @@ import Socket from './classes/Socket.js';
 import Controls from './classes/Controls.js';
 import Video from './classes/Video.js';
 import HUDBlock from './classes/HUDBlock.js';
+import LineChart from './classes/LineChart.js';
 import Dashboard from './classes/Dashboard.js';
 
 const gui = new GUI();
@@ -16,9 +17,9 @@ let confirmWaterTight = false;
 //console.log = gui.log
 
 const dashboard = new Dashboard(document.getElementById("dataGraphicsCanvas"))
-const hudBlock = new HUDBlock(document.getElementById("HUD"))
-
-
+//const hudBlock = new HUDBlock(document.getElementById("HUD"))
+const lineChart = new LineChart(document.getElementById("HUD"))
+window.lineChart = lineChart;;
 /************************
  * Video Socket - Used for camera transmit
  ************************/
@@ -176,8 +177,11 @@ socket.on("enviromentUpdate", (data) => {
 socket.on("telemetry", (data) => {
     data = JSON.parse(data);
 
-    hudBlock.draw(data.attitude.pitch, data.attitude.roll, data.attitude.heading);
-
+    //hudBlock.draw(data.attitude.pitch, data.attitude.roll, data.attitude.heading);
+    // Generate float between 0 and 20
+    const x = (Math.random() * 10).toFixed(2);
+    lineChart.addDataPoint(x);
+    data.environment.depth = x;
     gui.setInfo(1, data.environment.internalTemp.toFixed(1));
     gui.setInfo(2, data.environment.internalPressure);
     gui.setInfo(3, parseInt(data.environment.humidity)+ "%");

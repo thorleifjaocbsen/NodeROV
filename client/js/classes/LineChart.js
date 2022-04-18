@@ -29,34 +29,84 @@ export default class LineChart {
     this.#lastPoint = this.#height;
 
     this.xxx = 0;
+
+    this.setDepthScale(10);
+    this.setTimeScale(10);
+
+
+    // Width scale (time) seconds to pixels
+    this.points = [];
   }
 
+  setTimeScale(timeScale) {
+    this.timeScale = timeScale;
+    this.pixelsPerSecond = this.#width / this.timeScale;
+  }
+
+  setDepthScale(depthScale) {
+    this.depthScale = depthScale;
+    this.pixelsPerCentimeter = this.#height / (this.depthScale * 100);
+  }
+
+
   addDataPoint(depth) {
-    console.log("adding x" + depth);
+
+    this.points.push({ depth, time: new Date() });
+    this.checkDatapoints();
+    this.draw();
+  }
+
+  // Remove all points outside of current time minus the time scale
+  checkDatapoints() {
+    let time = new Date();
+    let deepest = 0;
+    let shallowest = 0;
+    this.points.forEach((point, index) => {
+
+      // Calculate time difference
+      const diff = (time - point.time) / 1000;
+      // Remove if diff is bigger than the time scale
+      if (diff > this.timeScale) {
+        this.points.splice(index, 1);
+      } 
+
+      // Set deepest 
+      if (point.depth > deepest) { deepest = point.depth; }
+      // Set shallowest
+      if (point.depth < shallowest) { shallowest = point.depth; }
+
+    });
+
+    // Update depth scale if needed     
+    this.setDepthScale(deepest);
+  }
+
+
+  draw() {
+    this.#ctx.clearRect(0, 0, this.#width, this.#height);
+    this.#ctx.save();
+
+    let lastPointsTime = this.points[0].time;
 
     this.#ctx.beginPath();
     this.#ctx.lineWidth = 3;
     this.#ctx.strokeStyle = "rgba(255,255,255,0.9)";
-    this.#ctx.moveTo(this.#width - 10, this.#lastPoint);
-    this.#ctx.lineTo(this.#width, depth);
+
+    // Draw lines between each point.
+    this.points.forEach(point => {
+      
+      // Calculate y axis position
+      let yPosition = (point.depth * 100) * this.pixelsPerCentimeter;
+
+      // Calculate x axis position
+      let timeDiff = (point.time - lastPointsTime) / 1000;  // In seconds
+      let xPosition = timeDiff * this.pixelsPerSecond;
+
+      // Draw line
+      this.#ctx.lineTo(xPosition, yPosition);
+    });
+
     this.#ctx.stroke();
-    this.#lastPoint = depth * 10
-
-    if (this.xxx == 0) this.test();
-    this.draw();
-  }
-
-  test() {
-    this.xxx = 1
-  }
-
-  draw() {
-
-    this.#ctx.globalCompositeOperation = "copy";
-    this.#ctx.drawImage(this.#ctx.canvas, -10, 0);
-    // reset back to normal for subsequent operations.
-    this.#ctx.globalCompositeOperation = "source-over"
-
   }
 
 
