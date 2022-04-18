@@ -31,7 +31,7 @@ module.exports = class MS5837 {
   #D2;
   #C;
 
-  constructor(address, device) {
+  constructor(device, address) {
 
     this.address = (typeof address !== 'undefined') ? address : 0x76;
     this.device = (typeof device !== 'undefined') ? device : 1;

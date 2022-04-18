@@ -20,6 +20,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       humidity: 0,
       internalTemp: 0,
       externalTemp: 0,
+      depth: 0,
       leak: false
     }
 

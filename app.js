@@ -6,23 +6,24 @@
 
 require('./ascii')
 
-const ws        = require('ws')
-const fs        = require('fs')
-const express   = require('express')
-const app       = express()
-const https     = require('https')
-const log       = require('./js/Log.js')
+const ws = require('ws')
+const fs = require('fs')
+const express = require('express')
+const app = express()
+const https = require('https')
+const log = require('./js/Log.js')
 
-console.log   = log.warn
+console.log = log.warn
 console.error = log.error
 
-const Configuration           = require('./configuration.json')
-const defaultControls         = require('./controls.json')
-const RemoteOperatedVehicle   = require('./js/classes/RemoteOperatedVehicle.js');
-const AuxiliaryController     = require('./js/classes/AuxiliaryController.js')
-const HeartbeatController     = require('./js/classes/Heartbeat.js')
-const InternalPressureSensor  = require('./js/classes/InternalPressureSensor')
-const AnalogDigitalConverter  = require('./js/classes/AnalogDigitalConverter')
+const Configuration = require('./configuration.json')
+const defaultControls = require('./controls.json')
+const RemoteOperatedVehicle = require('./js/classes/RemoteOperatedVehicle');
+const AuxiliaryController = require('./js/classes/AuxiliaryController')
+const HeartbeatController = require('./js/classes/Heartbeat')
+const InternalPressureSensor = require('./js/classes/InternalPressureSensor')
+const ExternalPressureSensor = require('./js/classes/ExternalPressureSensor')
+const AnalogDigitalConverter = require('./js/classes/AnalogDigitalConverter')
 const InertialMeasurementUnit = require('./js/classes/InertialMeasurementUnit')
 
 const PCA9685 = require('./js/drivers/PCA9685.js');
@@ -42,6 +43,7 @@ setInterval(() => {
 const aux = new AuxiliaryController(Configuration.auxiliary)
 const rov = new RemoteOperatedVehicle(Configuration.rov)
 const ips = new InternalPressureSensor()
+const eps = new ExternalPressureSensor();
 const imu = new InertialMeasurementUnit()
 const adc = new AnalogDigitalConverter(Configuration.calibration.adc)
 
@@ -52,7 +54,7 @@ const adc = new AnalogDigitalConverter(Configuration.calibration.adc)
  ************************/
 rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
-rov.on('thusterOutputChanged', (ouputInUs) => { 
+rov.on('thusterOutputChanged', (ouputInUs) => {
   ouputInUs.forEach((output) => {
     log.info(`Pin: ${output.pin} = ${output.us}us`);
     pca9685.setPWM(output.pin, output.us);
@@ -65,10 +67,10 @@ rov.controllerInputUpdate(defaultControls)
  * Internal Pressure Sensor
  *
  ************************/
-ips.on('initError', (err) => { log.error(`IPS initializing failed (${err})`) })
-ips.on('readError', (err) => { log.error(`IPS read failed (${err})`) })
-ips.on('init', () => { log.info("IPS successfully initialized") })
-ips.on('change', () => { 
+ips.on('initError', (err) => log.error(`Internal Pressure Sensor initializing failed (${err})`))
+ips.on('readError', (err) => log.error(`Internal Pressure Sensor read failed (${err})`))
+ips.on('init', () => log.info("Internal Pressure Sensor successfully initialized"))
+ips.on('change', () => {
 
   log.debug(`IPS Change: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
   rov.environment.internalPressure = ips.pressure
@@ -78,11 +80,28 @@ ips.on('change', () => {
 
 /************************
  *
+ * External Pressure Sensor
+ *
+ ************************/
+eps.on('initError', () => log.error('External Pressure Sensor initializing failed (${err})'));
+eps.on('readError', () => log.error('External Pressure Sensor read failed (${err})'));
+eps.on('init', () => log.info('External Pressure Sensor Initialized'));
+eps.on('read', () => {
+
+  log.debug(`EPS Change: ${eps.temperature()}c, ${eps.pressure()}psi, ${eps.depth()}m depth`)
+  rov.environment.externalPressure = eps.pressure();
+  rov.environment.externalTemp = eps.temperature();
+  rov.environment.depth = eps.depth();
+});
+
+
+/************************
+ *
  * Analog Digital Converter (ADC)
  *
  ************************/
 adc.on('init', () => { log.info("ADC successfully initialized") })
-adc.on('read', () => { 
+adc.on('read', () => {
 
   log.debug(`ADS1015 Read: V=${adc.getCurrent().toFixed(3)}a, 1=${adc.getVoltage().toFixed(2)}v, 2=${adc.getLeak()}, X=${adc.getAccumulatedMah()}mAh`)
   rov.battery.voltage = adc.getVoltage()
@@ -124,13 +143,13 @@ aux.on('deviceOutputChange', (device) => {
  * Web server start
  *
  ************************/
- log.log('info','Starting webserver')
- const key = fs.readFileSync('assets/server.key');
- const cert = fs.readFileSync('assets/server.cert');
- 
- app.use('/', express.static(__dirname+'/client'))
- const webServer = https.createServer({ key, cert }, app).listen(Configuration.port, Configuration.ip, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
- 
+log.log('info', 'Starting webserver')
+const key = fs.readFileSync('assets/server.key');
+const cert = fs.readFileSync('assets/server.cert');
+
+app.use('/', express.static(__dirname + '/client'))
+const webServer = https.createServer({ key, cert }, app).listen(Configuration.port, Configuration.ip, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
+
 
 /************************
  *
@@ -139,7 +158,7 @@ aux.on('deviceOutputChange', (device) => {
  ************************/
 const wss = new ws.WebSocketServer({ perMessageDeflate: false, server: webServer })
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
-wss.on('connection', function(client) {
+wss.on('connection', function (client) {
 
   client.ip = client._socket.remoteAddress;
   client.port = client._socket.remotePort;
@@ -185,7 +204,7 @@ function parseWebsocketData(data) {
   const cmd = data.shift(1)
   const client = this;
 
-  switch(cmd) {
+  switch (cmd) {
 
     case "clog":
       log.info(`Websocket: Client data:  ${cmd} (${JSON.stringify(data)}`);
@@ -213,7 +232,7 @@ function parseWebsocketData(data) {
     case 'controls':
       log.info(`Websocket: Controls command from ${client.ip}:${client.port}`);
       data = JSON.parse(data.join(' '));
-      data = {...{ axes: defaultControls.axes }, ...data};
+      data = { ...{ axes: defaultControls.axes }, ...data };
       rov.controllerInputUpdate(data);
       break;
 
@@ -232,7 +251,7 @@ function parseWebsocketData(data) {
  *
  ************************/
 
- setInterval(() => { // Send data to client
+setInterval(() => { // Send data to client
   /************************
    *
    * Check client connectivity
@@ -320,7 +339,7 @@ function parseWebsocketData(data) {
   // }
   // else if(rov.heading.hold && !rov.armed) rov.heading.hold = false;
 
-  
+
   // /****************************
   //  * MOTOR THRUST CALCULATION *
   //  ****************************/
@@ -330,7 +349,7 @@ function parseWebsocketData(data) {
   // rov.motors.frontright = base_command + fwd_factor*forward_command + strafe_factor*strafe_command + yaw_factor*yaw_command;
   // rov.motors.upleft     = base_command - climb_command;
   // rov.motors.upright    = base_command + climb_command;
-  
+
   // // Limit all motors to output of 1000 and 2000 maximum
   // for(var i in rov.motors) {
   //   if(rov.motors[i] > 1950) rov.motors[i] = 1950;
@@ -339,11 +358,11 @@ function parseWebsocketData(data) {
 
   // // Sends thruster data to thrusters, will only happen if "armed"
   // rov.updateThrusters();
-  
+
   // // Reset gripper if its been over 2 seconds since update.
   // var lgm = Date.now() - rov.lastGripper;
   // if((lgm > 100) && ( rov.gripper != 0)) { rov.setGripper(0); }
-  
+
   // /************************
   //  *
   //  * Send telemetry data every 10tick (20*10 = 200ms)

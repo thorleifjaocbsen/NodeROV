@@ -178,19 +178,14 @@ socket.on("telemetry", (data) => {
 
     hudBlock.draw(data.attitude.pitch, data.attitude.roll, data.attitude.heading);
 
-    // Math
-    const internalPressureInPSI = (data.environment.internalPressure * 0.0145037738).toFixed(1);
-    const externalPressureInPSI = (data.environment.externalPressure * 0.0145037738);
-    const depth = (externalPressureInPSI * 1.4219702063247);
-
     gui.setInfo(1, data.environment.internalTemp.toFixed(1));
-    gui.setInfo(2, internalPressureInPSI);
+    gui.setInfo(2, data.environment.internalPressure);
     gui.setInfo(3, parseInt(data.environment.humidity)+ "%");
     gui.setInfo(4, data.environment.leak);
 
-    dashboard.setScale(0, "DEPTH", depth.toFixed(1), 100, 30)
-    dashboard.setScale(1, "PRESSURE", externalPressureInPSI.toFixed(1), 1300, 30)
-    dashboard.setScale(2, "TEMPERATURE", data.environment.internalTemp, 30, 0)
+    dashboard.setScale(0, "DEPTH", data.environment.depth, 100, 30)
+    dashboard.setScale(1, "PRESSURE", data.environment.externalPressure, 1300, 30)
+    dashboard.setScale(2, "TEMPERATURE", data.environment.externalTemp, 30, 0)
     dashboard.setScale(3, "VOLTAGE", data.battery.voltage.toFixed(2), 16.8, -6.8)
     dashboard.setScale(4, "CURRENT", data.battery.current.toFixed(2), 90, 10)
     dashboard.setScale(5, "MAH USED", parseInt(data.battery.voltage), 5500, 1000)
