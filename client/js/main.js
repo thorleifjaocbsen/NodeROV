@@ -11,13 +11,9 @@ const controls = new Controls();
 const socket = new Socket();
 const video = new Video(document.getElementById("video"));
 const rovData = {};
-let vacuumTest = false;
-let confirmWaterTight = false;
-
-//console.log = gui.log
 
 const dashboard = new Dashboard(document.getElementById("dataGraphicsCanvas"))
-//const hudBlock = new HUDBlock(document.getElementById("HUD"))
+const hudBlock = new HUDBlock(document.getElementById("HUD"))
 const lineChart = new LineChart(document.getElementById("HUD"))
 window.lineChart = lineChart;;
 /************************
@@ -174,12 +170,18 @@ socket.on("enviromentUpdate", (data) => {
 
 });
 
+let tick = 1;
+
 socket.on("telemetry", (data) => {
     data = JSON.parse(data);
 
-    //hudBlock.draw(data.attitude.pitch, data.attitude.roll, data.attitude.heading);
-    lineChart.addDataPoint(data.environment.depth);
-    
+    if(tick == 1) { hudBlock.draw(data.attitude.pitch, data.attitude.roll, data.attitude.heading); tick = 0; }
+    else if(tick == 0) { 
+        lineChart.addDataPoint(data.environment.depth);
+        lineChart.draw(data.environment.temperature);
+        tick++;
+    }
+
     gui.setInfo(1, data.environment.internalTemp.toFixed(1));
     gui.setInfo(2, data.environment.internalPressure);
     gui.setInfo(3, parseInt(data.environment.humidity)+ "%");

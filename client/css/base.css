@@ -79,7 +79,7 @@ section#video.fullscreen {
     top: 0px;
     width: 1920px;
     height: 1080px;
-    z-index: 2;
+    z-index: 998;
 }
 
 section#video canvas {
@@ -260,12 +260,16 @@ section.datagraphics canvas {
 /*                     */
 /***********************/
 section.vitals {
-    background: none;
     position: absolute;
     top: 740px;
     left: 660px;
     height: 320px;
     width: 620px;
+    z-index: 2;
+}
+
+section.vitals.fullWidth {
+    width: 1240px;
 }
 
 section.vitals canvas {  
@@ -284,6 +288,7 @@ section.log {
     height: 320px;
     left: 1300px;
     top: 740px;
+    z-index: 1;
 }
 section.log h1 {
     font-size: 40px;
