@@ -178,10 +178,8 @@ socket.on("telemetry", (data) => {
     data = JSON.parse(data);
 
     //hudBlock.draw(data.attitude.pitch, data.attitude.roll, data.attitude.heading);
-    // Generate float between 0 and 20
-    const x = (Math.random() * 10).toFixed(2);
-    lineChart.addDataPoint(x);
-    data.environment.depth = x;
+    lineChart.addDataPoint(data.environment.depth);
+    
     gui.setInfo(1, data.environment.internalTemp.toFixed(1));
     gui.setInfo(2, data.environment.internalPressure);
     gui.setInfo(3, parseInt(data.environment.humidity)+ "%");

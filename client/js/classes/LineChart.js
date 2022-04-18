@@ -10,8 +10,8 @@ export default class LineChart {
   #ctx;
   #width;
   #height;
-  #axis;
-  #lastPoint;
+  #points;
+  #seaLevelOffset;
 
   constructor(canvas) {
 
@@ -20,22 +20,13 @@ export default class LineChart {
 
     this.#width = this.#canvas.width;
     this.#height = this.#canvas.height;
-    // X axis is the time
-    // Y axis is the depth
-
-    this.#axis = [];
-
-
-    this.#lastPoint = this.#height;
-
-    this.xxx = 0;
 
     this.setDepthScale(10);
-    this.setTimeScale(10);
+    this.setTimeScale(60 * 1);
 
+    this.#seaLevelOffset = 1; // 1 meter down
 
-    // Width scale (time) seconds to pixels
-    this.points = [];
+    this.#points = [];
   }
 
   setTimeScale(timeScale) {
@@ -51,7 +42,7 @@ export default class LineChart {
 
   addDataPoint(depth) {
 
-    this.points.push({ depth, time: new Date() });
+    this.#points.push({ depth, time: new Date() });
     this.checkDatapoints();
     this.draw();
   }
@@ -60,24 +51,21 @@ export default class LineChart {
   checkDatapoints() {
     let time = new Date();
     let deepest = 0;
-    let shallowest = 0;
-    this.points.forEach((point, index) => {
+    this.#points.forEach((point, index) => {
 
       // Calculate time difference
       const diff = (time - point.time) / 1000;
       // Remove if diff is bigger than the time scale
       if (diff > this.timeScale) {
-        this.points.splice(index, 1);
+        this.#points.splice(index, 1);
       } 
 
-      // Set deepest 
+      // Find the deepets point 
       if (point.depth > deepest) { deepest = point.depth; }
-      // Set shallowest
-      if (point.depth < shallowest) { shallowest = point.depth; }
-
     });
 
     // Update depth scale if needed     
+    if(deepest < 5) deepest = 5;
     this.setDepthScale(deepest);
   }
 
@@ -86,27 +74,35 @@ export default class LineChart {
     this.#ctx.clearRect(0, 0, this.#width, this.#height);
     this.#ctx.save();
 
-    let lastPointsTime = this.points[0].time;
+    let lastPointsTime = this.#points[0].time;
+    let sealevel = (this.#seaLevelOffset * 100) * this.pixelsPerCentimeter;;
 
     this.#ctx.beginPath();
     this.#ctx.lineWidth = 3;
     this.#ctx.strokeStyle = "rgba(255,255,255,0.9)";
 
     // Draw lines between each point.
-    this.points.forEach(point => {
+    this.#points.forEach(point => {
       
       // Calculate y axis position
       let yPosition = (point.depth * 100) * this.pixelsPerCentimeter;
-
+      
       // Calculate x axis position
       let timeDiff = (point.time - lastPointsTime) / 1000;  // In seconds
       let xPosition = timeDiff * this.pixelsPerSecond;
 
       // Draw line
-      this.#ctx.lineTo(xPosition, yPosition);
+      this.#ctx.lineTo(xPosition, yPosition + sealevel);
     });
 
     this.#ctx.stroke();
+
+    this.#ctx.beginPath();
+    this.#ctx.strokeStyle = "#51861d";
+    this.#ctx.moveTo(0, sealevel);
+    this.#ctx.lineTo(this.#width, sealevel);
+    this.#ctx.stroke();
+    this.#ctx.restore();
   }
 
 
