@@ -12,7 +12,6 @@ module.exports = class InternalPressureSensor extends EventEmitter {
 
     super();
 
-    this.eventEmitter = new EventEmitter()
     this.bme280 = new BME280_SENSOR({ i2cBusNo: 1, i2cAddress: 0x77 })
     this.bme280.init()
     .then(() => {
