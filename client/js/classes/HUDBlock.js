@@ -84,8 +84,6 @@ export default class HUDBlock {
     ctx.fillText("ROLL", width - 20 - ctx.measureText(roll + "° ").width, centerY);
     ctx.fillStyle = "rgb(231,96,98)";
     ctx.fillText(roll + "°", width - 20, centerY)
-
-    ctx.restore()
   }
 
 
@@ -121,12 +119,4 @@ export default class HUDBlock {
     ctx.fillStyle = "rgb(255,255,255)";
     ctx.fillText(heading.toString().padStart(3,'0'), width/2, 15);
   }
-
-
-  drawGauges(no, title, value) {
-
-  }
-
-
-
 }
