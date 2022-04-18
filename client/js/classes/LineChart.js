@@ -8,8 +8,6 @@ export default class LineChart {
 
   #canvas;
   #ctx;
-  #width;
-  #height;
   #points;
   #seaLevelOffset;
 
@@ -17,9 +15,6 @@ export default class LineChart {
 
     this.#canvas = canvas;
     this.#ctx = this.#canvas.getContext("2d");
-
-    this.#width = this.#canvas.width;
-    this.#height = this.#canvas.height;
 
     this.setDepthScale(10);
     this.setTimeScale(60 * 1);
@@ -31,12 +26,12 @@ export default class LineChart {
 
   setTimeScale(timeScale) {
     this.timeScale = timeScale;
-    this.pixelsPerSecond = this.#width / this.timeScale;
+    this.pixelsPerSecond = this.#canvas.width / this.timeScale;
   }
 
   setDepthScale(depthScale) {
     this.depthScale = depthScale + this.#seaLevelOffset;
-    this.pixelsPerCentimeter = this.#height / (this.depthScale * 100);
+    this.pixelsPerCentimeter = this.#canvas.height / (this.depthScale * 100);
   }
 
 
@@ -76,7 +71,7 @@ export default class LineChart {
 
 
   drawPoints() {
-    this.#ctx.clearRect(0, 0, this.#width, this.#height);
+    this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
     this.#ctx.save();
 
     let lastPointsTime = this.#points[0].time;
@@ -105,7 +100,7 @@ export default class LineChart {
     this.#ctx.beginPath();
     this.#ctx.strokeStyle = "rgba(0,255,0,0.1)";
     this.#ctx.moveTo(0, sealevel);
-    this.#ctx.lineTo(this.#width, sealevel);
+    this.#ctx.lineTo(this.#canvas.width, sealevel);
     this.#ctx.stroke();
     this.#ctx.restore();
   }
