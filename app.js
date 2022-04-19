@@ -43,7 +43,7 @@ setInterval(() => {
 const aux = new AuxiliaryController(Configuration.auxiliary)
 const rov = new RemoteOperatedVehicle(Configuration.rov)
 const ips = new InternalPressureSensor()
-const eps = new ExternalPressureSensor();
+const eps = new ExternalPressureSensor(true, 100);
 const imu = new InertialMeasurementUnit()
 const adc = new AnalogDigitalConverter(Configuration.calibration.adc)
 
@@ -59,7 +59,11 @@ rov.on('thusterOutputChanged', (ouputInUs) => {
     log.info(`Pin: ${output.pin} = ${output.us}us`);
     pca9685.setPWM(output.pin, output.us);
   })
-})
+});
+rov.on('environmentChanged', (variable, value) => {
+  wss.broadcast("env " + variable + " " + value);
+  log.debug(`Environment variable ${variable} changed to ${value}`);
+});
 rov.controllerInputUpdate(defaultControls)
 
 /************************
@@ -73,9 +77,9 @@ ips.on('init', () => log.info("Internal Pressure Sensor successfully initialized
 ips.on('change', () => {
 
   log.debug(`IPS Change: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
-  rov.environment.internalPressure = ips.pressure
-  rov.environment.internalTemp = ips.temperature
-  rov.environment.humidity = ips.humidity
+  rov.update("iPressure", ips.pressure);
+  rov.update("iTemperature", ips.temperature);
+  rov.update("iHumidity", ips.humidity);
 })
 
 /************************
@@ -83,15 +87,16 @@ ips.on('change', () => {
  * External Pressure Sensor
  *
  ************************/
-eps.on('initError', () => log.error('External Pressure Sensor initializing failed (${err})'));
-eps.on('readError', () => log.error('External Pressure Sensor read failed (${err})'));
+let epsClientData;
+eps.on('initError', (err) => log.error(`External Pressure Sensor initializing failed (${err})`));
+eps.on('readError', (err) => log.error(`External Pressure Sensor read failed (${err})`));
 eps.on('init', () => log.info('External Pressure Sensor Initialized'));
 eps.on('read', () => {
 
-  log.debug(`EPS Change: ${eps.temperature()}c, ${eps.pressure()}psi, ${eps.depth()}m depth`)
-  rov.environment.externalPressure = eps.pressure();
-  rov.environment.externalTemp = eps.temperature();
-  rov.environment.depth = eps.depth();
+  log.debug(`EPS Read: ${eps.temperature()}c, ${eps.pressure()}psi, ${eps.depth()}m depth`);
+  rov.update("ePressure", eps.pressure());
+  rov.update("eTemperature", eps.temperature());
+  rov.update("depth", eps.depth());
 });
 
 
@@ -103,11 +108,11 @@ eps.on('read', () => {
 adc.on('init', () => { log.info("ADC successfully initialized") })
 adc.on('read', () => {
 
-  log.debug(`ADS1015 Read: V=${adc.getCurrent().toFixed(3)}a, 1=${adc.getVoltage().toFixed(2)}v, 2=${adc.getLeak()}, X=${adc.getAccumulatedMah()}mAh`)
-  rov.battery.voltage = adc.getVoltage()
-  rov.battery.current = adc.getCurrent()
-  rov.battery.mahUsed = adc.getAccumulatedMah()
-  rov.environment.leak = adc.getLeak()
+  log.debug(`ADS1015 Read: ${adc.getCurrent().toFixed(3)}a, ${adc.getVoltage().toFixed(2)}v, Leak: ${adc.getLeak()}, ${adc.getAccumulatedMah()}mAh`);
+  rov.update("voltage", adc.getVoltage());
+  rov.update("current", adc.getCurrent());
+  rov.update("leak", adc.getLeak());
+  rov.update("accumulatedMah", adc.getAccumulatedMah());
 })
 
 /************************
@@ -120,9 +125,9 @@ imu.on('init', () => { log.info("IMU successfully initialized") })
 imu.on('read', () => {
 
   log.debug(`IMU Data: Roll = ${imu.roll}, Pitch = ${imu.pitch}, Heading = ${imu.heading}`)
-  rov.attitude.roll = imu.roll
-  rov.attitude.pitch = imu.pitch
-  rov.attitude.heading = imu.heading
+  rov.update("roll", imu.roll);
+  rov.update("pitch", imu.pitch);
+  rov.update("heading", imu.heading);
 })
 
 
@@ -185,7 +190,16 @@ wss.on('connection', function (client) {
     log.remove(log.transports.socketIO, client)
     client.heartbeat.stop()
     client.heartbeat.removeAllListeners();
-  })
+  });
+
+  /* Update client of env data */
+  let rovEnv = rov.getEnviromentData();
+  for (let type in rovEnv) {
+    log.debug(`Sending enviroment data to client ${client.ip}:${client.port}: type: ${type}, value ${rovEnv[type]}, typeof: ${typeof rovEnv[type]}`)
+    client.send(`env ${type} ${rovEnv[type]}`);
+  }
+
+
 });
 
 wss.broadcast = (package) => wss.clients.forEach((client) => { client.send(package); });

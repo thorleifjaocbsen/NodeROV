@@ -8,21 +8,29 @@ const EventEmitter = require('events')
 
 module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
+  #enviroment; 
+
   constructor(options) {
     super()
 
-    this.battery = { voltage: 0, current: 0, mahUsed: 0 }
-    this.attitude = { roll: 0, pitch: 0, heading: 0 }
-    this.environment = {
-      internalHumidity: 0,
-      internalPressure: 0,
-      externalPressure: 0,
-      humidity: 0,
-      internalTemp: 0,
-      externalTemp: 0,
-      depth: 0,
-      leak: false
-    }
+    this.#enviroment = {
+      iTemperature: 0,
+      iPressure: 0,
+      iHumidity: 0,
+    
+      eTemperature: 0,
+      ePressure: 0,
+    
+      leak: 0,
+    
+      voltage: 0,
+      current: 0,
+      accumulatedMah: 0,
+    
+      roll: 0,
+      pitch: 0,
+      heading: 0
+    };
 
     // uS Overview
     this.minUS = options && options.hasOwnProperty('minUS') ? options.minUS : 1000
@@ -54,6 +62,18 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
   constrain(value, min, max) { return Math.max(Math.min(value, max), min) }
   map(x, in_min, in_max, out_min, out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min }
+  update(type, value) {
+    // Check if old value is different from new value
+    if (this.#enviroment[type] != value) {
+      this.#enviroment[type] = value;
+      super.emit("environmentChanged", type, value)
+    }
+  }
+
+  getEnviromentData(type) {
+    return type ? this.#enviroment[type] : this.#enviroment;
+  }
+
 
   // Generate telemetry data
   getTelemetry() {
@@ -208,5 +228,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
   trimRollLeft(value) { if (value != 0) console.log("Trim roll left") }
   trimRollRight(value) { if (value != 0) console.log("Trim roll right") }
 
+  // Create setters and getters for all private variables
+  
 
 }

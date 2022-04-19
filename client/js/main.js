@@ -164,44 +164,63 @@ socket.on("hb", (data) => {
     gui.setInfo(12, latency)
 });
 
-socket.on("enviromentUpdate", (data) => {
-    const env = JSON.parse(data);
-    console.log(data);
+socket.on("env", (data) => {
 
-});
+    data = data.split(" ");
+    const type = data[0];
+    const value = data[1];
 
-let tick = 1;
+    switch (type) {
 
-socket.on("telemetry", (data) => {
-    data = JSON.parse(data);
+        case "iTemperature":
+            gui.setInfo(1, value);
+            break;
 
-    if(tick == 1) { hudBlock.draw(data.attitude.pitch, data.attitude.roll, data.attitude.heading); tick = 0; }
-    else if(tick == 0) { 
-        lineChart.addDataPoint(data.environment.depth);
-        lineChart.draw(data.environment.temperature);
-        tick++;
+        case "iPressure":
+            gui.setInfo(2, value);
+            break;
+
+        case "iHumidity":
+            gui.setInfo(3, value + "%");
+            break;
+
+        case "eTemperature":
+            dashboard.setScale(2, "TEMPERATURE", value, 30, 0);
+            break;
+
+        case "ePressure":
+            dashboard.setScale(0, "PRESSURE", value, 1300, 30);
+            break;
+
+        case "depth":
+            dashboard.setScale(1, "DEPTH", value, 100, 30);
+            lineChart.addDataPoint(value);
+            lineChart.draw();        
+            break;
+
+        case "leak":
+            gui.setInfo(4, value);
+            break;
+
+        case "voltage":
+            dashboard.setScale(3, "VOLTAGE", value, 16.8, -6.8);
+            break;
+
+        case "current":
+            dashboard.setScale(4, "CURRENT", value, 90, 10);
+            break;
+
+        case "accumulatedMah":
+            dashboard.setScale(5, "MAH USED", parseInt(data.battery.voltage), 5500, 1000);
+            break;
+
+        case "roll":
+        case "pitch":
+        case "heading":
+        default:
+            console.log(data);
+            return;
     }
-
-    gui.setInfo(1, data.environment.internalTemp.toFixed(1));
-    gui.setInfo(2, data.environment.internalPressure);
-    gui.setInfo(3, parseInt(data.environment.humidity)+ "%");
-    gui.setInfo(4, data.environment.leak);
-
-    dashboard.setScale(0, "DEPTH", data.environment.depth, 100, 30)
-    dashboard.setScale(1, "PRESSURE", data.environment.externalPressure, 1300, 30)
-    dashboard.setScale(2, "TEMPERATURE", data.environment.externalTemp, 30, 0)
-    dashboard.setScale(3, "VOLTAGE", data.battery.voltage.toFixed(2), 16.8, -6.8)
-    dashboard.setScale(4, "CURRENT", data.battery.current.toFixed(2), 90, 10)
-    dashboard.setScale(5, "MAH USED", parseInt(data.battery.voltage), 5500, 1000)
-
-    //  setThruster(number, value, offsetX = false, offsetY = false, rotation = false) {
-    for(let id in data.motors) {
-        console.log(data.motors[id]);
-
-        dashboard.setThruster(id, data.motors[id]);
-    }
-        
-    
     dashboard.draw();
 
 });
@@ -218,8 +237,6 @@ socket.on("telemetryData", function (data) {
 
     gui.setInfo(1, parseFloat(rovData.inside.temp).toFixed(2))
     gui.setInfo(2, parseFloat(rovData.inside.pressure / 1000 * 14.5037738).toFixed(2))
-    gui.setInfo(3, parseFloat(rovData.outside.temp).toFixed(2))
-    gui.setInfo(4, parseFloat(rovData.outside.pressure / 1000 * 14.5037738).toFixed(2))
 
     gui.setInfo(5, parseFloat(rovData.inside.coreTemp).toFixed(2))
     gui.setInfo(6, parseInt(rovData.mAmpUsed))
@@ -307,7 +324,7 @@ let tempCounter = 0;
 function systemLoop() {
 
     controls.detectPressedGamepad();
-    if(controls.inputChanged()) {
+    if (controls.inputChanged()) {
         let gpData = controls.getGamepad();
         socket.send('controls ' + JSON.stringify(gpData))
     }
