@@ -10,12 +10,11 @@ const gui = new GUI();
 const controls = new Controls();
 const socket = new Socket();
 const video = new Video(document.getElementById("video"));
-const rovData = {};
 
 const dashboard = new Dashboard(document.getElementById("dataGraphicsCanvas"))
 const hudBlock = new HUDBlock(document.getElementById("HUD"))
 const lineChart = new LineChart(document.getElementById("HUD"))
-window.lineChart = lineChart;;
+
 /************************
  * Video Socket - Used for camera transmit
  ************************/
@@ -56,21 +55,20 @@ gui.setButton("gui-controls-button-3", "RIGHT LIGHT", function (e) {
 
 gui.overlayText("Connecting to NodeROV...", 2000);
 
-gui.setButton("gui-controls-button-4", "TEST", function (e) {
-    if (gui.buttonState("gui-controls-button-4")) {
-        gui.buttonState("gui-controls-button-4", false);
+gui.setButton("gui-controls-button-5", "Depthchart", () => {
+    if (gui.buttonState("gui-controls-button-5")) {
+        hudBlock.draw();
+        gui.buttonState("gui-controls-button-5", false);
     } else {
-        gui.buttonState("gui-controls-button-4", true);;
+        lineChart.draw();
+        gui.buttonState("gui-controls-button-5", true);
     }
-    // Generate random number between 0 and 100
-    let randomNumber = Math.floor(Math.random() * 100);
-    gui.animateScale("scale1", randomNumber, randomNumber);
 });
 
-gui.setButton("gui-controls-button-2", "ARM", function (e) { socket.send("togglearm"); });
-gui.setButton("gui-controls-button-5", "HEADING HOLD", function (e) { socket.send("headinghold"); });
-gui.setButton("gui-controls-button-6", "DEPTH HOLD", function (e) { socket.send("depthhold"); });
-gui.setButton("gui-controls-button-7", "RECORD", function (e) {
+gui.setButton("gui-controls-button-2", "ARM", () => { socket.send("togglearm"); });
+gui.setButton("gui-controls-button-4", "HEADING HOLD", () => { socket.send("headinghold"); });
+gui.setButton("gui-controls-button-6", "DEPTH HOLD", () => { socket.send("depthhold"); });
+gui.setButton("gui-controls-button-7", "RECORD", () => {
     if (gui.buttonState("gui-controls-button-7")) {
         video.stopRecord();
         gui.buttonState("gui-controls-button-7", false);
@@ -85,15 +83,15 @@ video.on("recordStateChange", (state) => {
     gui.log(`Recording state changed to ${state}`);
 })
 
-gui.setButton("gui-controls-button-8", "FULLSCREEN", function (e) {
+gui.setButton("gui-controls-button-8", "FULLSCREEN", () => {
     const videoEl = document.getElementById("video");
     videoEl.classList.toggle("fullscreen");
     gui.buttonState("gui-controls-button-8", videoEl.classList.contains("fullscreen"));
     videoEl.onclick = () => { gui.pressButton("gui-controls-button-8"); };
 });
-gui.setButton("gui-controls-button-9", "SET FLAT", function (e) { socket.send("setflat"); });
-gui.setButton("gui-controls-button-10", "CALIBRATE GYRO", function (e) { socket.send("calibrategyro"); });
-gui.setButton("gui-log-button-1", "ADD EVENT", function (e) {
+gui.setButton("gui-controls-button-9", "SET FLAT", () => { socket.send("setflat"); });
+gui.setButton("gui-controls-button-10", "CALIBRATE GYRO", () => { socket.send("calibrategyro"); });
+gui.setButton("gui-log-button-1", "ADD EVENT", () => {
     var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
     popup("Add event", msg, "Add", "Cancel", function () {
         gui.log("Custom event: " + $("#eventmsg").val());
@@ -101,7 +99,7 @@ gui.setButton("gui-log-button-1", "ADD EVENT", function (e) {
     });
     $("#eventmsg").focus();
 });
-gui.setButton("gui-log-button-2", "SCREENSHOT", function (e) {
+gui.setButton("gui-log-button-2", "SCREENSHOT", (e) => {
     var data = player.canvas.toDataURL("image/jpeg", 1);
     var filename = "noderov_" + (Date.now() / 1000) + ".jpg";
     gui.log("Screenshot saved (" + filename + ")");
@@ -110,19 +108,17 @@ gui.setButton("gui-log-button-2", "SCREENSHOT", function (e) {
 });
 
 
-
-
 gui.setInfo(1, 0, "Int. temp:");
 gui.setInfo(2, 0, "Int. pressure:");
 gui.setInfo(3, 0, "Int. humidity:");
 gui.setInfo(4, 0, "Leak:");
-gui.setInfo(5, 0, "Core temp:");
-gui.setInfo(6, 0, "-");
-gui.setInfo(7, 0, "Gain:");
-gui.setInfo(8, 0, "Turns:");
-gui.setInfo(9, 0, "Heading Hold:");
-gui.setInfo(10, 0, "Depth Hold:");
-gui.setInfo(11, "", "-");
+gui.setInfo(5, 0, "CPU temp:");
+gui.setInfo(6, 0, "CPU usage:");
+gui.setInfo(7, 0, "Memory:");
+gui.setInfo(8, 0, "Disk:");
+gui.setInfo(9, "", "");
+gui.setInfo(10, "", "");
+gui.setInfo(11, "", "");
 gui.setInfo(12, 0, "Latency:");
 
 /************************
@@ -155,8 +151,6 @@ gui.setInfo(12, 0, "Latency:");
  *
  ************************/
 
-var voltWarnLevel = 0;
-
 socket.connect(location.hostname, location.port);
 socket.on("hb", (data) => {
     const [sendtTime, latency] = data.split(" ");
@@ -186,16 +180,19 @@ socket.on("env", (data) => {
 
         case "eTemperature":
             dashboard.setScale(2, "TEMPERATURE", value, 30, 0);
+            dashboard.draw();
             break;
 
         case "ePressure":
             dashboard.setScale(0, "PRESSURE", value, 1300, 30);
+            dashboard.draw();
             break;
 
         case "depth":
             dashboard.setScale(1, "DEPTH", value, 100, 30);
+            dashboard.draw();
             lineChart.addDataPoint(value);
-            lineChart.draw();        
+            if(gui.buttonState("gui-controls-button-5")) lineChart.draw();
             break;
 
         case "leak":
@@ -204,25 +201,51 @@ socket.on("env", (data) => {
 
         case "voltage":
             dashboard.setScale(3, "VOLTAGE", value, 16.8, -6.8);
+            dashboard.draw();
             break;
 
         case "current":
             dashboard.setScale(4, "CURRENT", value, 90, 10);
+            dashboard.draw();
             break;
 
         case "accumulatedMah":
-            dashboard.setScale(5, "MAH USED", parseInt(data.battery.voltage), 5500, 1000);
+            dashboard.setScale(5, "MAH USED", parseInt(value), 5500, 1000);
+            dashboard.draw();
             break;
 
         case "roll":
+            if(!gui.buttonState("gui-controls-button-5")) hudBlock.draw(value, undefined, undefined);
+            break;
+
         case "pitch":
+            if(!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, value, undefined)
+            break;
+
         case "heading":
+            if(!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, undefined, value)
+            break;
+
+        case 'cpuTemperature':
+            gui.setInfo(5, Math.round(value*10)/10+"°C");
+            break;
+
+        case 'cpuLoad':
+            gui.setInfo(6, Math.round(value*10)/10+"%");
+            break;
+
+        case 'memoryUsed':
+            gui.setInfo(7, Math.round(value*10)/10+"%");
+            break;
+
+        case 'diskUsed':
+            gui.setInfo(8, Math.round(value*10)/10+"%");
+            break;
+
         default:
-            console.log(data);
+            gui.log(`Unknown enviroment type received: ${type} (${value})`);
             return;
     }
-    dashboard.draw();
-
 });
 
 socket.on("log", function (data) {
@@ -232,84 +255,6 @@ socket.on("log", function (data) {
     } catch (e) { }
 })
 
-socket.on("telemetryData", function (data) {
-    rovData = JSON.parse(data);
-
-    gui.setInfo(1, parseFloat(rovData.inside.temp).toFixed(2))
-    gui.setInfo(2, parseFloat(rovData.inside.pressure / 1000 * 14.5037738).toFixed(2))
-
-    gui.setInfo(5, parseFloat(rovData.inside.coreTemp).toFixed(2))
-    gui.setInfo(6, parseInt(rovData.mAmpUsed))
-    gui.setInfo(7, parseInt(rovData.gain))
-    gui.setInfo(8, parseInt(rovData.heading.turns))
-
-    gui.setInfo(9, rovData.heading.hold ? parseInt(rovData.heading.totalHeading) + "/" + parseInt(rovData.heading.wanted) : "OFF")
-    //gui.setInfo(11, "Unused")
-    //gui.setInfo(12, "Unused")
-
-
-    // Update lights gui
-    for (i in rovData.lights) { gui.setButtonState(2 * i, rovData.lights[i] > 0); }
-
-    // Update armed gui
-    gui.setButtonState(1, rovData.armed);
-    gui.setButtonState(5, rovData.depth.hold);
-    gui.setButtonState(4, rovData.heading.hold);
-
-    var insidePressure = parseFloat(rovData.inside.pressure / 1000 * 14.5037738).toFixed(2);
-    if (insidePressure < 14 && !vacuumTest) {
-        popup("Vacuum test - Stage 1", "<p>Starting automatic vacuum test due to lower internal pressure.<br />Be sure the LiPo battery is not inside and you use a vacuum safe battery.<br /><br />Current pressure is: <span class='currpress'>" + insidePressure + "</span></p>");
-        gui.log("Vacuum Test: Stage 1 starting")
-        vacuumTest = 1;
-    } else if (insidePressure < 12 && insidePressure > 4.5 && vacuumTest == 1) {
-        $(".currpress").html(insidePressure);
-    } else if (insidePressure <= 5 && vacuumTest == 1) {
-        popup("Vacuum test - Stage 2", "<p>Vacuum test at wanted pressure. Stop pumping now:<br /><br />Time passed: <span class='timepassed'>0</span> sec of 900<br />Current pressure is: <span class='currpress'>" + insidePressure + "</span></p>");
-        gui.log("Vacuum Test: Stage 2 starting")
-        vacuumTest = Date.now();
-    } else if (vacuumTest && insidePressure > 14) {
-        popup_hide();
-        vacuumTest = false;
-        gui.log("Vacuum Test: Cancelled")
-    }
-    if (vacuumTest >= 4) {
-        var passed = (Date.now() - vacuumTest) / 1000;
-        $(".timepassed").html(Math.round(passed));
-        $(".currpress").html(insidePressure);
-
-        if (passed > 900 && insidePressure <= 5) {
-            vacuumTest = 3;
-            gui.log("Vacuum Test: Passed, pressure after 15 minutes are " + insidePressure + " PSI");
-
-            popup("Vacuum test - Passed", "<p>ROV seems tight, internal pressure did not go above 5PSI in the period of 60 seconds.<br /><br />Release pressure before you continue then press 'Confirm'</p>", "Confirm", false, function () {
-                vacuumTest = false;
-                popup_hide();
-            });
-        } else if (insidePressure > 5) {
-            vacuumTest = 3;
-            gui.log("Vacuum Test: FAILED, pressure after " + (passed / 60) + " minutes are " + insidePressure + " PSI");
-            popup("Vacuum test - Fail", "<p>ROV seems leaky, internal pressure did pass 4.5PSI during the test period.<br />It hit " + insidePressure + " in only " + passed + " seconds..<br /><br />Release pressure before you continue then press 'Confirm' then check for leaks</p>", "Confirm", false, function () {
-                popup_hide();
-                vacuumTest = false;
-            });
-        }
-    }
-
-    // On Screen Warnings:
-    if (rovData.volt < 10.5 && voltWarnLevel == 0) {
-        gui.overlayText("Voltage warning", 3);
-        voltWarnLevel = 1;
-    } else if (rovData.volt < 9.8 && voltWarnLevel == 1) {
-        gui.overlayText("Voltage warning", 3);
-        voltWarnLevel = 2;
-    } else if (rovData.volt < 9 && voltWarnLevel == 2) {
-        gui.overlayText("Battery dying", 100);
-        voltWarnLevel = 3;
-    }
-
-
-});
-
 
 /************************
  *
@@ -318,9 +263,6 @@ socket.on("telemetryData", function (data) {
  *
  *
  ************************/
-
-let tempCounter = 0;
-
 function systemLoop() {
 
     controls.detectPressedGamepad();
@@ -341,44 +283,22 @@ function systemLoop() {
     //     confirmWaterTight = true;
     // }
 
-    // if (controls.checkGamepad()) controls.update();
-    if (rovData.heading) {
-        gui.drawCompass(rovData.heading.current);
-    }
+    requestAnimationFrame(systemLoop);
+}
+systemLoop();
 
-    // /* Temp to show gui working */
-    // if (tempCounter > 30) {
-    //     var compass = Math.floor(Math.random() * 360);
-    //     var roll = Math.floor(Math.random() * 14) - 7;
-    //     var pitch = Math.floor(Math.random() * 6) - 3;
-    //     var depth = Math.floor(Math.random() * 100);
-
-    //     gui.animateDataGraph();
-    //     gui.drawCompass(compass);
-    //     gui.drawAccelerometer(pitch, roll);
-    //     gui.animateScale("scale1", depth, depth);
-    //     gui.animateScale("scale2", depth, depth);
-    //     gui.animateScale("scale3", depth, depth);
-    //     tempCounter = 0;
-    // }
-    // else tempCounter++;
-
-    if (rovData.outside) {
-        var PSI = parseFloat(rovData.outside.pressure / 1000 * 14.5037738).toFixed(2);
-        gui.animateScale(1, gui.map(parseInt(PSI), 0, 1450, 0, 100), PSI + " PSI");
-        gui.animateScale(2, parseInt(rovData.outside.depth), rovData.outside.depth.toFixed(2) + " M");
-        gui.animateScale(3, gui.map(parseInt(rovData.outside.temp), -30, 30, 0, 100), rovData.outside.temp.toFixed(2) + " &deg;");
-    }
-
+/************************
+ *
+ *
+ * Clock
+ *
+ *
+ ************************/
+setInterval(() => {
     let d = new Date().toISOString();
     document.getElementsByTagName("time")[0].innerHTML = d.split('T')[1].split('.')[0] + " UTC";
     document.getElementsByTagName("time")[1].innerHTML = d.split('T')[0];
-
-    requestAnimationFrame(systemLoop);
-}
-
-systemLoop();
-
+}, 1000);
 
 /*
 

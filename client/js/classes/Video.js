@@ -50,8 +50,10 @@ export default class Video extends EventEmitter {
                 case 'stopped':
                     console.log("Somehow the software stopped!");
                     break;
+                case 'connected':
+                    break;
                 default:
-                    console.log(e.data, Date.now());
+                    console.log(`Unparsed data from video recorder: ${e.data}`);
                     return false;
             }
 
@@ -67,8 +69,12 @@ export default class Video extends EventEmitter {
 
     }
 
-    onerror() {}
-    onclose() {}
+    onerror(e) {}
+
+    onclose() {
+        // Reconnect every 5 seconds
+        setTimeout(() => this.connect(this.ws.ip, this.ws.port), 5000);
+    }
 
     resizeToFit() {
         

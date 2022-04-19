@@ -73,7 +73,7 @@ export default class LineChart {
     this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
     this.#ctx.save();
 
-    let lastPointsTime = this.#points[0].time;
+    let lastPointsTime = this.#points[0] ? this.#points[0].time : new Date();
     let sealevel = (this.#seaLevelOffset * 100) * this.pixelsPerCentimeter;;
 
     this.#ctx.beginPath();

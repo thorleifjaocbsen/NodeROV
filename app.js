@@ -4,27 +4,28 @@
  * Credits: Myself, my family and my girlfriend and child.
  */
 
-require('./ascii')
+require('./ascii');
 
-const ws = require('ws')
-const fs = require('fs')
-const express = require('express')
-const app = express()
-const https = require('https')
-const log = require('./js/Log.js')
+const ws = require('ws');
+const fs = require('fs');
+const express = require('express');
+const app = express();
+const https = require('https');
+const log = require('./js/Log.js');
 
-console.log = log.warn
-console.error = log.error
+console.log = log.warn;
+console.error = log.error;
 
-const Configuration = require('./configuration.json')
-const defaultControls = require('./controls.json')
+const Configuration = require('./configuration.json');
+const defaultControls = require('./controls.json');
 const RemoteOperatedVehicle = require('./js/classes/RemoteOperatedVehicle');
-const AuxiliaryController = require('./js/classes/AuxiliaryController')
-const HeartbeatController = require('./js/classes/Heartbeat')
-const InternalPressureSensor = require('./js/classes/InternalPressureSensor')
-const ExternalPressureSensor = require('./js/classes/ExternalPressureSensor')
-const AnalogDigitalConverter = require('./js/classes/AnalogDigitalConverter')
-const InertialMeasurementUnit = require('./js/classes/InertialMeasurementUnit')
+const AuxiliaryController = require('./js/classes/AuxiliaryController');
+const HeartbeatController = require('./js/classes/Heartbeat');
+const InternalPressureSensor = require('./js/classes/InternalPressureSensor');
+const ExternalPressureSensor = require('./js/classes/ExternalPressureSensor');
+const AnalogDigitalConverter = require('./js/classes/AnalogDigitalConverter');
+const InertialMeasurementUnit = require('./js/classes/InertialMeasurementUnit');
+const SystemController = require('./js/classes/SystemController');
 
 const PCA9685 = require('./js/drivers/PCA9685.js');
 const pca9685 = new PCA9685();
@@ -40,12 +41,13 @@ setInterval(() => {
  * Initialize scripts
  *
  ************************/
-const aux = new AuxiliaryController(Configuration.auxiliary)
-const rov = new RemoteOperatedVehicle(Configuration.rov)
-const ips = new InternalPressureSensor()
+const aux = new AuxiliaryController(Configuration.auxiliary);
+const rov = new RemoteOperatedVehicle(Configuration.rov);
+const ips = new InternalPressureSensor();
 const eps = new ExternalPressureSensor(true, 100);
-const imu = new InertialMeasurementUnit()
-const adc = new AnalogDigitalConverter(Configuration.calibration.adc)
+const imu = new InertialMeasurementUnit();
+const adc = new AnalogDigitalConverter(Configuration.calibration.adc);
+const sc  = new SystemController();
 
 /************************
  *
@@ -87,7 +89,6 @@ ips.on('change', () => {
  * External Pressure Sensor
  *
  ************************/
-let epsClientData;
 eps.on('initError', (err) => log.error(`External Pressure Sensor initializing failed (${err})`));
 eps.on('readError', (err) => log.error(`External Pressure Sensor read failed (${err})`));
 eps.on('init', () => log.info('External Pressure Sensor Initialized'));
@@ -130,7 +131,19 @@ imu.on('read', () => {
   rov.update("heading", imu.heading);
 })
 
+/************************
+ *
+ * System Controller
+ *
+ ************************/
+sc.on('read', () => {
 
+  log.debug(`System Controller: temp=${sc.cpuTemperature}c, load=${sc.cpuLoad}%, memory=${sc.memory}%, disk=${sc.disk}%`);
+  rov.update("cpuTemperature", sc.cpuTemperature);
+  rov.update("cpuLoad", sc.cpuLoad);
+  rov.update("memoryUsed", sc.memory);
+  rov.update("diskUsed", sc.disk);
+})
 
 /************************
  *

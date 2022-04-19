@@ -29,7 +29,12 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     
       roll: 0,
       pitch: 0,
-      heading: 0
+      heading: 0,
+
+      cpuTemperature: 0,
+      cpuLoad: 0,
+      memoryUsed: 0,
+      diskUsed: 0    
     };
 
     // uS Overview

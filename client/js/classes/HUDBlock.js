@@ -11,10 +11,17 @@ export default class HUDBlock {
     this.canvas = canvas
     this.compassRose = new Image()
     this.compassRose.src = "gfx/compass_rose.png"
+    this.pitch = 0;
+    this.roll = 0;
+    this.heading = 0;
   }
 
 
-  draw(pitch = 0, roll = 0, heading = 0) {
+  draw(pitch = this.pitch, roll = this.roll, heading = this.heading) {
+
+    this.roll = roll;
+    this.pitch = pitch;
+    this.heading = heading;
 
     const width = this.canvas.width
     const height = this.canvas.height

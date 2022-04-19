@@ -10,6 +10,8 @@ export default class GUI extends EventEmitter {
         this.compassRose = new Image();
         this.dataGraphCanvasContext = null;
         this.compassRose.src = 'gfx/compass_rose.png';
+
+        this.overlayTimer = null;
     };
 
     map(x, in_min, in_max, out_min, out_max) {
@@ -33,8 +35,8 @@ export default class GUI extends EventEmitter {
     setButton(name, text, callback) {
         const btn = document.getElementsByName(name)[0];
         if (!btn) return false;
-        btn.innerHTML = text;
-        btn.onclick = (e) => callback(e);
+        if (text) btn.innerHTML = text;
+        if (callback) btn.onclick = (e) => callback(e);
         return true;
     }
 
@@ -52,14 +54,13 @@ export default class GUI extends EventEmitter {
     };
 
     overlayText(message, time) {
+        clearTimeout(this.overlayTimer);
         const overlay = document.getElementById("overlay");
 
         overlay.innerHTML = message;
         overlay.style.display = "block";
         overlay.style.opacity = 1;
-        setTimeout(() => {
-            overlay.style.opacity = 0;
-        }, time);
+        this.overlayTimer = setTimeout(() => { overlay.style.opacity = 0; }, time);
     };
 
     setInfo(no, value, titleText = false) {
