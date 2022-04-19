@@ -15,12 +15,6 @@ module.exports = class ExternalPressureSensor extends EventEmitter {
 
     super();
 
-    // Water density (kg/m^3 convenience)
-    this.density = {
-      freshwater: 997,
-      saltwater: 1029
-    };
-
     // Initialize the sensor
     this.#sensor = new MS5837(1, 0x76);
     this.#sensor.init()
@@ -33,13 +27,24 @@ module.exports = class ExternalPressureSensor extends EventEmitter {
     // Auto Read Sensor 
     this.autoRead = autoRead == true;
     this.readInterval = parseInt(readInterval);
-    if(this.readInterval < 500) { this.readInterval = 5000; }
+    if(this.readInterval < 100) { this.readInterval = 100; }
+
+    // Water density (kg/m^3 convenience)
+    this.density = {
+      freshwater: 997.0474,
+      saltwater: 1023.6
+    };
+
+    // Gravity (m/s^2)
+    this.gravity = 9.80665;
   }
 
   read() {
+
     this.#sensor.readSensor()
       .then(() => {
         super.emit('read');
+
         if (this.autoRead) {
           setTimeout(() => this.read(), this.readInterval);
         }
@@ -48,20 +53,18 @@ module.exports = class ExternalPressureSensor extends EventEmitter {
   }
 
   temperature(conversion = "c") {
-    return this.#sensor.temperature(conversion).toFixed(1);
+
+    return Math.round(this.#sensor.temperature(conversion) * 10) / 10;
   }
 
   pressure(conversion = "psi") {
-    return this.#sensor.pressure(conversion).toFixed(2);
+
+    return Math.round(this.#sensor.pressure(conversion) * 10) / 10;
   }
 
-  depth(density = this.density.saltwater) {
-    // Pressure in pa
-    const pressure = this.#sensor.pressure("pa");
+  depth(pressure = this.#sensor.pressure("pa"), density = this.density.saltwater) {
 
-    // Depth relative to MSL pressure in given fluid density
-    const depth = (pressure - 101300) / (density * 9.80665);
-    return depth.toFixed(2);
+    return Math.round(((pressure-101300)/(density*this.gravity)) * 100) / 100;
   }
 
 }
