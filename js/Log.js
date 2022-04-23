@@ -18,8 +18,8 @@ const log = new winston.Logger({
   ]
 });
 
-log.socketIOTransport = function (client) {
-    this.name  = 'socketIO';
+log.socketIOTransport = function(client) {
+    this.name  = `socket_${client._socket.remoteAddress}:${client._socket.remotePort}`;
     this.level = 'info';
     this.client = client;
     this.log = function(level, msg) {  

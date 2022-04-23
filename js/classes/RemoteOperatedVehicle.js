@@ -158,7 +158,6 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     const lastControlData = this.controlData
     this.controlData = newInput
 
-
     // Loop through new controls, if there is a function matching, then run it
     for (const functionName in newInput) {
 

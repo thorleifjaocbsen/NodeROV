@@ -31,11 +31,6 @@ const PCA9685 = require('./js/drivers/PCA9685.js');
 const pca9685 = new PCA9685();
 pca9685.init();
 
-// Create interval every 1 second to update the telemtry from rov
-setInterval(() => {
-  wss.broadcast("telemetry " + JSON.stringify(rov.getTelemetry()));
-}, 1000);
-
 /************************
  *
  * Initialize scripts
@@ -176,7 +171,7 @@ const webServer = https.createServer({ key, cert }, app).listen(Configuration.po
  ************************/
 const wss = new ws.WebSocketServer({ perMessageDeflate: false, server: webServer })
 log.info(`Websocket: Listning on ${Configuration.socketPort}`)
-wss.on('connection', function (client) {
+wss.on('connection', (client) => {
 
   client.ip = client._socket.remoteAddress;
   client.port = client._socket.remotePort;
@@ -200,7 +195,7 @@ wss.on('connection', function (client) {
     log.info(`Websocket: Close from ${client.ip}:${client.port}`)
 
     rov.disarm()
-    log.remove(log.transports.socketIO, client)
+    log.remove(`socket_${client._socket.remoteAddress}:${client._socket.remotePort}`, client)
     client.heartbeat.stop()
     client.heartbeat.removeAllListeners();
   });
@@ -261,6 +256,12 @@ function parseWebsocketData(data) {
       data = JSON.parse(data.join(' '));
       data = { ...{ axes: defaultControls.axes }, ...data };
       rov.controllerInputUpdate(data);
+      break;
+
+    case 'fanState':
+      const newState = data[0] == "true";
+      log.info(`Websocket: Fan state (${newState}) command from ${client.ip}:${client.port}`);
+      sc.setFan(newState);
       break;
 
     default:

@@ -99,6 +99,11 @@ gui.setButton("gui-log-button-1", "ADD EVENT", () => {
     });
     $("#eventmsg").focus();
 });
+gui.setButton("gui-controls-button-11", "CPU FAN", () => {
+    const newState = !gui.buttonState("gui-controls-button-11");
+    gui.buttonState("gui-controls-button-11", newState);
+    socket.send("fanState "+newState);
+});
 gui.setButton("gui-log-button-2", "SCREENSHOT", (e) => {
     var data = player.canvas.toDataURL("image/jpeg", 1);
     var filename = "noderov_" + (Date.now() / 1000) + ".jpg";
