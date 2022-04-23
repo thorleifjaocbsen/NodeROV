@@ -252,10 +252,10 @@ function parseWebsocketData(data) {
       break;
 
     case 'controls':
-      log.info(`Websocket: Controls command from ${client.ip}:${client.port}`);
-      data = JSON.parse(data.join(' '));
-      data = { ...{ axes: defaultControls.axes }, ...data };
-      rov.controllerInputUpdate(data);
+      // log.info(`Websocket: Controls command from ${client.ip}:${client.port}`);
+      // data = JSON.parse(data.join(' '));
+      // data = { ...{ axes: defaultControls.axes }, ...data };
+      // rov.controllerInputUpdate(data);
       break;
 
     case 'fanState':

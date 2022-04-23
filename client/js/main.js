@@ -102,7 +102,7 @@ gui.setButton("gui-log-button-1", "ADD EVENT", () => {
 gui.setButton("gui-controls-button-11", "CPU FAN", () => {
     const newState = !gui.buttonState("gui-controls-button-11");
     gui.buttonState("gui-controls-button-11", newState);
-    socket.send("fanState "+newState);
+    socket.send("fanState " + newState);
 });
 gui.setButton("gui-log-button-2", "SCREENSHOT", (e) => {
     var data = player.canvas.toDataURL("image/jpeg", 1);
@@ -129,24 +129,22 @@ gui.setInfo(12, 0, "Latency:");
 /************************
   * Controls on press e.t.c
  ************************/
-// controls.onPress(controls.map.gainUp, () => { socket.send("setgain " + (rovData.gain + 50)); });
-// controls.onPress(controls.map.gainDown, () => { socket.send("setgain " + (rovData.gain - 50)); });
-// controls.onPress(controls.map.lightsUp, () => {
-//     socket.send("setlight 0 " + (rovData.lights[0] + 10));
-//     socket.send("setlight 1 " + (rovData.lights[1] + 10));
-// }, 100);
-// controls.onPress(controls.map.lightsDown, () => {
-//     socket.send("setlight 0 " + (rovData.lights[0] - 10));
-//     socket.send("setlight 1 " + (rovData.lights[1] - 10));
-// }, 100);
-// controls.onPress(controls.map.cameraUp, () => { socket.send("setcamera " + (rovData.cameraPosition - 1)); }, 10);
-// controls.onPress(controls.map.cameraDown, () => { socket.send("setcamera " + (rovData.cameraPosition + 1)); }, 10);
-// controls.onPress(controls.map.fullscreen, () => { gui.pressButton("gui-controls-button-8"); }, 1000)
-// controls.onPress(controls.map.arm, () => { socket.send("arm"); });
-// controls.onPress(controls.map.disarm, () => { socket.send("disarm"); });
-// controls.onPress(controls.map.depthhold, () => { socket.send("depthhold"); });
-// controls.onPress(controls.map.gripOpen, () => { socket.send("gripopen"); }, 50);
-// controls.onPress(controls.map.gripClose, () => { socket.send("gripclose"); }, 50);
+controls.onPress(controls.map.gainIncrease, () => { socket.send("gainIncrease"); });
+controls.onPress(controls.map.gainDecrease, () => { socket.send("gainDecrease"); });
+controls.onPress(controls.map.lightsDimBrighter, () => { socket.send("lightsDimBrighter"); }, 250);
+controls.onPress(controls.map.lightsDimDarker, () => { socket.send("lightsDimDarker"); }, 250);
+controls.onPress(controls.map.cameraTiltUp, () => { socket.send("cameraTiltUp"); }, 250);
+controls.onPress(controls.map.cameraTiltDown, () => { socket.send("cameraTiltDown"); }, 250);
+controls.onPress(controls.map.fullscreen, () => { gui.pressButton("gui-controls-button-8"); }, 1000)
+controls.onPress(controls.map.arm, () => { socket.send("arm"); });
+controls.onPress(controls.map.disarm, () => { socket.send("disarm"); });
+controls.onPress(controls.map.depthHoldToggle, () => { socket.send("depthHoldToggle"); });
+controls.onPress(controls.map.headingHoldToggle, () => { socket.send("headingHoldToggle"); });
+controls.onPress(controls.map.gripperOpen, (value) => {  console.log(value);socket.send("gripperOpen " + value); }, 50);
+controls.onPress(controls.map.gripperClose, (value) => { socket.send("gripperClose " + value); }, 50);
+
+controls.onPress(controls.map.headingHoldDisable, () => { socket.send("headingHoldDisable"); });
+controls.onPress(controls.map.headingHoldEnable, () => { socket.send("headingHoldEnable"); }, 250);
 
 /************************
  *
@@ -197,7 +195,7 @@ socket.on("env", (data) => {
             dashboard.setScale(1, "DEPTH", value, 100, 30);
             dashboard.draw();
             lineChart.addDataPoint(value);
-            if(gui.buttonState("gui-controls-button-5")) lineChart.draw();
+            if (gui.buttonState("gui-controls-button-5")) lineChart.draw();
             break;
 
         case "leak":
@@ -220,31 +218,31 @@ socket.on("env", (data) => {
             break;
 
         case "roll":
-            if(!gui.buttonState("gui-controls-button-5")) hudBlock.draw(value, undefined, undefined);
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(value, undefined, undefined);
             break;
 
         case "pitch":
-            if(!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, value, undefined)
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, value, undefined)
             break;
 
         case "heading":
-            if(!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, undefined, value)
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, undefined, value)
             break;
 
         case 'cpuTemperature':
-            gui.setInfo(5, Math.round(value*10)/10+"°C");
+            gui.setInfo(5, Math.round(value * 10) / 10 + "°C");
             break;
 
         case 'cpuLoad':
-            gui.setInfo(6, Math.round(value*10)/10+"%");
+            gui.setInfo(6, Math.round(value * 10) / 10 + "%");
             break;
 
         case 'memoryUsed':
-            gui.setInfo(7, Math.round(value*10)/10+"%");
+            gui.setInfo(7, Math.round(value * 10) / 10 + "%");
             break;
 
         case 'diskUsed':
-            gui.setInfo(8, Math.round(value*10)/10+"%");
+            gui.setInfo(8, Math.round(value * 10) / 10 + "%");
             break;
 
         default:
@@ -270,12 +268,7 @@ socket.on("log", function (data) {
  ************************/
 function systemLoop() {
 
-    controls.detectPressedGamepad();
-    if (controls.inputChanged()) {
-        let gpData = controls.getGamepad();
-        socket.send('controls ' + JSON.stringify(gpData))
-    }
-
+    controls.update();
     // // ! < add it below to enable gp warning again (before controls.warned)
     // if (!controls.checkGamepad() && controls.warned) {
     //     popup("Connect Gamepad", "Please connect the gamepad to continue.");

@@ -1,96 +1,132 @@
-const DEFAULT_GAMEPAD = {
-  axes: [0, 0, 0, 0],
-  buttons: [],
-  timestamp: 0
-}
 export default class Controls {
 
   constructor() {
-    this.gamepad = DEFAULT_GAMEPAD
-    this.autoUpdate = true
 
-    this.gpIndex = null
-    this.gp = navigator.getGamepads();
+    this.gp = null;
+    this.forward = 0; // [-100,+100] Forward and reverse
+    this.backward = 0; // [-100,+100] Left and Right
+    this.yaw = 0; // [-100,+100] Turn left, Turn right
+    this.climb = 0; // [-100,+100] Up and down
 
-    this.axes = DEFAULT_GAMEPAD.axes
-    this.buttons = DEFAULT_GAMEPAD.buttons
-    this.timestamp = DEFAULT_GAMEPAD.timestamp
+    this.map = {
+      "roll": false,
+      "pitch": false,
+      "yaw": false,
+      "ascend": false,
+      "forward": false,
+      "lateral": false,
+      "arm": 9,
+      "disarm": 8,
+      "toggleArm": false,
+      "cameraTiltUp": 4,
+      "cameraTiltDown": 5,
+      "cameraCenter": false,
+      "gainIncrease": 12,
+      "gainDecrease": 13,
+      "gripperClose": 6,
+      "gripperOpen": 7,
+      "lightsDimBrighter": 15,
+      "lightsDimDarker": 14,
+      "depthHoldEnable": false,
+      "depthHoldDisable": false,
+      "depthHoldToggle": 0,
+      "headingHoldEnable": "kb72",
+      "headingHoldDisable": "kb74",
+      "headingHoldToggle": 2,
+      "trimRollLeft": false,
+      "trimRollRight": false,
+      "fullscreen": 1,
+    };
+    this.callbacks = {};
+    this.debounce = {};
+    this.repeatInterval = {};
+    this.repeatIntervalTimer = {};
+
+    this.lastUpdate = 0;
+    this.changedSinceReturn = false;
+    this.warned = false;
+
+    document.addEventListener("keydown", (e) => this.keyDown(e));
+    document.addEventListener("keyup", (e) => this.keyUp(e));
   }
 
-
-  isGamepadDetected() {
-    return !(this.gpIndex == null)
+  checkGamepad() {
+    try {
+      this.gp = navigator.getGamepads()[0];
+      return this.gp.connected;
+    } catch (err) {
+      return false;
+    }
   }
 
-  detectPressedGamepad() {
-    const gp = navigator.getGamepads()
+  update() {
+    if (!this.checkGamepad()) return false;
 
-    for (var i = 0; i < gp.length; i++) {
+    if (this.lastUpdate == this.gp.timestamp) return false;
+    this.lastUpdate = this.gp.timestamp;
+    this.changedSinceReturn = true;
 
-      if (this.gp[i] != gp[i]) {
-        this.gp = gp
-        this.gpIndex = i
-        return gp[i]
+    this.forward = Math.round(this.gp.axes[1] * 100);
+    this.strafe = -1 * Math.round(this.gp.axes[0] * 100);
+    this.yaw = -1 * Math.round(this.gp.axes[2] * 100);
+    this.climb = Math.round(this.gp.axes[3] * 100);
+
+    // Deadband
+    if (Math.abs(this.forward) < 5) this.forward = 0;
+    if (Math.abs(this.strafe) < 5) this.strafe = 0;
+    if (Math.abs(this.yaw) < 5) this.yaw = 0;
+    if (Math.abs(this.climb) < 5) this.climb = 0;
+
+    for (const btn in this.gp.buttons) {
+      if (this.gp.buttons[btn].pressed && !this.debounce[btn] && typeof this.callbacks[btn] == "function") {
+        this.callbacks[btn](this.gp.buttons[btn].value);
+        this.debounce[btn] = true;
+
+        if (this.repeatInterval[btn] > 0) {
+
+          this.repeatIntervalTimer[btn] = setInterval(() => { this.callbacks[btn](this.gp.buttons[btn].value); }, this.repeatInterval[btn]);
+        }
+      }
+      if (!this.gp.buttons[btn].pressed && this.debounce[btn]) {
+        this.debounce[btn] = false;
+        if (this.repeatInterval[btn] > 0) {
+          clearInterval(this.repeatIntervalTimer[btn]);
+        }
       }
     }
 
-    return false
   }
 
-  disconnectGamepad() {
-    this.gpIndex = null
-    this.gp = navigator.getGamepads()
+  onPress(btn, callback, bounceDelete) {
+    if (isNaN(bounceDelete)) bounceDelete = 0;
+    bounceDelete = parseInt(bounceDelete);
+    this.callbacks[btn] = callback;
+    this.repeatInterval[btn] = bounceDelete;
   }
 
-  inputChanged() {
-    const oldTimestamp = this.timestamp
-    try {
-      const gp = navigator.getGamepads()[this.gpIndex]
-      this.axes = gp.axes
-      gp.buttons.forEach((elem, index) => {
-        this.buttons[index] = elem.pressed
-      })
-      this.timestamp = gp.timestamp
+  keyDown(e) {
+    const btn = "kb" + e.keyCode;
+
+    if (!this.debounce[btn] && typeof this.callbacks[btn] == "function") {
+
+      this.callbacks[btn]();
+      this.debounce[btn] = true;
+
+      if (this.repeatInterval[btn] > 0) {
+        this.repeatIntervalTimer[btn] = setInterval(this.callbacks[btn], this.repeatInterval[btn]);
+      }
     }
-    catch (e) {
-      this.axes = DEFAULT_GAMEPAD.axes
-      this.buttons = DEFAULT_GAMEPAD.buttons
-      this.timestamp = DEFAULT_GAMEPAD.timestamp
-      this.disconnectGamepad()
-    }
-
-    return this.timestamp != oldTimestamp;
   }
 
-  getGamepad() {
-    const gp = navigator.getGamepads()[this.gpIndex];
-    return {
-      "roll": 0,
-      "pitch": 0,
-      "yaw": gp.axes[2],
-      "ascend": gp.axes[3],
-      "forward": gp.axes[1],
-      "lateral": gp.axes[0],
-      "arm": gp.buttons[9].value,
-      "disarm": gp.buttons[8].value,
-      "toggleArm": 0,
-      "cameraTiltUp": gp.buttons[5].value,
-      "cameraTiltDown": gp.buttons[4].value,
-      "cameraCenter": gp.buttons[10].value,
-      "gainIncrease": gp.buttons[12].value,
-      "gainDecrease": gp.buttons[13].value,
-      "gripperClose": gp.buttons[6].value,
-      "gripperOpen": gp.buttons[7].value,
-      "lightsDimBrighter": gp.buttons[15].value,
-      "lightsDimDarker": gp.buttons[14].value,
-      "depthHoldEnable": 0,
-      "depthHoldDisable": 0,
-      "depthHoldToggle": gp.buttons[2].value,
-      "headingHoldEnable": 0,
-      "headingHoldDisable": 0,
-      "headingHoldToggle": gp.buttons[3].value,
-      "trimRollLeft": 0,
-      "trimRollRight": 0
+  keyUp(e) {
+    const btn = "kb" + e.keyCode;
+
+    if (this.debounce[btn]) {
+      this.debounce[btn] = false;
+
+      if (this.repeatInterval[btn] > 0) {
+        clearInterval(this.repeatIntervalTimer[btn]);
+      }
     }
   }
 }
