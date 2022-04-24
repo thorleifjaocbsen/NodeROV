@@ -51,17 +51,21 @@ const sc  = new SystemController();
  ************************/
 rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
-rov.on('thusterOutputChanged', (ouputInUs) => {
-  ouputInUs.forEach((output) => {
-    log.info(`Pin: ${output.pin} = ${output.us}us`);
+rov.on('thusterOutputChanged', (output) => {
+  output.forEach((output) => {
+    log.debug(`Pin: ${output.pin} = ${output.us}us`);
     pca9685.setPWM(output.pin, output.us);
+
+
   })
+
+  wss.broadcast(`ts ${JSON.stringify(output)}`);
+
 });
 rov.on('environmentChanged', (variable, value) => {
   wss.broadcast("env " + variable + " " + value);
   log.debug(`Environment variable ${variable} changed to ${value}`);
 });
-rov.controllerInputUpdate(defaultControls)
 
 /************************
  *
@@ -252,17 +256,28 @@ function parseWebsocketData(data) {
       client.heartbeat.pulse(data[0]);
       break;
 
-    case 'controls':
-      // log.info(`Websocket: Controls command from ${client.ip}:${client.port}`);
-      // data = JSON.parse(data.join(' '));
-      // data = { ...{ axes: defaultControls.axes }, ...data };
-      // rov.controllerInputUpdate(data);
-      break;
-
     case 'fanState':
       const newState = data[0] == "true";
       log.info(`Websocket: Fan state (${newState}) command from ${client.ip}:${client.port}`);
       sc.setFan(newState);
+      break;
+
+    case 'lateral':
+    case 'forward':
+    case 'yaw':
+    case 'ascend':
+    case 'headingHold':
+    case 'fullScreen':
+    case 'depthHold':
+    case 'camera':
+    case 'gripper':
+    case 'disarm':
+    case 'arm':
+    case 'cameraCenter':
+    case 'gainIncrement':
+    case 'gainDecrement':
+    case 'light':
+      rov.command(cmd, data[0]);
       break;
 
     default:

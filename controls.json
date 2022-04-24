@@ -3,7 +3,7 @@
     "name": "Lateral",
     "func": "lateral",
     "type": "analogue",
-    "invert": true
+    "invert": false
   },
   "a1": {
     "name": "Forward",
@@ -15,7 +15,7 @@
     "name": "Yaw",
     "func": "yaw",
     "type": "analogue",
-    "invert": true
+    "invert": false
   },
   "a3": {
     "name": "Ascend/Descend",

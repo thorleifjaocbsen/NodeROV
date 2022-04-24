@@ -61,7 +61,14 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     }
 
     this.armed = false
-    this.controlData = {}
+    this.controlData = {
+      roll: 0,
+      pitch: 0,
+      yaw: 0,
+      ascend: 0,
+      forward: 0,
+      lateral: 0
+    }
   }
 
 
@@ -97,7 +104,6 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
   }
 
   calculateThrusterOutput() {
-
     // to keep track of changes
     let changes = false
 
@@ -121,7 +127,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
         forward * motor.forwardFactor +
         lateral * motor.lateralFactor
 
-      const output = this.constrain(rollPitchYaw + linear, -1, 1)
+      const output = this.constrain(rollPitchYaw + linear, -100, 100)
 
       // Tracking changes and storing changes.
       changes = changes || motor.output != output
@@ -142,47 +148,35 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       const pin = motor.pwmPin;
       const motorOutput = motor.output;
 
-      let us = this.map(motorOutput, -1, 1, this.minUS, this.maxUS);
+      let us = this.map(motorOutput, -100, 100, this.minUS, this.maxUS);
       if (motorOutput == 0 || !motorOutput) us = this.idleUS;
 
       us = Math.round(us)
 
-      ouputUS.push({ pin, us })
+      ouputUS.push({ pin, us, percentage: motorOutput })
     }
 
     return ouputUS;
   }
 
-  controllerInputUpdate(newInput) {
+  command(command, value) {
 
-    const lastControlData = this.controlData
-    this.controlData = newInput
+    // Verify that it is a function
+    if (typeof this[command] !== 'function') return;
 
-    // Loop through new controls, if there is a function matching, then run it
-    for (const functionName in newInput) {
+    const constrainedValue = this.constrain(value, -100, 100);
+    if (value != constrainedValue) value = 0;
 
-      // Skip if not pointing to a function name
-      if (typeof this[functionName] != "function") continue
-
-      // Process Value to be within requirements
-      let value = newInput[functionName]
-      const constrainedValue = this.constrain(value, -1, 1)
-      if (value != constrainedValue) value = 0
-
-      // Skip if value is not changed since last time
-      if (value == lastControlData[functionName]) continue
-
-      // If not run the function with the new value!
-      this[functionName](value)
-    }
+    // If not run the function with the new value!
+    this[command](value);
   }
 
-  roll(value) { this.calculateThrusterOutput() }
-  pitch(value) { this.calculateThrusterOutput() }
-  yaw(value) { this.calculateThrusterOutput() }
-  ascend(value) { this.calculateThrusterOutput() }
-  forward(value) { this.calculateThrusterOutput() }
-  lateral(value) { this.calculateThrusterOutput() }
+  roll(value) { this.controlData.roll = value; this.calculateThrusterOutput() }
+  pitch(value) { this.controlData.pitch = value; this.calculateThrusterOutput() }
+  yaw(value) { this.controlData.yaw = value; this.calculateThrusterOutput() }
+  ascend(value) { this.controlData.ascend = value; this.calculateThrusterOutput() }
+  forward(value) { this.controlData.forward = value; this.calculateThrusterOutput() }
+  lateral(value) { this.controlData.lateral = value; this.calculateThrusterOutput() }
 
   arm() {
 

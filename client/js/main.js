@@ -258,6 +258,17 @@ socket.on("log", function (data) {
     } catch (e) { }
 })
 
+socket.on("ts", (data) => {
+    try {
+        data = JSON.parse(data);
+        console.log(data);
+        data.forEach(thruster => {
+            dashboard.setThruster(thruster.pin, thruster.percentage);
+        });
+
+    } catch (e) { } 
+});
+
 
 /************************
  *
