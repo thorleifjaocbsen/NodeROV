@@ -65,7 +65,7 @@ export default class GUI extends EventEmitter {
 
     setInfo(no, value, titleText = false) {
         no--;
-        let parent = document.getElementsByClassName("field data")[0];
+        let parent = document.getElementsByClassName("data")[0];
         let child = parent.getElementsByTagName("li")[no];
         let title = child.getElementsByTagName("b")[0];
         let text = child.getElementsByTagName("span")[0];

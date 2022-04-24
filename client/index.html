@@ -10,11 +10,8 @@
   <link rel="stylesheet" type="text/css" href="css/base.css">
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
   <script type="text/javascript" src="js/scaling.js" charset="utf-8" defer></script>
+  <script type="text/javascript" src="js/controlMapping.js" charset="utf-8" defer></script>
   <script type="module" src="js/main.js" charset="utf-8" defer></script>
-  <style>
-
-
-  </style>
 </head>
 
 <body>
@@ -35,7 +32,7 @@
       <div id="overlay">EMERGENCY DATA</div>
     </section>
 
-    <section class="field info">
+    <section class="info">
       <h1>NodeROV</h1>
       <aside>
         <time>00:00:00</time><br />
@@ -50,7 +47,7 @@
       </ul>
     </section>
 
-    <section class="field data">
+    <section class="data">
       <ul>
         <li><b></b><br /><span></span></li>
         <li><b></b><br /><span></span></li>
@@ -73,7 +70,7 @@
       </ul>
     </section>
 
-    <section class="field controls">
+    <section class="controls">
       <button name="gui-controls-button-1">-</button>
       <button name="gui-controls-button-2">-</button>
       <button name="gui-controls-button-3">-</button>
@@ -88,21 +85,64 @@
       <button name="gui-controls-button-12">-</button>
     </section>
 
-    <section class="field datagraphics">
+    <section class="datagraphics">
       <canvas id="dataGraphicsCanvas">DataGraphics</canvas>
     </section>
 
-    <section class="field vitals">
+    <section class="vitals">
       <canvas id="HUD">You'r browser does not support canvas, prick!</canvas>
     </section>
 
-    <section class="field log">
+    <section class="log">
       <button name="gui-log-button-1">1</button>
       <button name="gui-log-button-2">2</button>
       <h1>LOG</h1>
       <hr />
       <div class="logs">
         <table id="logTable"></table>
+      </div>
+    </section>
+
+    <section id="controlMapping">
+      <div id="controlMappingCover"><p>Press button to map to function<br /><br /><span>Arm</span><br /><br />Press Escape to unset</p></div>
+      <button class="save">Save</button>
+      <button class="reset">Reset</button>
+      <h1>Control Setup</h1>
+      <hr />
+      <div style="overflow: scroll; height: 810px; margin-top: 10px;">
+        <table id="controlTable">
+          <tr>
+            <th>Action</th>
+            <th>Keyboard</th>
+            <th>Controller</th>
+          </tr>
+          <tr>
+            <td>Arm</td>
+            <td class="buttonmap">&lt; Unset &gt;</td>
+            <td class="buttonmap">&lt; Unset &gt;</td>
+          </tr>
+          <tr><td>Disarm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Press left</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+        </table>
       </div>
     </section>
   </div>

@@ -129,22 +129,22 @@ gui.setInfo(12, 0, "Latency:");
 /************************
   * Controls on press e.t.c
  ************************/
-controls.onPress(controls.map.gainIncrease, () => { socket.send("gainIncrease"); });
-controls.onPress(controls.map.gainDecrease, () => { socket.send("gainDecrease"); });
-controls.onPress(controls.map.lightsDimBrighter, () => { socket.send("lightsDimBrighter"); }, 250);
-controls.onPress(controls.map.lightsDimDarker, () => { socket.send("lightsDimDarker"); }, 250);
-controls.onPress(controls.map.cameraTiltUp, () => { socket.send("cameraTiltUp"); }, 250);
-controls.onPress(controls.map.cameraTiltDown, () => { socket.send("cameraTiltDown"); }, 250);
-controls.onPress(controls.map.fullscreen, () => { gui.pressButton("gui-controls-button-8"); }, 1000)
-controls.onPress(controls.map.arm, () => { socket.send("arm"); });
-controls.onPress(controls.map.disarm, () => { socket.send("disarm"); });
-controls.onPress(controls.map.depthHoldToggle, () => { socket.send("depthHoldToggle"); });
-controls.onPress(controls.map.headingHoldToggle, () => { socket.send("headingHoldToggle"); });
-controls.onPress(controls.map.gripperOpen, (value) => {  console.log(value);socket.send("gripperOpen " + value); }, 50);
-controls.onPress(controls.map.gripperClose, (value) => { socket.send("gripperClose " + value); }, 50);
-
-controls.onPress(controls.map.headingHoldDisable, () => { socket.send("headingHoldDisable"); });
-controls.onPress(controls.map.headingHoldEnable, () => { socket.send("headingHoldEnable"); }, 250);
+window.c = controls;
+controls.onPress("gainIncrement", (step) => { socket.send(`gainIncrement ${step}`); });
+controls.onPress("gainDecrement", (step) => { socket.send(`gainDecrement ${step}`); });
+controls.onPress("light", (step) => { socket.send(`light ${step}`); }, 250);
+controls.onPress("camera", (step) => { socket.send(`camera ${step}`); }, 250);
+controls.onPress("cameraCenter", () => { socket.send(`cameraCenter`); }, 250);
+controls.onPress("fullScreen", () => { gui.pressButton("gui-controls-button-8"); }, 1000)
+controls.onPress("arm", () => { socket.send("arm"); });
+controls.onPress("disarm", () => { socket.send("disarm"); }, 1000);
+controls.onPress("depthHold", () => { socket.send("depthHoldToggle"); });
+controls.onPress("headingHold", () => { socket.send("headingHoldToggle"); });
+controls.onPress("gripper", (value) => { socket.send("gripper " + value); });
+controls.onPress("forward", (value) => { socket.send("forward " + value); });
+controls.onPress("yaw", (value) => { socket.send("yaw " + value); });
+controls.onPress("lateral", (value) => { socket.send("lateral " + value); });
+controls.onPress("ascend", (value) => { socket.send("ascend " + value); });
 
 /************************
  *
@@ -266,9 +266,10 @@ socket.on("log", function (data) {
  *
  *
  ************************/
+ controls.update();
+
 function systemLoop() {
 
-    controls.update();
     // // ! < add it below to enable gp warning again (before controls.warned)
     // if (!controls.checkGamepad() && controls.warned) {
     //     popup("Connect Gamepad", "Please connect the gamepad to continue.");

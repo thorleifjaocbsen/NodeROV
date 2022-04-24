@@ -160,7 +160,8 @@ log.log('info', 'Starting webserver')
 const key = fs.readFileSync('assets/server.key');
 const cert = fs.readFileSync('assets/server.cert');
 
-app.use('/', express.static(__dirname + '/client'))
+app.use('/', express.static(__dirname + '/client'));
+app.use('/controls.json', express.static(__dirname + '/controls.json'));
 const webServer = https.createServer({ key, cert }, app).listen(Configuration.port, Configuration.ip, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
 
 

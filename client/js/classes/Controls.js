@@ -3,51 +3,27 @@ export default class Controls {
   constructor() {
 
     this.gp = null;
-    this.forward = 0; // [-100,+100] Forward and reverse
-    this.backward = 0; // [-100,+100] Left and Right
-    this.yaw = 0; // [-100,+100] Turn left, Turn right
-    this.climb = 0; // [-100,+100] Up and down
 
-    this.map = {
-      "roll": false,
-      "pitch": false,
-      "yaw": false,
-      "ascend": false,
-      "forward": false,
-      "lateral": false,
-      "arm": 9,
-      "disarm": 8,
-      "toggleArm": false,
-      "cameraTiltUp": 4,
-      "cameraTiltDown": 5,
-      "cameraCenter": false,
-      "gainIncrease": 12,
-      "gainDecrease": 13,
-      "gripperClose": 6,
-      "gripperOpen": 7,
-      "lightsDimBrighter": 15,
-      "lightsDimDarker": 14,
-      "depthHoldEnable": false,
-      "depthHoldDisable": false,
-      "depthHoldToggle": 0,
-      "headingHoldEnable": "kb72",
-      "headingHoldDisable": "kb74",
-      "headingHoldToggle": 2,
-      "trimRollLeft": false,
-      "trimRollRight": false,
-      "fullscreen": 1,
-    };
     this.callbacks = {};
     this.debounce = {};
     this.repeatInterval = {};
     this.repeatIntervalTimer = {};
 
     this.lastUpdate = 0;
-    this.changedSinceReturn = false;
-    this.warned = false;
+
+    this.axis = [];
+    this.buttons = [];
+    this.keyboard = [];
 
     document.addEventListener("keydown", (e) => this.keyDown(e));
     document.addEventListener("keyup", (e) => this.keyUp(e));
+
+
+    fetch("/controls.json")
+      .then(res => res.json())
+      .then(json => { this.controls = json; })
+      .catch(err => console.error(err));
+
   }
 
   checkGamepad() {
@@ -59,42 +35,80 @@ export default class Controls {
     }
   }
 
+  change(btn, value) {
+    // Verify that this is a configured button
+    if (!this.controls[btn]) { return false; }
+
+    // Check if this points to another button instead
+    if (typeof this.controls[btn].forward === "string") {
+      if (this.controls[btn].invert) { value = -1 * value; }
+      this.change(this.controls[btn].forward, value);
+      return true;
+    }
+
+    let { name, func, type, step, invert } = this.controls[btn];
+    const pressed = Math.abs(value) > 0;
+
+    // If invert, lets do it!
+    if(invert) { value = -1 * value; }
+    if (value < 1 && type == "step") step = -1 * step;
+
+
+    // Verify that callback exists for this function
+    const cb = this.callbacks[func];
+    if (typeof cb != "function") { return false; }
+
+    if (pressed) {
+
+      // If type is step, change value by step
+      if (type == "step") { value = step; }
+
+      // Call the callback
+      cb(value);
+
+      if (this.repeatInterval[func] > 0) {
+        this.repeatIntervalTimer[func] = setInterval(() => { cb(value); }, this.repeatInterval[func]);
+      }
+    } else if (!pressed) {
+
+      // Remove interval if set
+      if (this.repeatInterval[func] > 0) clearInterval(this.repeatIntervalTimer[func]);
+
+      // If analogue we need to send the 0 value to the callback
+      if (type == "analogue") { cb(0); }
+    }
+  }
+
   update() {
+
+    // Request this to be re-run
+    requestAnimationFrame(() => this.update());
+
     if (!this.checkGamepad()) return false;
 
     if (this.lastUpdate == this.gp.timestamp) return false;
     this.lastUpdate = this.gp.timestamp;
-    this.changedSinceReturn = true;
 
-    this.forward = Math.round(this.gp.axes[1] * 100);
-    this.strafe = -1 * Math.round(this.gp.axes[0] * 100);
-    this.yaw = -1 * Math.round(this.gp.axes[2] * 100);
-    this.climb = Math.round(this.gp.axes[3] * 100);
+    // Loop through axis
+    for (let i = 0; i < this.gp.axes.length; i++) {
+      let axisValue = Math.round(this.gp.axes[i] * 100);
 
-    // Deadband
-    if (Math.abs(this.forward) < 5) this.forward = 0;
-    if (Math.abs(this.strafe) < 5) this.strafe = 0;
-    if (Math.abs(this.yaw) < 5) this.yaw = 0;
-    if (Math.abs(this.climb) < 5) this.climb = 0;
+      if (Math.abs(axisValue) < 5) axisValue = 0; // Deadband
 
-    for (const btn in this.gp.buttons) {
-      if (this.gp.buttons[btn].pressed && !this.debounce[btn] && typeof this.callbacks[btn] == "function") {
-        this.callbacks[btn](this.gp.buttons[btn].value);
-        this.debounce[btn] = true;
-
-        if (this.repeatInterval[btn] > 0) {
-
-          this.repeatIntervalTimer[btn] = setInterval(() => { this.callbacks[btn](this.gp.buttons[btn].value); }, this.repeatInterval[btn]);
-        }
-      }
-      if (!this.gp.buttons[btn].pressed && this.debounce[btn]) {
-        this.debounce[btn] = false;
-        if (this.repeatInterval[btn] > 0) {
-          clearInterval(this.repeatIntervalTimer[btn]);
-        }
+      if (this.axis[i] != axisValue) {
+        this.axis[i] = axisValue;
+        this.change(`a${i}`, axisValue);
       }
     }
 
+    // Loop through buttons
+    for (let i = 0; i < this.gp.buttons.length; i++) {
+      const buttonValue = Math.round(this.gp.buttons[i].value * 100);
+      if (this.buttons[i] != buttonValue) {
+        this.buttons[i] = buttonValue;
+        this.change(`b${i}`, buttonValue);
+      }
+    }
   }
 
   onPress(btn, callback, bounceDelete) {
@@ -105,28 +119,20 @@ export default class Controls {
   }
 
   keyDown(e) {
-    const btn = "kb" + e.keyCode;
-
-    if (!this.debounce[btn] && typeof this.callbacks[btn] == "function") {
-
-      this.callbacks[btn]();
-      this.debounce[btn] = true;
-
-      if (this.repeatInterval[btn] > 0) {
-        this.repeatIntervalTimer[btn] = setInterval(this.callbacks[btn], this.repeatInterval[btn]);
-      }
+    
+    if(this.keyboard[e.keyCode] != e.keyCode && !this.debounce[e.keyCode]) {
+      this.keyboard[e.keyCode] = 100;
+      this.debounce[e.keyCode] = true;
+      this.change(`k${e.keyCode}`, 100);
     }
   }
 
   keyUp(e) {
-    const btn = "kb" + e.keyCode;
 
-    if (this.debounce[btn]) {
-      this.debounce[btn] = false;
-
-      if (this.repeatInterval[btn] > 0) {
-        clearInterval(this.repeatIntervalTimer[btn]);
-      }
+    if(this.keyboard[e.keyCode] != e.keyCode) {
+      this.keyboard[e.keyCode] = 0;
+      this.debounce[e.keyCode] = false;
+      this.change(`k${e.keyCode}`, 0);
     }
   }
 }

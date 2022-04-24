@@ -1,28 +1,165 @@
 {
-  "roll": false, 
-  "pitch": false, 
-  "yaw": false, 
-  "ascend": false, 
-  "forward": false, 
-  "lateral": false,
-  "arm": false,
-  "disarm": false,
-  "toggleArm": false,
-  "cameraTiltUp": false,
-  "cameraTiltDown": false,
-  "cameraCenter": false,
-  "gainIncrease": false,
-  "gainDecrease": false,
-  "gripperClose": false,
-  "gripperOpen": false,
-  "lightsDimBrighter": false,
-  "lightsDimDarker": false,
-  "depthHoldEnable": false,
-  "depthHoldDisable": false,
-  "depthHoldToggle": false,
-  "headingHoldEnable": false,
-  "headingHoldDisable": false,
-  "headingHoldToggle": false,
-  "trimRollLeft": false,
-  "trimRollRight": false
+  "a0": {
+    "name": "Lateral",
+    "func": "lateral",
+    "type": "analogue",
+    "invert": true
+  },
+  "a1": {
+    "name": "Forward",
+    "func": "forward",
+    "type": "analogue",
+    "invert": false
+  },
+  "a2": {
+    "name": "Yaw",
+    "func": "yaw",
+    "type": "analogue",
+    "invert": true
+  },
+  "a3": {
+    "name": "Ascend/Descend",
+    "func": "ascend",
+    "type": "analogue",
+    "invert": false
+  },
+  "b0": {
+    "name": "Heading hold",
+    "func": "headingHold",
+    "type": "button",
+    "invert": false
+  },
+  "b1": {
+    "name": "Full Screen",
+    "func": "fullScreen",
+    "type": "button"
+  },
+  "b2": {
+    "name": "Depth hold",
+    "func": "depthHold",
+    "type": "button",
+    "invert": false
+  },
+  "b3": {
+    "name": "Unknown"
+  },
+  "b4": {
+    "name": "Camera down",
+    "func": "camera",
+    "type": "step",
+    "step": 10,
+    "invert": true
+  },
+  "b5": {
+    "name": "Camera up",
+    "forward": "b4",
+    "invert": true
+  },
+  "b6": {
+    "name": "Close gripper",
+    "func": "gripper",
+    "type": "analogue",
+    "invert": true
+  },
+  "b7": {
+    "name": "Open gripper",
+    "forward": "b6",
+    "invert": true
+  },
+  "b8": {
+    "name": "Disarm",
+    "func": "disarm",
+    "type": "button"
+  },
+  "b9": {
+    "name": "Arm",
+    "func": "arm",
+    "type": "button"
+  },
+  "b10": {
+    "name": "Camera center",
+    "func": "cameraCenter",
+    "type": "button"
+  },
+  "b11": {
+    "name": "Camera center",
+    "func": "cameraCenter",
+    "type": "button"
+  },
+  "b12": {
+    "name": "Increment gain",
+    "func": "gainIncrement",
+    "type": "step",
+    "step": 10,
+    "invert": false
+  },
+  "b13": {
+    "name": "Decrement gain",
+    "func": "gainDecrement",
+    "type": "step",
+    "step": 10,
+    "invert": false
+  },
+  "b14": {
+    "name": "Decrement light",
+    "func": "light",
+    "type": "step",
+    "step": 10,
+    "invert": true
+  },
+  "b15": {
+    "name": "Increment light",
+    "func": "light",
+    "type": "step",
+    "step": 10,
+    "invert": false
+  },
+  "k38": {
+    "name": "Ascend",
+    "forward": "a3",
+    "invert": true
+  },
+  "k37": {
+    "name": "Yaw left",
+    "forward": "a2",
+    "invert": true
+  },
+  "k39": {
+    "name": "Yaw right",
+    "forward": "a2",
+    "invert": false
+  },
+  "k40": {
+    "name": "Descend",
+    "forward": "a3",
+    "invert": false
+  },
+  "k65": {
+    "name": "Lateral left",
+    "forward": "a0",
+    "invert": true
+  },
+  "k68": {
+    "name": "Lateral right",
+    "forward": "a0",
+    "invert": false
+  },
+  "k69": {
+    "name": "Open gripper",
+    "forward": "b7"
+  },
+  "k81": {
+    "name": "Close gripper",
+    "forward": "b6"
+  },
+  "k83": {
+    "name": "Backwads",
+    "forward": "a1",
+    "invert": false
+  },
+  "k87": {
+    "name": "Forward",
+    "forward": "a1",
+    "invert": true
+  }
 }
