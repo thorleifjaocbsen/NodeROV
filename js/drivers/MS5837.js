@@ -57,8 +57,9 @@ module.exports = class MS5837 {
             .then(() => {
               if (this.validateCRC()) resolve();
               else reject();
-            });
-        });
+            })
+            .catch(err => reject(err));
+        }).catch(err => reject(err));
     });
   }
 
