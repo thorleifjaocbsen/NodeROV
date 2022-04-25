@@ -27,7 +27,6 @@ export default class Dashboard {
     this.setThruster(1, 0, 100, 0, 315)
     this.setThruster(4, 0, 20, 100, 180)
     this.setThruster(5, 0, 80, 100, 0)
-    this.setThruster(5, -55)
     this.setThruster(2, 0, 0, 200, 135+180)
     this.setThruster(3, 0, 100, 200, 225+180)
   }
