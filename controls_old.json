@@ -1,0 +1,135 @@
+{
+  "roll": {
+    "name": "Roll",
+    "type": "axis",
+    "min": -100,
+    "max": 100,
+    "default": 0,
+    "deadband": 5,
+    "mapping": false
+  },
+  "pitch": {
+    "name": "Pitch",
+    "type": "axis",
+    "min": -100,
+    "max": 100,
+    "default": 0,
+    "deadband": 5,
+    "mapping": false
+  },
+  "yaw": {
+    "name": "Yaw",
+    "type": "axis",
+    "min": -100,
+    "max": 100,
+    "default": 0,
+    "deadband": 5,
+    "mapping": 2
+  },
+  "ascend": {
+    "name": "Ascend",
+    "type": "axis",
+    "min": -100,
+    "max": 100,
+    "default": 0,
+    "deadband": 5,
+    "mapping": 3
+  },
+  "forward": {
+    "name": "Forward",
+    "type": "axis",
+    "min": -100,
+    "max": 100,
+    "default": 0,
+    "deadband": 5,
+    "mapping": 1
+  },
+  "lateral": {
+    "name": "Lateral",
+    "type": "axis",
+    "min": -1,
+    "max": 1,
+    "default": 0,
+    "mapping": 0
+  },
+  "arm": {
+    "name": "Arm",
+    "type": "button"
+  },
+  "disarm": {
+    "name": "Disarm",
+    "type": "button"
+  },
+  "toggleArm": {
+    "name": "Toggle Arm",
+    "type": "button"
+  },
+  "cameraTiltUp": {
+    "name": "Camera Tilt Up",
+    "type": "step",
+    "min": 0,
+    "max": 100,
+    "default": 10
+  },
+  "cameraTiltDown": {
+    "name": "Camera Tilt Down",
+    "type": "step",
+    "min": 0,
+    "max": 100,
+    "default": 10
+  },
+  "cameraCenter": {
+    "name": "Camera center",
+    "type": "button"
+  },
+  "gainIncrease": {
+    "name": "Gain Increase",
+    "type": "step",
+    "min": 0,
+    "max": 100,
+    "default": 10
+  },
+  "gainDecrease": {
+    "name": "Gain Decrease",
+    "type": "step",
+    "min": 0,
+    "max": 100,
+    "default": 10
+  },
+  "gripperClose": {
+    "name": "Gripper Close",
+    "type": "step",
+    "min": 0,
+    "max": 100,
+    "default": 10
+  },
+  "gripperOpen": {
+    "name": "Gripper Open",
+    "type": "step",
+    "min": 0,
+    "max": 100,
+    "default": 10
+  },
+  "lightsBrighten": {
+    "name": "Lights Brighten",
+    "type": "step",
+    "min": 0,
+    "max": 100,
+    "default": 10
+  },
+  "lightsDarken": {
+    "name": "Lights Darken",
+    "type": "step",
+    "min": 0,
+    "max": 100,
+    "default": 10
+  },
+  "depthHoldToggle": {
+    "name": "Depth Hold Toggle",
+    "type": "button"
+  },
+  "headingHoldToggle": {
+    "name": "Heading Hold Toggle",
+    "type": "button"
+  }
+}

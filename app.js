@@ -262,6 +262,27 @@ function parseWebsocketData(data) {
       sc.setFan(newState);
       break;
 
+    case 'camera':
+      cameraPercentage += parseInt(data[0]);
+      if(cameraPercentage > 95) cameraPercentage = 95;
+      if(cameraPercentage < 5) cameraPercentage = 5;
+      let usData = rov.map(cameraPercentage, 0, 100, 1000, 2000);
+      console.log(usData,cameraPercentage);
+      pca9685.setPWM(6, usData);
+      break;
+
+    case 'cameraCenter':
+      cameraPercentage = 55;
+      let usDataCenter = rov.map(cameraPercentage, 0, 100, 1000, 2000);
+      console.log(usDataCenter,cameraPercentage);
+      pca9685.setPWM(6, usDataCenter);
+      break;
+
+    case 'setflat':
+      console.log("I should go flat now ! how the heck do I do that?");
+      imu.calibrateLevel();
+      break;
+
     case 'lateral':
     case 'forward':
     case 'yaw':
@@ -273,7 +294,6 @@ function parseWebsocketData(data) {
     case 'gripper':
     case 'disarm':
     case 'arm':
-    case 'cameraCenter':
     case 'gainIncrement':
     case 'gainDecrement':
     case 'light':
@@ -286,6 +306,8 @@ function parseWebsocketData(data) {
       break;
   }
 }
+
+let cameraPercentage = 50;
 
 
 

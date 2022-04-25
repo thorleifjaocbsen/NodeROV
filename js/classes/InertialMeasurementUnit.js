@@ -23,6 +23,13 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     this.roll = 0
     this.pitch = 0
     this.heading = 0
+
+    // Calibration
+    this.calibration = {
+      roll: 0,
+      pitch: 0,
+      heading: 0
+    }
     
     // Auto Read Sensor 
     this.autoRead = true
@@ -36,6 +43,12 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     this.parseData() 
 
     if (this.autoRead) setTimeout(() => { this.readSensorData() }, this.readInterval)
+  }
+
+
+  calibrateLevel() {
+    this.calibration.roll = this.roll;
+    this.calibration.pitch = this.pitch;
   }
 
   
@@ -92,9 +105,9 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     Psi   = Psi   * 180 / Math.PI
     if(Psi < 0) Psi += 360
 
-    this.roll    = Phi.toFixed(2)
-    this.pitch   = Theta.toFixed(2)
-    this.heading = Psi.toFixed(2)
+    this.roll    = Phi.toFixed(2) - this.calibration.roll;
+    this.pitch   = Theta.toFixed(2) - this.calibration.pitch;
+    this.heading = Psi.toFixed(2);
 
     super.emit('read')
   }
