@@ -120,15 +120,19 @@ adc.on('read', () => {
  * Inertial Measurement Unit (IMU)
  *
  ************************/
-imu.on('initError', (err) => { log.error(`IMU initializing failed (${err})`) })
-imu.on('init', () => { log.info("IMU successfully initialized") })
-imu.on('read', () => {
-
-  log.debug(`IMU Data: Roll = ${imu.roll}, Pitch = ${imu.pitch}, Heading = ${imu.heading}`)
-  rov.update("roll", imu.roll);
-  rov.update("pitch", imu.pitch);
-  rov.update("heading", imu.heading);
+imu.init()
+.then(() => {
+  log.info("IMU successfully initialized");
+  imu.on('read', () => {
+    log.info(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
+    rov.update("roll", imu.getRoll());
+    rov.update("pitch", imu.getPitch());
+    rov.update("heading", imu.getHeading());
+  });
 })
+.catch((err) => {
+  log.error(`IMU initialization failed (${err})`);
+});
 
 /************************
  *
@@ -268,14 +272,14 @@ function parseWebsocketData(data) {
       if(cameraPercentage < 5) cameraPercentage = 5;
       let usData = rov.map(cameraPercentage, 0, 100, 1000, 2000);
       console.log(usData,cameraPercentage);
-      pca9685.setPWM(6, usData);
+      pca9685.setPWM(8, usData);
       break;
 
     case 'cameraCenter':
       cameraPercentage = 55;
       let usDataCenter = rov.map(cameraPercentage, 0, 100, 1000, 2000);
       console.log(usDataCenter,cameraPercentage);
-      pca9685.setPWM(6, usDataCenter);
+      pca9685.setPWM(8, usDataCenter);
       break;
 
     case 'setflat':

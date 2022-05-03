@@ -79,7 +79,7 @@ module.exports = class PCA9685 {
   // Calculate how many steps an specific µS can be
   usToSteps(us) {
     // E.g. 50hz cycle = 1000000µS / 50hz = 20 000µS pr cycle.
-    const MicrosecoundPerCycle = 1000000 / this.frequency;
+    const MicrosecoundPerCycle = 1000000 / 50;
     // Then get how many µS we get pr step by dividing steps on µS pr cycle
     const stepsPerMicrosecound = 4095 / MicrosecoundPerCycle;
     // Then return µS wanted times steps we get per µS
