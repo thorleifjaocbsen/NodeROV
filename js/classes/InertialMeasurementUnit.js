@@ -9,30 +9,32 @@ const LSM9DS1 = require('../drivers/LSM9DS1')
 module.exports = class InertialMeasurementUnit extends EventEmitter {
 
   #sensor;
+  lastGyroRead;
 
   constructor(options) {
 
     super();
 
     this.theta = {
-      measured: 0,
+      accMeasured: 0,
+      gyrMeasured: 0,
       filtered: 0
     }
 
     this.phi = {
-      measured: 0,
+      accMeasured: 0,
+      gyrMeasured: 0,
       filtered: 0
     }
 
     this.psi = {
-      measured: 0,
+      accMeasured: 0,
+      gyrMeasured: 0,
       filtered: 0
     }
 
-    this.roll = 0
-    this.pitch = 0
-    this.heading = 0
     this.temperature = 0;
+    this.lastGyroRead = 0;
   }
 
   init(autoRead = true, readInterval = 100) {
@@ -54,11 +56,13 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
 
   readSensorData() {
 
-    return Promise.all([
-      this.#sensor.readAccel(),
-      this.#sensor.readMag(),
-      this.#sensor.readGyro()
-    ])
+    this.#sensor.readAccel()
+      .catch((err) => { super.emit('readError', err); })
+      .then(() => this.#sensor.readMag())
+      .catch((err) => { super.emit('readError', err); })
+      .then(() => this.#sensor.readTemp())
+      .catch((err) => { super.emit('readError', err); })
+      .then(() => this.#sensor.readGyro()) // Reading gyro last to get most accurate timing on when it was last read.
       .catch((err) => { super.emit('readError', err); })
       .then(() => this.parseData())
       .catch((err) => { super.emit('readError', err); })
@@ -69,17 +73,16 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
       });
   }
 
-
-  calibrateLevel() {
-    //this.calibration.roll = this.roll;
-    //this.calibration.pitch = this.pitch;
-    //this.#sensor.calibrate();
-  }
-
   calibrateAccelGyroBias() {
-    console.log("CALIBRATE!");
+
     return this.#sensor.calibrate()
-      .then(() => { console.log("Calibration done"); })
+      .then(() => { 
+
+        this.phi.gyrMeasured = 0;
+        this.theta.gyrMeasured = 0;
+        this.psi.gyrMeasured = 0;
+      
+      })
       .catch((err) => { console.log(`Calibration error: ${err}`); })
   }
 
@@ -92,8 +95,8 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     const Xm = this.#sensor.mag.x
     const Ym = this.#sensor.mag.y
     const Zm = this.#sensor.mag.z
-    const Xg = this.#sensor.gyro.x
-    const Yg = this.#sensor.gyro.y
+    const Xg = this.#sensor.gyro.x *-1 // TODO: Find out why this is needed
+    const Yg = this.#sensor.gyro.y *-1 // TODO: Find out why this is needed
     const Zg = this.#sensor.gyro.z
 
     let Phi, Theta, Psi, Xh, Yh
@@ -140,14 +143,31 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     Psi = Psi * 180 / Math.PI
     if (Psi < 0) Psi += 360
 
-    this.phi.measured = Phi;
-    this.theta.measured = Theta
-    this.psi.measured = Psi;
+    this.phi.accMeasured = Phi;
+    this.theta.accMeasured = Theta
+    this.psi.accMeasured = Psi;
 
-    // Low pass filter, 95% old and 5% new data
-    this.phi.filtered = (this.phi.filtered * .95) + (this.phi.measured * .05)
-    this.theta.filtered = (this.theta.filtered * .95) + (this.theta.measured * .05)
-    this.psi.filtered = (this.psi.filtered * .95) + (this.psi.measured * .05)
+    // Calculate Phi and Theta and PSI from Gyro
+    let currentTime = Date.now() / 1000;
+    let dt = currentTime - this.lastGyroRead;
+    this.lastGyroRead = currentTime;
+
+    this.phi.gyrMeasured = this.phi.gyrMeasured + Xg * dt;
+    this.theta.gyrMeasured = this.theta.gyrMeasured + Yg * dt;
+    this.psi.gyrMeasured = this.psi.gyrMeasured + Zg * dt;
+
+    //console.log(Xg.toFixed(2), Yg.toFixed(2), Zg.toFixed(2), Xa.toFixed(2), Ya.toFixed(2), Za.toFixed(2));
+    //console.log(this.phi.accMeasured.toFixed(2), this.theta.accMeasured.toFixed(2), this.psi.accMeasured.toFixed(2), Xg.toFixed(2), Yg.toFixed(2), Zg.toFixed(2));
+
+    // Low pass filter, 95% old and 5% new data - Accel only.
+    // this.phi.filtered = (this.phi.filtered * .95) + (this.phi.accMeasured * .05)
+    // this.theta.filtered = (this.theta.filtered * .95) + (this.theta.accMeasured * .05)
+    // this.psi.filtered = (this.psi.filtered * .95) + (this.psi.accMeasured * .05)
+
+    // Two complements filter, 95% gyro, 5% acc
+    this.phi.filtered = (this.phi.filtered + Xg * dt) * .95 + (this.phi.accMeasured * .05)
+    this.theta.filtered = (this.theta.filtered + Yg * dt) * .95 + (this.theta.accMeasured * .05)
+    this.psi.filtered = (this.psi.filtered + Zg * dt) * .95 + (this.psi.accMeasured * .05)
 
     super.emit('read')
   }

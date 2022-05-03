@@ -124,13 +124,16 @@ module.exports = class LSM9DS1 {
       bandwidth: 0,
       lowPowerEnable: false,
       HPFEnable: false,
-      HPFCutoff: 0,
+      HPFCutoff: 0b0000,
       flipX: false,
       flipY: false,
       flipZ: false,
       orientation: 0,
       latchInterrupt: true,
       resolution: 0,
+      xRaw: 0,
+      yRaw: 0,
+      zRaw: 0,
       x: 0,
       y: 0,
       z: 0
@@ -147,6 +150,9 @@ module.exports = class LSM9DS1 {
       highResEnable: false,
       highResBandwidth: 0,
       resolution: 0,
+      xRaw: 0,
+      yRaw: 0,
+      zRaw: 0,
       x: 0,
       y: 0,
       z: 0
@@ -162,6 +168,9 @@ module.exports = class LSM9DS1 {
       lowPowerEnable: false,
       operatingMode: 0,
       resolution: 0,
+      xRaw: 0,
+      yRaw: 0,
+      zRaw: 0,
       x: 0,
       y: 0,
       z: 0
@@ -179,6 +188,13 @@ module.exports = class LSM9DS1 {
     this.aBiasRaw = [0, 0, 0];
     this.mBiasRaw = [0, 0, 0];
 
+  }
+
+  twosComp(val, bits) {
+    if (val & (1 << (bits - 1))) {
+      val = val - (1 << bits);
+    }
+    return val;
   }
 
   init() {
@@ -416,6 +432,12 @@ module.exports = class LSM9DS1 {
       .catch(err => { throw err; })
   }
 
+  readInt16LETwoComp(buffer, offset) {
+    let val = buffer.readInt16LE(offset);
+    if (val >= 32768) val -= 65536;
+    return val;
+  }
+
   readGyro(force = false) {
 
     if (this.#isCalibrating && !force) return Promise.reject("Calibration in progress");
@@ -423,15 +445,20 @@ module.exports = class LSM9DS1 {
     return this.#sensor.readI2cBlock(this.#G_XL_ADDRESS, this.#OUT_X_L_G, 6, Buffer.alloc(6))
       .then((data) => {
 
-        this.gyro.x = data.buffer.readInt16LE(0); // Store x-axis values
-        this.gyro.y = data.buffer.readInt16LE(2); // Store y-axis values
-        this.gyro.z = data.buffer.readInt16LE(4); // Store z-axis values
+        this.gyro.xRaw = this.readInt16LETwoComp(data.buffer, 0); // Store x-axis values
+        this.gyro.yRaw = this.readInt16LETwoComp(data.buffer, 2); // Store y-axis values
+        this.gyro.zRaw = this.readInt16LETwoComp(data.buffer, 4); // Store z-axis values
 
         if (this.#isCalibrated) {
-          this.gyro.x -= this.gBiasRaw[0];
-          this.gyro.y -= this.gBiasRaw[1];
-          this.gyro.z -= this.gBiasRaw[2];
+          this.gyro.xRaw -= this.gBiasRaw[0];
+          this.gyro.yRaw -= this.gBiasRaw[1];
+          this.gyro.zRaw -= this.gBiasRaw[2];
+
+          this.gyro.x = this.calcGyro(this.gyro.xRaw);
+          this.gyro.y = this.calcGyro(this.gyro.yRaw);
+          this.gyro.z = this.calcGyro(this.gyro.zRaw);
         }
+
       })
       .catch(err => { throw err });
 
@@ -442,15 +469,20 @@ module.exports = class LSM9DS1 {
     return this.#sensor.readI2cBlock(this.#M_ADDRESS, this.#OUT_X_L_M, 6, Buffer.alloc(6))
       .then((data) => {
 
-        this.mag.x = data.buffer.readInt16LE(0); // Store x-axis values
-        this.mag.y = data.buffer.readInt16LE(2); // Store y-axis values
-        this.mag.z = data.buffer.readInt16LE(4); // Store z-axis values
+        this.mag.xRaw = this.readInt16LETwoComp(data.buffer, 0); // Store x-axis values
+        this.mag.yRaw = this.readInt16LETwoComp(data.buffer, 2); // Store y-axis values
+        this.mag.zRaw = this.readInt16LETwoComp(data.buffer, 4); // Store z-axis values
 
         if (this.#isCalibrated) {
-          this.mag.x -= this.mBiasRaw[0];
-          this.mag.y -= this.mBiasRaw[1];
-          this.mag.z -= this.mBiasRaw[2];
+          this.mag.xRaw -= this.mBiasRaw[0];
+          this.mag.yRaw -= this.mBiasRaw[1];
+          this.mag.zRaw -= this.mBiasRaw[2];
         }
+
+        this.mag.x = this.calcMag(this.mag.xRaw);
+        this.mag.y = this.calcMag(this.mag.yRaw);
+        this.mag.z = this.calcMag(this.mag.zRaw);
+
       })
       .catch(err => { throw err });
   }
@@ -462,15 +494,20 @@ module.exports = class LSM9DS1 {
     return this.#sensor.readI2cBlock(this.#G_XL_ADDRESS, this.#OUT_X_L_XL, 6, Buffer.alloc(6))
       .then((data) => {
 
-        this.accel.x = data.buffer.readInt16LE(0); // Store x-axis values
-        this.accel.y = data.buffer.readInt16LE(2); // Store y-axis values
-        this.accel.z = data.buffer.readInt16LE(4); // Store z-axis values
+        this.accel.xRaw = this.readInt16LETwoComp(data.buffer, 0); // Store x-axis values
+        this.accel.yRaw = this.readInt16LETwoComp(data.buffer, 2); // Store y-axis values
+        this.accel.zRaw = this.readInt16LETwoComp(data.buffer, 4); // Store z-axis values
 
-        if (this.#isCalibrated) {
-          this.accel.x -= this.aBiasRaw[0];
-          this.accel.y -= this.aBiasRaw[1];
-          this.accel.z -= this.aBiasRaw[2];
+        if (this.#isCalibrated && false) {
+          this.accel.xRaw -= this.aBiasRaw[0];
+          this.accel.yRaw -= this.aBiasRaw[1];
+          this.accel.zRaw -= this.aBiasRaw[2];
         }
+
+        this.accel.x = this.calcAccel(this.accel.xRaw);
+        this.accel.y = this.calcAccel(this.accel.yRaw);
+        this.accel.z = this.calcAccel(this.accel.zRaw);
+
       })
       .catch(err => { throw err });
   }
@@ -557,21 +594,26 @@ module.exports = class LSM9DS1 {
       .then(() => this.setFIFO(1, 0x1F))
       .then(async () => {
 
+        const started = Date.now();
+
         // Read the 5 first bits only of FIFO_SRC which contains the FIFO sample count
         while (samples < 31) {
           samples = await this.#sensor.readByte(this.#G_XL_ADDRESS, this.#FIFO_SRC) & 0b00111111;
+          if (Date.now() - started > 5000) {
+            throw new Error("Calibration timed out");
+          }
         }
 
         // Read the gyro and accel data stored in the FIFO
         for (let i = 0; i < samples; i++) {
           await Promise.all([this.readGyro(true), this.readAccel(true)])
             .then(() => {
-              gBiasRawTemp[0] += this.gyro.x;
-              gBiasRawTemp[1] += this.gyro.y;
-              gBiasRawTemp[2] += this.gyro.z;
-              aBiasRawTemp[0] += this.accel.x;
-              aBiasRawTemp[1] += this.accel.y;
-              aBiasRawTemp[2] += this.accel.z - (1 / this.accel.resolution); // Assumes sensor facing up!
+              gBiasRawTemp[0] += this.gyro.xRaw;
+              gBiasRawTemp[1] += this.gyro.yRaw;
+              gBiasRawTemp[2] += this.gyro.zRaw;
+              aBiasRawTemp[0] += this.accel.xRaw;
+              aBiasRawTemp[1] += this.accel.yRaw;
+              aBiasRawTemp[2] += this.accel.zRaw - (1 / this.accel.resolution); // Assumes sensor facing up!
             })
             .catch(err => { throw err; });
         }
@@ -587,11 +629,12 @@ module.exports = class LSM9DS1 {
         this.#isCalibrated = true;
 
       })
-      .then(() => this.enableFIFO(false))
-      .then(() => this.setFIFO(0, 0))
-      .catch(err => { throw err })
+      .catch(err => { throw err; })
       .finally(() => {
         this.#isCalibrating = false;
+        this.enableFIFO(false)
+          .then(() => this.setFIFO(0, 0))
+          .catch(err => { throw err; });
       });
   }
 
