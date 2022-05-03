@@ -59,13 +59,9 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
       this.#sensor.readMag(),
       this.#sensor.readGyro()
     ])
-      .then(() => {
-        this.parseData();
-      })
-      .catch((err) => {
-        super.emit("readError");
-        throw err;
-      })
+      .catch((err) => { super.emit('readError', err); })
+      .then(() => this.parseData())
+      .catch((err) => { super.emit('readError', err); })
       .finally(() => {
         if (this.autoRead) {
           setTimeout(() => this.readSensorData(), this.readInterval);
@@ -80,16 +76,25 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     //this.#sensor.calibrate();
   }
 
+  calibrateAccelGyroBias() {
+    console.log("CALIBRATE!");
+    return this.#sensor.calibrate()
+      .then(() => { console.log("Calibration done"); })
+      .catch((err) => { console.log(`Calibration error: ${err}`); })
+  }
 
   parseData() {
 
-    // Calculate roll and pitch
+    // Calculate roll and pitch heading
     const Xa = this.#sensor.accel.x
     const Ya = this.#sensor.accel.y
     const Za = this.#sensor.accel.z
     const Xm = this.#sensor.mag.x
     const Ym = this.#sensor.mag.y
     const Zm = this.#sensor.mag.z
+    const Xg = this.#sensor.gyro.x
+    const Yg = this.#sensor.gyro.y
+    const Zg = this.#sensor.gyro.z
 
     let Phi, Theta, Psi, Xh, Yh
 
@@ -135,9 +140,9 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     Psi = Psi * 180 / Math.PI
     if (Psi < 0) Psi += 360
 
-    this.phi.measured   = Phi;
+    this.phi.measured = Phi;
     this.theta.measured = Theta
-    this.psi.measured   = Psi;
+    this.psi.measured = Psi;
 
     // Low pass filter, 95% old and 5% new data
     this.phi.filtered = (this.phi.filtered * .95) + (this.phi.measured * .05)

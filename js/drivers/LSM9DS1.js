@@ -103,7 +103,10 @@ module.exports = class LSM9DS1 {
   #BUS_NO;
   #G_XL_ADDRESS;
   #M_ADDRESS;
-  #autoCalc = false;
+
+  #isCalibrating = false;
+  #isCalibrated = false;
+  #isInitialized = false;
 
   constructor(options) {
 
@@ -174,7 +177,7 @@ module.exports = class LSM9DS1 {
     this.mBias = [0, 0, 0];
     this.gBiasRaw = [0, 0, 0];
     this.aBiasRaw = [0, 0, 0];
-    this.nBiasRaw = [0, 0, 0];
+    this.mBiasRaw = [0, 0, 0];
 
   }
 
@@ -191,6 +194,7 @@ module.exports = class LSM9DS1 {
       .then(() => this.initGyro()) // Gyro initalization
       .then(() => this.initAccel()) // Accel initalizationw
       .then(() => this.initMag()) // Mag initalization
+      .then(() => this.#isInitialized = true) // Gyro ODR
       .catch(err => { throw err })
 
   }
@@ -387,112 +391,116 @@ module.exports = class LSM9DS1 {
   accelAvailable() {
 
     return this.#sensor.readByte(this.#G_XL_ADDRESS, this.#STATUS_REG)
-    .then(status => { return status & (1 << 0); })
-    .catch(err => { return false; });
+      .then(status => { return status & (1 << 0); })
+      .catch(err => { return false; });
   }
 
   gyroAvailable() {
 
     return this.#sensor.readByte(this.#G_XL_ADDRESS, this.#STATUS_REG)
-    .then(status => { return (status & (1 << 1)) >> 1; })
-    .catch(err => { return false; });
+      .then(status => { return (status & (1 << 1)) >> 1; })
+      .catch(err => { return false; });
   }
 
   tempAvailable() {
 
     return this.#sensor.readByte(this.#G_XL_ADDRESS, this.#STATUS_REG)
-    .then(status => { return (status & (1 << 2)) >> 2; })
-    .catch(err => { return false; });
+      .then(status => { return (status & (1 << 2)) >> 2; })
+      .catch(err => { return false; });
   }
 
   magAvailable(axis) {
 
     return this.#sensor.readByte(this.#M_ADDRESS, this.#STATUS_REG_M)
-    .then(status => { return (status & (1 << axis)) >> axis; })
-    .catch(err => { throw err; })
+      .then(status => { return (status & (1 << axis)) >> axis; })
+      .catch(err => { throw err; })
   }
 
-  readGyro() {
+  readGyro(force = false) {
+
+    if (this.#isCalibrating && !force) return Promise.reject("Calibration in progress");
 
     return this.#sensor.readI2cBlock(this.#G_XL_ADDRESS, this.#OUT_X_L_G, 6, Buffer.alloc(6))
-    .then((data) => {
+      .then((data) => {
 
-      this.gyro.x = data.buffer.readInt16LE(0); // Store x-axis values
-      this.gyro.y = data.buffer.readInt16LE(2); // Store y-axis values
-      this.gyro.z = data.buffer.readInt16LE(4); // Store z-axis values
-    
-      if (this.#autoCalc) {
-        gx -= gBiasRaw[0];
-        gy -= gBiasRaw[1];
-        gz -= gBiasRaw[2];
-      }
-    })
-    .catch(err => { throw err });
+        this.gyro.x = data.buffer.readInt16LE(0); // Store x-axis values
+        this.gyro.y = data.buffer.readInt16LE(2); // Store y-axis values
+        this.gyro.z = data.buffer.readInt16LE(4); // Store z-axis values
+
+        if (this.#isCalibrated) {
+          this.gyro.x -= this.gBiasRaw[0];
+          this.gyro.y -= this.gBiasRaw[1];
+          this.gyro.z -= this.gBiasRaw[2];
+        }
+      })
+      .catch(err => { throw err });
 
   }
 
   readMag() {
 
     return this.#sensor.readI2cBlock(this.#M_ADDRESS, this.#OUT_X_L_M, 6, Buffer.alloc(6))
-    .then((data) => {
+      .then((data) => {
 
-      this.mag.x = data.buffer.readInt16LE(0); // Store x-axis values
-      this.mag.y = data.buffer.readInt16LE(2); // Store y-axis values
-      this.mag.z = data.buffer.readInt16LE(4); // Store z-axis values
+        this.mag.x = data.buffer.readInt16LE(0); // Store x-axis values
+        this.mag.y = data.buffer.readInt16LE(2); // Store y-axis values
+        this.mag.z = data.buffer.readInt16LE(4); // Store z-axis values
 
-      if (this.#autoCalc) {
-        mx -= mBiasRaw[0];
-        my -= mBiasRaw[1];
-        mz -= mBiasRaw[2];
-      }
-    })
-    .catch(err => { throw err });
+        if (this.#isCalibrated) {
+          this.mag.x -= this.mBiasRaw[0];
+          this.mag.y -= this.mBiasRaw[1];
+          this.mag.z -= this.mBiasRaw[2];
+        }
+      })
+      .catch(err => { throw err });
   }
 
-  readAccel() {
+  readAccel(force = false) {
+
+    if (this.#isCalibrating && !force) return Promise.reject("Calibration in progress");
 
     return this.#sensor.readI2cBlock(this.#G_XL_ADDRESS, this.#OUT_X_L_XL, 6, Buffer.alloc(6))
-    .then((data) => {
+      .then((data) => {
 
-      this.accel.x = data.buffer.readInt16LE(0); // Store x-axis values
-      this.accel.y = data.buffer.readInt16LE(2); // Store y-axis values
-      this.accel.z = data.buffer.readInt16LE(4); // Store z-axis values
+        this.accel.x = data.buffer.readInt16LE(0); // Store x-axis values
+        this.accel.y = data.buffer.readInt16LE(2); // Store y-axis values
+        this.accel.z = data.buffer.readInt16LE(4); // Store z-axis values
 
-      if (this.#autoCalc) {
-        ax -= aBiasRaw[0];
-        ay -= aBiasRaw[1];
-        az -= aBiasRaw[2];
-      }
-    })
-    .catch(err => { throw err });
+        if (this.#isCalibrated) {
+          this.accel.x -= this.aBiasRaw[0];
+          this.accel.y -= this.aBiasRaw[1];
+          this.accel.z -= this.aBiasRaw[2];
+        }
+      })
+      .catch(err => { throw err });
   }
 
   readTemp() {
 
     return this.#sensor.readI2cBlock(this.#G_XL_ADDRESS, this.#OUT_TEMP_L, 2, Buffer.alloc(2))
-    .then((data) => {
+      .then((data) => {
         // The value is expressed as two’s complement sign extended on the MSB.
-      let value = data.buffer.readInt16LE(0);
+        let value = data.buffer.readInt16LE(0);
 
-      // Remove the first 4 bits of the data as it is 12 bits only.
-      // The first 4 bits are duplicates of the 12th bit (sign bit).
-      // We do a bitwise and operation.
-      value &= 0b0000111111111111;
-      
-      // Two's complement on value, if the last bit is 1 we are in the negative number area.
-      // So basically the last bit is -2048 instead of 2048.
-      if (value > 2048) { value -= 4096; }
+        // Remove the first 4 bits of the data as it is 12 bits only.
+        // The first 4 bits are duplicates of the 12th bit (sign bit).
+        // We do a bitwise and operation.
+        value &= 0b0000111111111111;
 
-      // Adjust for sensitivity of the temperature sensor. 
-      value /= 16;
+        // Two's complement on value, if the last bit is 1 we are in the negative number area.
+        // So basically the last bit is -2048 instead of 2048.
+        if (value > 2048) { value -= 4096; }
 
-      // Add offset, with 0 degrees it is +25 degrees according to the datasheet.
-      value += this.temp.offset;
+        // Adjust for sensitivity of the temperature sensor. 
+        value /= 16;
 
-      this.temp.value = value;
-      
-    })
-    .catch((err) => { throw err })
+        // Add offset, with 0 degrees it is +25 degrees according to the datasheet.
+        value += this.temp.offset;
+
+        this.temp.value = value;
+
+      })
+      .catch((err) => { throw err })
   }
 
   calcGyro(value) {
@@ -508,27 +516,24 @@ module.exports = class LSM9DS1 {
   }
 
   enableFIFO(enable) {
-    try {
-      let temp = this.i2cBus.readByteSync(this.i2cAccelGyroAddress, LSM9DS1.CTRL_REG9());
-      if (enable) temp |= (1 << 1);
-      else temp &= ~(1 << 1);
-      this.i2cBus.writeByteSync(this.i2cAccelGyroAddress, LSM9DS1.CTRL_REG9(), temp);
-      return true;
-    } catch (err) {
-      return false;
-    }
+
+    // Read old data from REG9 and flip the bit based on FIFO enabled or not.
+    return this.#sensor.readByte(this.#G_XL_ADDRESS, this.#CTRL_REG9)
+      .then(data => {
+        if (enable) data |= (1 << 1);
+        else data &= ~(1 << 1);
+        return this.#sensor.writeByte(this.#G_XL_ADDRESS, this.#CTRL_REG9, data);
+      })
+      .catch(err => { throw err });
   }
 
   setFIFO(fifoMode, fifoThs) {
-    try {
-      // Limit threshold - 0x1F (31) is the maximum. If more than that was asked
-      // limit it to the maximum.
-      let threshold = fifoThs <= 0x1F ? fifoThs : 0x1F;
-      let temp = ((fifoMode & 0x7) << 5) | (threshold & 0x1F);
-      this.i2cBus.writeByteSync(this.i2cAccelGyroAddress, LSM9DS1.FIFO_CTRL(), temp);
-    } catch (err) {
-      return false;
-    }
+
+    // Limit threshold - 0x1F (31) is the maximum. If more than that was asked
+    // limit it to the maximum.
+    let threshold = fifoThs <= 0x1F ? fifoThs : 0x1F;
+    let temp = ((fifoMode & 0x7) << 5) | (threshold & 0x1F);
+    return this.#sensor.writeByte(this.#G_XL_ADDRESS, this.#FIFO_CTRL, temp)
   }
 
   // This is a function that uses the FIFO to accumulate sample of accelerometer and gyro data, average
@@ -538,40 +543,55 @@ module.exports = class LSM9DS1 {
   // subtract the biases ourselves. This results in a more accurate measurement in general and can
   // remove errors due to imprecise or varying initial placement. Calibration of sensor data in this manner
   // is good practice.
-  calibrate(autoCalc) {
+  calibrate() {
+
+    this.#isCalibrating = true;
+
     let samples = 0;
     let aBiasRawTemp = [0, 0, 0];
     let gBiasRawTemp = [0, 0, 0];
 
     // Turn on FIFO and set threshold to 32 samples
-    this.enableFIFO(true);
-    this.setFIFO(1, 0x1F);
-    while (samples < 0x1F) {
-      samples = (this.i2cBus.readByteSync(this.i2cAccelGyroAddress, LSM9DS1.FIFO_SRC()) & 0x3F); // Read number of stored samples
-    }
+    return this.enableFIFO(true)
+      .then(() => this.setFIFO(1, 0x1F))
+      .then(async () => {
 
-    for (let i = 0; i < samples; i++) {    // Read the gyro data stored in the FIFO
-      this.readGyro();
-      gBiasRawTemp[0] += this.gyro.x;
-      gBiasRawTemp[1] += this.gyro.y;
-      gBiasRawTemp[2] += this.gyro.z;
-      this.readAccel();
-      aBiasRawTemp[0] += this.accel.x;
-      aBiasRawTemp[1] += this.accel.y;
-      aBiasRawTemp[2] += this.accel.z - (1 / this.accel.resolution); // Assumes sensor facing up!
-    }
+        // Read the 5 first bits only of FIFO_SRC which contains the FIFO sample count
+        while (samples < 31) {
+          samples = await this.#sensor.readByte(this.#G_XL_ADDRESS, this.#FIFO_SRC) & 0b00111111;
+        }
 
-    for (let i = 0; i < 3; i++) {
-      this.gBiasRaw[i] = gBiasRawTemp[i] / samples;
-      this.gBias[i] = this.calcGyro(this.gBiasRaw[i]);
-      this.aBiasRaw[i] = aBiasRawTemp[i] / samples;
-      this.aBias[i] = this.calcAccel(this.aBiasRaw[i]);
-    }
+        // Read the gyro and accel data stored in the FIFO
+        for (let i = 0; i < samples; i++) {
+          await Promise.all([this.readGyro(true), this.readAccel(true)])
+            .then(() => {
+              gBiasRawTemp[0] += this.gyro.x;
+              gBiasRawTemp[1] += this.gyro.y;
+              gBiasRawTemp[2] += this.gyro.z;
+              aBiasRawTemp[0] += this.accel.x;
+              aBiasRawTemp[1] += this.accel.y;
+              aBiasRawTemp[2] += this.accel.z - (1 / this.accel.resolution); // Assumes sensor facing up!
+            })
+            .catch(err => { reject(err); });
+        }
 
-    this.enableFIFO(false);
-    this.setFIFO(0, 0x00);
+        // Loop thorugh biases
+        for (let i = 0; i < 3; i++) {
+          this.gBiasRaw[i] = gBiasRawTemp[i] / samples;
+          this.gBias[i] = this.calcGyro(this.gBiasRaw[i]);
+          this.aBiasRaw[i] = aBiasRawTemp[i] / samples;
+          this.aBias[i] = this.calcAccel(this.aBiasRaw[i]);
+        }
 
-    if (autoCalc) this._autoCalc = true;
+        this.#isCalibrated = true;
+
+      })
+      .then(() => this.enableFIFO(false))
+      .then(() => this.setFIFO(0, 0))
+      .catch(err => { throw err })
+      .finally(() => {
+        this.#isCalibrating = false;
+      });
   }
 
   constrainScalesAndCalculateResolutions() {

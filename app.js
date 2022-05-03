@@ -124,11 +124,13 @@ imu.init()
 .then(() => {
   log.info("IMU successfully initialized");
   imu.on('read', () => {
-    log.info(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
+    log.debug(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
     rov.update("roll", imu.getRoll());
     rov.update("pitch", imu.getPitch());
     rov.update("heading", imu.getHeading());
   });
+
+  imu.on('readError', (err) => log.error(`IMU read failed (${err})`));
 })
 .catch((err) => {
   log.error(`IMU initialization failed (${err})`);
@@ -284,7 +286,12 @@ function parseWebsocketData(data) {
 
     case 'setflat':
       console.log("I should go flat now ! how the heck do I do that?");
-      imu.calibrateLevel();
+      //imu.calibrateLevel();
+      break;
+
+    case 'calibrategyro':
+      console.log("I should calibrate the gyro now ! how the heck do I do that?");
+      imu.calibrateAccelGyroBias();
       break;
 
     case 'lateral':
