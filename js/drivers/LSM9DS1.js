@@ -546,6 +546,7 @@ module.exports = class LSM9DS1 {
   calibrate() {
 
     this.#isCalibrating = true;
+    this.#isCalibrated = false;
 
     let samples = 0;
     let aBiasRawTemp = [0, 0, 0];
