@@ -573,7 +573,7 @@ module.exports = class LSM9DS1 {
               aBiasRawTemp[1] += this.accel.y;
               aBiasRawTemp[2] += this.accel.z - (1 / this.accel.resolution); // Assumes sensor facing up!
             })
-            .catch(err => { reject(err); });
+            .catch(err => { throw err; });
         }
 
         // Loop thorugh biases
