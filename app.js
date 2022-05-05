@@ -117,10 +117,10 @@ adc.on('read', () => {
 
 /************************
  *
- * Inertial Measurement Unit (IMU)
+ * Inertial Measurement Unit (IMU) 10hz update frequency
  *
  ************************/
-imu.init()
+imu.init(true, 10)
 .then(() => {
   log.info("IMU successfully initialized");
   imu.on('read', () => {
@@ -287,6 +287,7 @@ function parseWebsocketData(data) {
     case 'setflat':
       console.log("I should go flat now ! how the heck do I do that?");
       //imu.calibrateLevel();
+      imu.calibrateMagnometerBias();
       break;
 
     case 'calibrategyro':

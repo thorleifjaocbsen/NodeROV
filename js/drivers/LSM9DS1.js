@@ -104,9 +104,14 @@ module.exports = class LSM9DS1 {
   #G_XL_ADDRESS;
   #M_ADDRESS;
 
-  #isCalibrating = false;
-  #isCalibrated = false;
-  #isInitialized = false;
+  #agIsCalibrating = false;
+  #agIsCalibrated = false;
+
+  #magIsCalibrating = false;
+  #magCalibrationSamples = [];
+
+  #isInitialized;
+
 
   constructor(options) {
 
@@ -186,7 +191,11 @@ module.exports = class LSM9DS1 {
     this.mBias = [0, 0, 0];
     this.gBiasRaw = [0, 0, 0];
     this.aBiasRaw = [0, 0, 0];
-    this.mBiasRaw = [0, 0, 0];
+    this.mBiasRaw = [419.358913, 3432.603446, 787.272714];
+    this.mSoftIron = [[1.226924,  0.049769,   0.067552],
+                      [0.049769,  1.173046,  -0.016976],
+                      [0.067552, -0.016976,   1.238414]];
+
 
   }
 
@@ -440,7 +449,7 @@ module.exports = class LSM9DS1 {
 
   readGyro(force = false) {
 
-    if (this.#isCalibrating && !force) return Promise.reject("Calibration in progress");
+    if (this.#agIsCalibrating && !force) return Promise.reject("Calibration in progress");
 
     return this.#sensor.readI2cBlock(this.#G_XL_ADDRESS, this.#OUT_X_L_G, 6, Buffer.alloc(6))
       .then((data) => {
@@ -449,7 +458,7 @@ module.exports = class LSM9DS1 {
         this.gyro.yRaw = this.readInt16LETwoComp(data.buffer, 2); // Store y-axis values
         this.gyro.zRaw = this.readInt16LETwoComp(data.buffer, 4); // Store z-axis values
 
-        if (this.#isCalibrated) {
+        if (this.#agIsCalibrated) {
           this.gyro.xRaw -= this.gBiasRaw[0];
           this.gyro.yRaw -= this.gBiasRaw[1];
           this.gyro.zRaw -= this.gBiasRaw[2];
@@ -464,7 +473,25 @@ module.exports = class LSM9DS1 {
 
   }
 
-  readMag() {
+  multiply(a, b) {
+    let aNumRows = a.length, aNumCols = a[0].length;
+    let bNumRows = b.length, bNumCols = b[0].length;
+    let m = new Array(aNumRows);  // initialize array of rows
+    for (var r = 0; r < aNumRows; ++r) {
+      m[r] = new Array(bNumCols); // initialize the current row
+      for (var c = 0; c < bNumCols; ++c) {
+        m[r][c] = 0;             // initialize the current cell
+        for (var i = 0; i < aNumCols; ++i) {
+          m[r][c] += a[r][i] * b[i][c];
+        }
+      }
+    }
+    return m;
+  }
+
+  readMag(force = false) {
+
+    //if (this.#magIsCalibrating && !force) return Promise.reject("Calibration in progress");
 
     return this.#sensor.readI2cBlock(this.#M_ADDRESS, this.#OUT_X_L_M, 6, Buffer.alloc(6))
       .then((data) => {
@@ -473,23 +500,37 @@ module.exports = class LSM9DS1 {
         this.mag.yRaw = this.readInt16LETwoComp(data.buffer, 2); // Store y-axis values
         this.mag.zRaw = this.readInt16LETwoComp(data.buffer, 4); // Store z-axis values
 
-        if (this.#isCalibrated) {
-          this.mag.xRaw -= this.mBiasRaw[0];
-          this.mag.yRaw -= this.mBiasRaw[1];
-          this.mag.zRaw -= this.mBiasRaw[2];
+        if (this.#magIsCalibrating) {
+
+          // Check if last xyz 
+          let xyzObject = { x: this.mag.xRaw, y: this.mag.yRaw, z: this.mag.zRaw };
+
+          if (this.#magCalibrationSamples.at(-1) != xyzObject) {
+            this.#magCalibrationSamples.push(xyzObject);
+          }
         }
 
-        this.mag.x = this.calcMag(this.mag.xRaw);
-        this.mag.y = this.calcMag(this.mag.yRaw);
-        this.mag.z = this.calcMag(this.mag.zRaw);
-
+        // Calculate hard iron
+        let x = this.mag.xRaw - this.mBiasRaw[0];
+        let y = this.mag.yRaw - this.mBiasRaw[1];
+        let z = this.mag.zRaw - this.mBiasRaw[2];
+    
+        // Calculate soft iron
+        let calX = x * this.mSoftIron[0][0] + y * this.mSoftIron[1][0] + z * this.mSoftIron[2][0];
+        let calY = x * this.mSoftIron[0][1] + y * this.mSoftIron[1][1] + z * this.mSoftIron[2][1];
+        let calZ = x * this.mSoftIron[0][2] + y * this.mSoftIron[1][2] + z * this.mSoftIron[2][2];
+     
+        this.mag.x = this.calcMag(calX);
+        this.mag.y = this.calcMag(calY);
+        this.mag.z = this.calcMag(calZ);
+      
       })
       .catch(err => { throw err });
   }
 
   readAccel(force = false) {
 
-    if (this.#isCalibrating && !force) return Promise.reject("Calibration in progress");
+    if (this.#agIsCalibrating && !force) return Promise.reject("Calibration in progress");
 
     return this.#sensor.readI2cBlock(this.#G_XL_ADDRESS, this.#OUT_X_L_XL, 6, Buffer.alloc(6))
       .then((data) => {
@@ -498,7 +539,7 @@ module.exports = class LSM9DS1 {
         this.accel.yRaw = this.readInt16LETwoComp(data.buffer, 2); // Store y-axis values
         this.accel.zRaw = this.readInt16LETwoComp(data.buffer, 4); // Store z-axis values
 
-        if (this.#isCalibrated && false) {
+        if (this.#agIsCalibrated) {
           this.accel.xRaw -= this.aBiasRaw[0];
           this.accel.yRaw -= this.aBiasRaw[1];
           this.accel.zRaw -= this.aBiasRaw[2];
@@ -580,10 +621,10 @@ module.exports = class LSM9DS1 {
   // subtract the biases ourselves. This results in a more accurate measurement in general and can
   // remove errors due to imprecise or varying initial placement. Calibration of sensor data in this manner
   // is good practice.
-  calibrate() {
+  calibrateAccelGyroBias() {
 
-    this.#isCalibrating = true;
-    this.#isCalibrated = false;
+    this.#agIsCalibrating = true;
+    this.#agIsCalibrated = false;
 
     let samples = 0;
     let aBiasRawTemp = [0, 0, 0];
@@ -626,17 +667,60 @@ module.exports = class LSM9DS1 {
           this.aBias[i] = this.calcAccel(this.aBiasRaw[i]);
         }
 
-        this.#isCalibrated = true;
+        this.#agIsCalibrated = true;
 
       })
       .catch(err => { throw err; })
       .finally(() => {
-        this.#isCalibrating = false;
+        this.#agIsCalibrating = false;
         this.enableFIFO(false)
           .then(() => this.setFIFO(0, 0))
           .catch(err => { throw err; });
       });
   }
+
+  calibrateMagnometerBias() {
+    if(!this.#magIsCalibrating) {
+      this.#magIsCalibrating = true;
+    }
+    else {
+      this.#magIsCalibrating = false;
+      console.log(this.#magCalibrationSamples)
+
+      // Loop through samples find the highest and lowest x value
+      let minX = 0;
+      let maxX = 0;
+      let minY = 0;
+      let maxY = 0;
+      let minZ = 0;
+      let maxZ = 0;
+
+      const fs = require('fs');
+
+      this.#magCalibrationSamples.forEach(({x,y,z}) => {
+        
+        // Add to min and max
+        if(x < minX) minX = x;
+        if(x > maxX) maxX = x;
+        if(y < minY) minY = y;
+        if(y > maxY) maxY = y;
+        if(z < minZ) minZ = z;
+        if(z > maxZ) maxZ = z;
+
+        // Write to file
+        fs.appendFileSync("test.txt", `${x}\t${y}\t${z}\n`);
+
+      });
+
+      // Calculate the bias
+      this.mBiasRaw[0] = (maxX + minX) / 2;
+      this.mBiasRaw[1] = (maxY + minY) / 2;
+      this.mBiasRaw[2] = (maxZ + minZ) / 2;
+
+      console.log(this.mBiasRaw);
+    }
+  }
+
 
   constrainScalesAndCalculateResolutions() {
     // Sensor Sensitivity Cosntants

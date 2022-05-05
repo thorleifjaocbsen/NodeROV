@@ -218,11 +218,11 @@ socket.on("env", (data) => {
             break;
 
         case "roll":
-            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(value, undefined, undefined);
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, value, undefined);
             break;
 
         case "pitch":
-            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, value, undefined)
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(value, undefined, undefined)
             break;
 
         case "heading":
