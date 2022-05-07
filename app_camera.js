@@ -59,7 +59,7 @@ wss.broadcast = (package) => {
   const binary = typeof package != "string";
 
   wss.clients.forEach((client) => {
-    if (client.bufferedAmount > 0 && !binary) {
+    if (client.bufferedAmount > 0 && binary) {
       console.log(`Video Streamer Service : Dropping frame, TCP socket still sending on client ${client._socket.remoteAddress}`);
       return;
     }
@@ -131,13 +131,11 @@ function startCameraSoftware() {
       writeStream.write(package);
     }
 
+
+
     // Save start frames for later initialization for new clients
-    if (package[4] == 0x27) {
-      startFrames[0] = package;
-    }
-    else if (package[4] == 0x28) {
-      startFrames[1] = package;
-    }
+    if (package[4] == 0x27) { startFrames[0] = package; }
+    else if (package[4] == 0x28) { startFrames[1] = package; }
     else if (package[4] == 0x25) {
       startFrames[2] = package;
 
