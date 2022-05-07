@@ -16,20 +16,17 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     super();
 
     this.theta = {
-      accMeasured: 0,
-      gyrMeasured: 0,
+      measured: 0,
       filtered: 0
     }
 
     this.phi = {
-      accMeasured: 0,
-      gyrMeasured: 0,
+      measured: 0,
       filtered: 0
     }
 
     this.psi = {
-      accMeasured: 0,
-      gyrMeasured: 0,
+      measured: 0,
       filtered: 0
     }
 
@@ -76,13 +73,7 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
   calibrateAccelGyroBias() {
 
     return this.#sensor.calibrateAccelGyroBias()
-      .then(() => { 
-
-        this.phi.gyrMeasured = 0;
-        this.theta.gyrMeasured = 0;
-        this.psi.gyrMeasured = 0;
-      
-      })
+      .then(() => { return true; })
       .catch((err) => { console.log(`Calibration error: ${err}`); })
   }
 
@@ -100,13 +91,13 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     const Xa = this.#sensor.accel.x 
     const Ya = this.#sensor.accel.y
     const Za = this.#sensor.accel.z
-    const Xm = this.#sensor.mag.y
-    const Ym = this.#sensor.mag.x
+    const Xm = this.#sensor.mag.x * -1; // Positive X shoud be pointing backwards on the PCB
+    const Ym = this.#sensor.mag.y * -1; // Positive Y should be pointing to the left on the PCB
     const Zm = this.#sensor.mag.z
-    const Xg = this.#sensor.gyro.x // TODO: Find out why this is needed
-    const Yg = this.#sensor.gyro.y // TODO: Find out why this is needed
-    const Zg = this.#sensor.gyro.z // TODO: Find out why this is needed
-
+    const Xg = this.#sensor.gyro.x
+    const Yg = this.#sensor.gyro.y
+    const Zg = this.#sensor.gyro.z
+    
     let Phi, Theta, Psi, Xh, Yh
 
     // roll: Rotation around the X-axis. -180 <= roll <= 180
@@ -131,38 +122,25 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     if (tmp == 0) Theta = Xa > 0 ? (Math.PI / 2) : (-Math.PI / 2)
     else Theta = Math.atan(Xa / tmp)
 
-
-    // heading: Rotation around the Z-axis. -180 <= roll <= 180
-    // a positive heading angle is defined to be a clockwise rotation about the positive Z-axis
-    //
-    //                                       z * sin(roll) - y * cos(roll)                           < Yh
-    //   heading = atan(--------------------------------------------------------------------------)
-    //                    x * cos(pitch) + y * sin(pitch) * sin(roll) + z * sin(pitch) * cos(roll))  < Xh
-    //
-    // where:  x, y, z are returned value from magnetometer sensor
-    
-    Yh = Zm * Math.sin(Phi) - Ym * Math.cos(Phi)
-    Xh = Xm * Math.cos(Theta) +
-      Ym * Math.sin(Theta) * Math.sin(Phi) +
-      Zm * Math.sin(Theta) * Math.cos(Phi)
+    // https://youtu.be/wzjQ8L090s0?t=673 - Have no idea what this magic is but it works much better than the old crap.
+    Xh = Xm * Math.cos(Theta) - Ym * Math.sin(Phi) * Math.sin(Theta) + Zm * Math.cos(Phi) * Math.sin(Theta)
+    Yh = Ym * Math.cos(Phi) + Zm * Math.sin(Phi)
     Psi = Math.atan2(Yh, Xh)
-
 
     // Convert radian data to degree (-180 / 180)
     Phi = Phi * (180 / Math.PI);
     Theta = Theta * (180 / Math.PI);
     Psi = Psi * (180 / Math.PI);
-    
-
-    // Convert PSI radian to 360 degree
-    Psi = Math.atan2(-Xm, -Ym) * (180 / Math.PI);
     if(Psi < 0) Psi = Psi + 360;
+    
+    // Convert PSI radian to 360 degree
+    //Psi = Math.atan2(Ym, Xm) * (180 / Math.PI);
     // console.log(Psi, Xm, Ym);
-    // console.log(Psi.toFixed(2), Xm.toFixed(2), Ym.toFixed(2), Zm.toFixed(2));
+    //console.log(Psi.toFixed(2), Xm.toFixed(2), Ym.toFixed(2), Zm.toFixed(2));
 
-    this.phi.accMeasured = Phi;
-    this.theta.accMeasured = Theta
-    this.psi.accMeasured = Psi;
+    this.phi.measured = Phi;
+    this.theta.measured = Theta
+    this.psi.measured = Psi;
 
     // Calculate Phi and Theta and Psi from Gyro
     let currentTime = Date.now() / 1000;
@@ -172,16 +150,16 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     // Low pass filter, 95% old and 5% new data - Accel only.
     // this.phi.filtered = (this.phi.filtered * .95) + (this.phi.accMeasured * .05)
     // this.theta.filtered = (this.theta.filtered * .95) + (this.theta.accMeasured * .05)
-    // this.psi.filtered = (this.psi.filtered * .95) + (this.psi.accMeasured * .05)
+    this.psi.filtered = (this.psi.filtered * .95) + (this.psi.measured * .05)
 
     // Two complements filter, 95% gyro, 5% acc (gives best response)
     // accels is prone to noise, so we use gyros to correct for it
     // gyros is prone to drift, so we use accels to correct for it.
     // Win win :)   
-
-    this.phi.filtered = (this.phi.filtered + Xg * dt) * .95 + (this.phi.accMeasured * .05)
-    this.theta.filtered = (this.theta.filtered + Yg * dt) * .95 + (this.theta.accMeasured * .05)
-    this.psi.filtered = (this.psi.filtered + -Zg * dt) * .95 + (this.psi.accMeasured * .05)
+ 
+    this.phi.filtered = (this.phi.filtered + Xg * dt) * .95 + (this.phi.measured * .05)
+    this.theta.filtered = (this.theta.filtered + Yg * dt) * .95 + (this.theta.measured * .05)
+    //this.psi.filtered = (this.psi.filtered + -Zg * dt) * .95 + (this.psi.measured * .05)
 
     super.emit('read')
   }

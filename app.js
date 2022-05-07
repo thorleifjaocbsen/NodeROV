@@ -29,7 +29,11 @@ const SystemController = require('./js/classes/SystemController');
 
 const PCA9685 = require('./js/drivers/PCA9685.js');
 const pca9685 = new PCA9685();
-pca9685.init();
+pca9685.init()
+.then(() => console.log("PWM Initialized"))
+.catch((err) => console.log(err));
+
+
 
 /************************
  *
@@ -53,7 +57,7 @@ rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('thusterOutputChanged', (output) => {
   output.forEach((output) => {
-    log.debug(`Pin: ${output.pin} = ${output.us}us`);
+    log.info(`Pin: ${output.pin} = ${output.us}us`);
     pca9685.setPWM(output.pin, output.us);
 
 
@@ -262,23 +266,34 @@ function parseWebsocketData(data) {
       client.heartbeat.pulse(data[0]);
       break;
 
-    case 'fanState':
-      const newState = data[0] == "true";
-      log.info(`Websocket: Fan state (${newState}) command from ${client.ip}:${client.port}`);
-      sc.setFan(newState);
+    case 'gripper':
+      const newState = data[0];
+      let usData2 = rov.map(newState, -100, 100, 1000, 2000);
+      console.log(newState,usData2);
+
+      if(newState < -10) {
+        pca9685.setPWM(9, 1400);
+      }
+      else if(newState > 10) {
+        pca9685.setPWM(9, 1600);
+      }
+      else {
+        pca9685.setPWM(9, 1550);
+      }
+      //rov.gripperOpen()
       break;
 
     case 'camera':
       cameraPercentage += parseInt(data[0]);
-      if(cameraPercentage > 95) cameraPercentage = 95;
-      if(cameraPercentage < 5) cameraPercentage = 5;
-      let usData = rov.map(cameraPercentage, 0, 100, 1000, 2000);
+      if(cameraPercentage > 100) cameraPercentage = 100;
+      if(cameraPercentage < 0) cameraPercentage = 0;
+      let usData = rov.map(cameraPercentage, 0, 100, 700, 2400);
       console.log(usData,cameraPercentage);
       pca9685.setPWM(8, usData);
       break;
 
     case 'cameraCenter':
-      cameraPercentage = 55;
+      cameraPercentage = 45;
       let usDataCenter = rov.map(cameraPercentage, 0, 100, 1000, 2000);
       console.log(usDataCenter,cameraPercentage);
       pca9685.setPWM(8, usDataCenter);

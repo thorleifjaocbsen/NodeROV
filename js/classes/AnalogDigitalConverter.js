@@ -49,9 +49,9 @@ module.exports = class AnalogDigitalConverter extends EventEmitter {
 
   async readSensorData() {
 
-    this.data.a0 = (await this.sensor.measure('0+GND') / MAX_RANGE * PGA);
-    this.data.a1 = (await this.sensor.measure('1+GND') / MAX_RANGE * PGA);
-    this.data.a2 = (await this.sensor.measure('2+GND') / MAX_RANGE * PGA);
+    this.data.a0 = (await this.sensor.measure('0+GND') / MAX_RANGE * PGA); // Current
+    this.data.a1 = (await this.sensor.measure('1+GND') / MAX_RANGE * PGA); // Voltage
+    this.data.a2 = (await this.sensor.measure('2+GND') / MAX_RANGE * PGA); // Leak
 
     this.calculateAccumulatedMah();
 
@@ -64,7 +64,7 @@ module.exports = class AnalogDigitalConverter extends EventEmitter {
   getCurrent(digits = 2) {
 
     digits = 10 ** digits
-    return Math.round((this.data.a0 / this.currentMultiplier) * digits) / digits;
+    return Math.round((this.data.a0 * this.currentMultiplier) * digits) / digits;
   }
 
 
