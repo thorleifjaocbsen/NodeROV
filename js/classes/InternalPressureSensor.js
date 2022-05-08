@@ -56,4 +56,17 @@ module.exports = class InternalPressureSensor extends EventEmitter {
 
     super.emit('read')
   }
+
+  getHumidity(digits = 0) {
+    return this.humidity.toFixed(digits);
+  }
+
+  getTemperature(digits = 1) {
+    return this.temperature.toFixed(digits);
+  }
+
+  getPressure(digits = 0) {
+    return this.pressure.toFixed(digits);
+  }
+
 }
