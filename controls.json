@@ -21,7 +21,7 @@
     "name": "Ascend/Descend",
     "func": "ascend",
     "type": "analogue",
-    "invert": false
+    "invert": true
   },
   "b0": {
     "name": "Heading hold",
@@ -45,10 +45,10 @@
   },
   "b4": {
     "name": "Camera down",
-    "func": "camera",
+    "func": "adjustCamera",
     "type": "step",
-    "step": 5,
-    "invert": true
+    "step": -5,
+    "invert": false
   },
   "b5": {
     "name": "Camera up",
@@ -78,7 +78,7 @@
   },
   "b10": {
     "name": "Camera center",
-    "func": "cameraCenter",
+    "func": "centerCamera",
     "type": "button"
   },
   "b11": {
@@ -88,31 +88,29 @@
   },
   "b12": {
     "name": "Increment gain",
-    "func": "gainIncrement",
+    "func": "adjustGain",
     "type": "step",
     "step": 10,
     "invert": false
   },
   "b13": {
     "name": "Decrement gain",
-    "func": "gainDecrement",
+    "func": "adjustGain",
     "type": "step",
-    "step": 10,
+    "step": -10,
     "invert": false
   },
   "b14": {
     "name": "Decrement light",
-    "func": "light",
+    "func": "adjustLight",
     "type": "step",
-    "step": 10,
-    "invert": true
+    "step": -5,
+    "invert": false
   },
   "b15": {
     "name": "Increment light",
-    "func": "light",
-    "type": "step",
-    "step": 10,
-    "invert": false
+    "forward": "b14",
+    "invert": true
   },
   "k38": {
     "name": "Ascend",
@@ -153,7 +151,7 @@
     "forward": "b6"
   },
   "k83": {
-    "name": "Backwads",
+    "name": "Backwars",
     "forward": "a1",
     "invert": false
   },
@@ -161,5 +159,15 @@
     "name": "Forward",
     "forward": "a1",
     "invert": true
+  },
+  "k33": {
+    "name": "Gain increment",
+    "forward": "b12",
+    "invert": false
+  },
+  "k34": {
+    "name": "Gain decrement",
+    "forward": "b13",
+    "invert": false
   }
 }

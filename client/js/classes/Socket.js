@@ -47,7 +47,7 @@ export default class Socket {
 
   onclose(e) {
     if (this.reconnectTime > 0) {
-      setTimeout(this.reconnect, this.reconnectTime * 1000);
+      setTimeout(() => this.reconnect(), this.reconnectTime * 1000);
       this.log('Lost connection with socket on ' + this.ip + ':' + this.port + ', reconnecting in ' + this.reconnectTime + ' seconds.');
     }
     else {

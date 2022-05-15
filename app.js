@@ -26,13 +26,7 @@ const ExternalPressureSensor = require('./js/classes/ExternalPressureSensor');
 const AnalogDigitalConverter = require('./js/classes/AnalogDigitalConverter');
 const InertialMeasurementUnit = require('./js/classes/InertialMeasurementUnit');
 const SystemController = require('./js/classes/SystemController');
-
 const PCA9685 = require('./js/drivers/PCA9685.js');
-const pca9685 = new PCA9685();
-pca9685.init()
-.then(() => console.log("PWM Initialized"))
-.catch((err) => console.log(err));
-
 
 
 /************************
@@ -46,7 +40,25 @@ const ips = new InternalPressureSensor();
 const eps = new ExternalPressureSensor(true, 100);
 const imu = new InertialMeasurementUnit();
 const adc = new AnalogDigitalConverter(Configuration.calibration.adc);
-const sc  = new SystemController();
+const sc = new SystemController();
+const pwm = new PCA9685();
+
+/************************
+ *
+ * PWM Initialization
+ *
+ ************************/
+pwm.init()
+  .then(() => console.log("PWM Initialized"))
+  .catch((err) => console.log(err))
+  .then(() => {
+    rov.setLight(0);
+    console.log("Center Camera");
+    rov.centerCamera();
+    rov.disarm(true);
+  })
+  .catch((err) => console.log(err))
+
 
 /************************
  *
@@ -58,9 +70,7 @@ rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('thusterOutputChanged', (output) => {
   output.forEach((output) => {
     log.info(`Pin: ${output.pin} = ${output.us}us`);
-    pca9685.setPWM(output.pin, output.us);
-
-
+    pwm.setPWM(output.pin, 1550);
   })
 
   wss.broadcast(`ts ${JSON.stringify(output)}`);
@@ -70,6 +80,22 @@ rov.on('environmentChanged', (variable, value) => {
   wss.broadcast("env " + variable + " " + value);
   log.debug(`Environment variable ${variable} changed to ${value}`);
 });
+
+rov.on('lightChange', (newPercentage) => {
+  let us = rov.map(newPercentage, 0, 100, 1100, 1900);
+  pwm.setPWM(6, us).catch((err) => console.log(err));
+  pwm.setPWM(7, us).catch((err) => console.log(err));
+})
+
+rov.on('cameraChange', (newPercentage) => {
+  let us = rov.map(newPercentage, 0, 100, 1000, 2000);
+  pwm.setPWM(8, us).catch((err) => console.log(err));
+})
+
+rov.on('gripperChange', (newPercentage) => {
+  let us = rov.map(newPercentage, 0, 100, 1000, 2000);
+  pwm.setPWM(9, us).catch((err) => console.log(err));
+})
 
 /************************
  *
@@ -82,9 +108,9 @@ ips.on('init', () => log.info("Internal Pressure Sensor successfully initialized
 ips.on('change', () => {
 
   log.debug(`IPS Change: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
-  rov.update("iPressure", ips.pressure);
-  rov.update("iTemperature", ips.temperature);
-  rov.update("iHumidity", ips.humidity);
+  rov.update("iPressure", ips.getPressure());
+  rov.update("iTemperature", ips.getTemperature());
+  rov.update("iHumidity", ips.getHumidity());
 })
 
 /************************
@@ -125,20 +151,22 @@ adc.on('read', () => {
  *
  ************************/
 imu.init(true, 10)
-.then(() => {
-  log.info("IMU successfully initialized");
-  imu.on('read', () => {
-    log.debug(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
-    rov.update("roll", imu.getRoll());
-    rov.update("pitch", imu.getPitch());
-    rov.update("heading", imu.getHeading());
-  });
+  .then(() => {
+    log.info("IMU successfully initialized");
+    imu.on('read', () => {
+      log.debug(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
+      rov.update("roll", imu.getRoll());
+      rov.update("pitch", imu.getPitch());
+      rov.update("heading", imu.getHeading());
+    });
 
-  imu.on('readError', (err) => log.error(`IMU read failed (${err})`));
-})
-.catch((err) => {
-  log.error(`IMU initialization failed (${err})`);
-});
+    imu.on('readError', (err) => log.error(`IMU read failed (${err})`));
+  })
+  .catch((err) => {
+    log.error(`IMU initialization failed (${err})`);
+  })
+  .then(() => imu.calibrateAccelGyroBias())
+  .catch((err) => log.error(`IMU calibration failed (${err})`));
 
 /************************
  *
@@ -218,7 +246,7 @@ wss.on('connection', (client) => {
   /* Update client of env data */
   let rovEnv = rov.getEnviromentData();
   for (let type in rovEnv) {
-    log.debug(`Sending enviroment data to client ${client.ip}:${client.port}: type: ${type}, value ${rovEnv[type]}, typeof: ${typeof rovEnv[type]}`)
+    log.info(`Sending enviroment data to client ${client.ip}:${client.port}: type: ${type}, value ${rovEnv[type]}, typeof: ${typeof rovEnv[type]}`)
     client.send(`env ${type} ${rovEnv[type]}`);
   }
 
@@ -269,34 +297,18 @@ function parseWebsocketData(data) {
     case 'gripper':
       const newState = data[0];
       let usData2 = rov.map(newState, -100, 100, 1000, 2000);
-      console.log(newState,usData2);
+      console.log(newState, usData2);
 
-      if(newState < -10) {
-        pca9685.setPWM(9, 1400);
+      if (newState < -10) {
+        pwm.setPWM(9, 1400);
       }
-      else if(newState > 10) {
-        pca9685.setPWM(9, 1600);
+      else if (newState > 10) {
+        pwm.setPWM(9, 1600);
       }
       else {
-        pca9685.setPWM(9, 1550);
+        pwm.setPWM(9, 1550);
       }
       //rov.gripperOpen()
-      break;
-
-    case 'camera':
-      cameraPercentage += parseInt(data[0]);
-      if(cameraPercentage > 100) cameraPercentage = 100;
-      if(cameraPercentage < 0) cameraPercentage = 0;
-      let usData = rov.map(cameraPercentage, 0, 100, 700, 2400);
-      console.log(usData,cameraPercentage);
-      pca9685.setPWM(8, usData);
-      break;
-
-    case 'cameraCenter':
-      cameraPercentage = 45;
-      let usDataCenter = rov.map(cameraPercentage, 0, 100, 1000, 2000);
-      console.log(usDataCenter,cameraPercentage);
-      pca9685.setPWM(8, usDataCenter);
       break;
 
     case 'setflat':
@@ -305,25 +317,20 @@ function parseWebsocketData(data) {
       imu.calibrateMagnometerBias();
       break;
 
-    case 'calibrategyro':
-      console.log("I should calibrate the gyro now ! how the heck do I do that?");
+    case 'calibrateAccelGyroBias':
       imu.calibrateAccelGyroBias();
       break;
 
-    case 'lateral':
-    case 'forward':
-    case 'yaw':
-    case 'ascend':
-    case 'headingHold':
-    case 'fullScreen':
-    case 'depthHold':
-    case 'camera':
-    case 'gripper':
-    case 'disarm':
-    case 'arm':
-    case 'gainIncrement':
-    case 'gainDecrement':
-    case 'light':
+    case 'lateral': // OK
+    case 'forward': // OK
+    case 'yaw': // OK
+    case 'ascend': // OK
+    case 'adjustLight': // OK
+    case 'adjustGain': // OK
+    case 'adjustCamera': // OK 
+    case 'centerCamera': // OK
+    case 'headingHoldToggle': // OK
+    case 'depthHoldToggle': // OK
       rov.command(cmd, data[0]);
       break;
 

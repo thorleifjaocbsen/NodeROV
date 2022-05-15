@@ -90,7 +90,7 @@ gui.setButton("gui-controls-button-8", "FULLSCREEN", () => {
     videoEl.onclick = () => { gui.pressButton("gui-controls-button-8"); };
 });
 gui.setButton("gui-controls-button-9", "SET FLAT", () => { socket.send("setflat"); });
-gui.setButton("gui-controls-button-10", "CALIBRATE GYRO", () => { socket.send("calibrategyro"); });
+gui.setButton("gui-controls-button-10", "CALIBRATE", () => { socket.send("calibrateAccelGyroBias"); });
 gui.setButton("gui-log-button-1", "ADD EVENT", () => {
     var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
     popup("Add event", msg, "Add", "Cancel", function () {
@@ -121,20 +121,20 @@ gui.setInfo(5, 0, "CPU temp:");
 gui.setInfo(6, 0, "CPU usage:");
 gui.setInfo(7, 0, "Memory:");
 gui.setInfo(8, 0, "Disk:");
-gui.setInfo(9, "", "");
-gui.setInfo(10, "", "");
-gui.setInfo(11, "", "");
+gui.setInfo(9, 0, "Gain");
+gui.setInfo(10, 0, "Camera");
+gui.setInfo(11, 0, "Light");
 gui.setInfo(12, 0, "Latency:");
 
 /************************
   * Controls on press e.t.c
  ************************/
 window.c = controls;
-controls.onPress("gainIncrement", (step) => { socket.send(`gainIncrement ${step}`); });
-controls.onPress("gainDecrement", (step) => { socket.send(`gainDecrement ${step}`); });
-controls.onPress("light", (step) => { socket.send(`light ${step}`); }, 250);
-controls.onPress("camera", (step) => { socket.send(`camera ${step}`); }, 250);
-controls.onPress("cameraCenter", () => { socket.send(`cameraCenter`); }, 250);
+controls.onPress("adjustGain", (step) => { socket.send(`adjustGain ${step}`); });
+controls.onPress("adjustCamera", (step) => { socket.send(`adjustCamera ${step}`); }, 250);
+controls.onPress("centerCamera", () => { socket.send(`centerCamera`); }, 250);
+
+controls.onPress("adjustLight", (step) => { socket.send(`adjustLight ${step}`); }, 250);
 controls.onPress("fullScreen", () => { gui.pressButton("gui-controls-button-8"); }, 1000)
 controls.onPress("arm", () => { socket.send("arm"); });
 controls.onPress("disarm", () => { socket.send("disarm"); }, 1000);
@@ -170,11 +170,12 @@ socket.on("env", (data) => {
     switch (type) {
 
         case "iTemperature":
-            gui.setInfo(1, value);
+            gui.setInfo(1, value + "°C");
             break;
 
         case "iPressure":
-            gui.setInfo(2, value);
+            gui.setInfo(2, Math.round(value * 0.145038) / 10 + " PSI");
+
             break;
 
         case "iHumidity":
@@ -243,6 +244,18 @@ socket.on("env", (data) => {
 
         case 'diskUsed':
             gui.setInfo(8, Math.round(value * 10) / 10 + "%");
+            break;
+
+        case 'gain':
+            gui.setInfo(9, value);
+            break;
+        
+        case 'camera':
+            gui.setInfo(10, value);
+            break;
+        
+        case 'light':
+            gui.setInfo(11, value);
             break;
 
         default:

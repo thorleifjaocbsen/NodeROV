@@ -62,7 +62,7 @@ module.exports = class PCA9685 {
 
   // Usage: setPWM(channel, microsecounds);
   setPWM(no, us) {
-    
+   
     const steps = this.usToSteps(us);
     // 0x06 -> 0x09 (LED0_ON_L,LED0_ON_H,LED0_OFF_L,LED0_OFF_H)
     // The 4*NO changes it so it inclines depending on NO up to 15.    

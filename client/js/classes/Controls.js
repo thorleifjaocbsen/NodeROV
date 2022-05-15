@@ -39,6 +39,8 @@ export default class Controls {
     // Verify that this is a configured button
     if (!this.controls[btn]) { return false; }
 
+    console.log("Controls: " + btn + ": " + value);
+
     // Check if this points to another button instead
     if (typeof this.controls[btn].forward === "string") {
       if (this.controls[btn].invert) { value = -1 * value; }
@@ -48,6 +50,7 @@ export default class Controls {
 
     let { name, func, type, step, invert } = this.controls[btn];
     const pressed = Math.abs(value) > 0;
+
 
     // If invert, lets do it!
     if(invert) { value = -1 * value; }
