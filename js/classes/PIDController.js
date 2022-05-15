@@ -41,7 +41,7 @@ module.exports = class PIDController {
     this.integral += error * timeDiff;
     const derivative = (error - this.lastError) / timeDiff;
 
-    this.output = (this.kP * error) + (this.kI * pid.integral) + (this.kD * derivative);     
+    this.output = (this.kP * error) + (this.kI * this.integral) + (this.kD * derivative);     
     
     this.lastError = error;
     this.lastUpdate = now;
