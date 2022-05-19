@@ -110,10 +110,10 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     return type ? this.#data[type] : this.#data;
   }
 
-  calculateThrusterOutput() {
+  calculateThrusterOutput(force = false) {
 
     // Cancel if not armed
-    if (!this.#data.armed) return
+    if (!this.#data.armed && !force) return
 
     // to keep track of changes
     let changes = false
@@ -210,7 +210,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     this.headingHoldOff();
 
     // Set all motors off
-    this.calculateThrusterOutput()
+    this.calculateThrusterOutput(true)
 
     super.emit("disarm")
   }
@@ -240,8 +240,9 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     this.emit("gainChange", this.#data.gain);
   }
 
-  gripperClose(value) { if (value > 0) console.log("Close gripper", value) }
-  gripperOpen(value) { if (value > 0) console.log("Open gripper", value) }
+  gripperState(value) { 
+    this.emit('gripperChange', value);  
+  }
 
   adjustLight(value) {
     let light = this.#data.light + parseInt(value);

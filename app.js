@@ -49,11 +49,10 @@ const pwm = new PCA9685();
  *
  ************************/
 pwm.init()
-  .then(() => console.log("PWM Initialized"))
-  .catch((err) => console.log(err))
+  .then(() => log.info("PWM Initialized"))
+  .catch((err) => log.warn(err))
   .then(() => {
     rov.setLight(0);
-    console.log("Center Camera");
     rov.centerCamera();
     rov.disarm(true);
   })
@@ -77,13 +76,13 @@ rov.on('thusterOutputChanged', (output) => {
 
 });
 rov.on('dataChanged', (type, value) => {
-  wss.broadcast(`data ${JSON.stringify({type, value})}`)
+  wss.broadcast(`data ${JSON.stringify({ type, value })}`)
   log.debug(`Data variable ${type} changed to ${value}`);
 });
 
 rov.on('lightChange', (newPercentage) => {
   let us = 1100; // Off!
-  if(newPercentage > 0) { us = rov.map(newPercentage, 0, 100, 1300, 1900); }
+  if (newPercentage > 0) { us = rov.map(newPercentage, 0, 100, 1300, 1900); }
   pwm.setPWM(6, us).catch((err) => console.log(err));
   pwm.setPWM(7, us).catch((err) => console.log(err));
 })
@@ -93,9 +92,12 @@ rov.on('cameraChange', (newPercentage) => {
   pwm.setPWM(8, us).catch((err) => console.log(err));
 })
 
-rov.on('gripperChange', (newPercentage) => {
-  let us = rov.map(newPercentage, 0, 100, 1000, 2000);
-  pwm.setPWM(9, us).catch((err) => console.log(err));
+rov.on('gripperChange', (newState) => {
+  console.log("gripperChange", newState);
+  return;
+  if (newState == -1) { pwm.setPWM(9, 1400); }
+  else if (newState == 1) { pwm.setPWM(9, 1600); }
+  else { pwm.setPWM(9, 1550); }
 })
 
 /************************
@@ -248,7 +250,7 @@ wss.on('connection', (client) => {
   let rovData = rov.getROVData();
   for (let type in rovData) {
     log.debug(`Sending data to client ${client.ip}:${client.port}: type: ${type}, value ${rovData[type]}, typeof: ${typeof rovData[type]}`)
-    client.send(`data ${JSON.stringify({type, value: rovData[type]})}`)
+    client.send(`data ${JSON.stringify({ type, value: rovData[type] })}`)
   }
 
 
@@ -296,20 +298,16 @@ function parseWebsocketData(data) {
       break;
 
     case 'gripper':
-      const newState = data[0];
-      let usData2 = rov.map(newState, -100, 100, 1000, 2000);
-      console.log(newState, usData2);
-
-      if (newState < -10) {
-        pwm.setPWM(9, 1400);
+      if (data[0] < -10) {
+        rov.gripperState(-1);
       }
-      else if (newState > 10) {
-        pwm.setPWM(9, 1600);
+      else if (data[0] > 10) {
+        rov.gripperState(1);
       }
       else {
-        pwm.setPWM(9, 1550);
+        rov.gripperState(0);
       }
-      //rov.gripperOpen()
+
       break;
 
     case 'setflat':

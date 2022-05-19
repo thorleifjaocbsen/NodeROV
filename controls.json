@@ -58,7 +58,7 @@
   "b6": {
     "name": "Close gripper",
     "func": "gripper",
-    "type": "analogue",
+    "type": "button",
     "invert": true
   },
   "b7": {
