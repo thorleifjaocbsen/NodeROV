@@ -36,21 +36,11 @@ gui.accelCanvas = document.getElementById("accelerometerCanvas");
 gui.compassCanvas = document.getElementById("compassCanvas");
 gui.dataGraphCanvas = document.getElementById("dataGraphicsCanvas");
 
-gui.setButton("gui-controls-button-1", "LEFT LIGHT", function (e) {
-    if (gui.getButtonState(0)) {
-        socket.send("setlight 0 0");
-    } else {
-        e.target.className = "selected";
-        socket.send("setlight 0 100");
-    }
+gui.setButton("gui-controls-button-1", "LIGHT + 5", function (e) {
+    socket.send(`adjustLight 5`);
 });
-gui.setButton("gui-controls-button-3", "RIGHT LIGHT", function (e) {
-    if (gui.getButtonState(2)) {
-        socket.send("setlight 1 0");
-    } else {
-        e.target.className = "selected";
-        socket.send("setlight 1 100");
-    }
+gui.setButton("gui-controls-button-3", "LIGHT - 5", function (e) {
+    socket.send(`adjustLight -5`);
 });
 
 gui.overlayText("Connecting to NodeROV...", 2000);
@@ -66,8 +56,8 @@ gui.setButton("gui-controls-button-5", "Depthchart", () => {
 });
 
 gui.setButton("gui-controls-button-2", "ARM", () => { socket.send("togglearm"); });
-gui.setButton("gui-controls-button-4", "HEADING HOLD", () => { socket.send("headinghold"); });
-gui.setButton("gui-controls-button-6", "DEPTH HOLD", () => { socket.send("depthhold"); });
+gui.setButton("gui-controls-button-4", "HEADING HOLD", () => { socket.send("headingHoldToggle"); });
+gui.setButton("gui-controls-button-6", "DEPTH HOLD", () => { socket.send("depthHoldToggle"); });
 gui.setButton("gui-controls-button-7", "RECORD", () => {
     if (gui.buttonState("gui-controls-button-7")) {
         video.stopRecord();
@@ -89,8 +79,10 @@ gui.setButton("gui-controls-button-8", "FULLSCREEN", () => {
     gui.buttonState("gui-controls-button-8", videoEl.classList.contains("fullscreen"));
     videoEl.onclick = () => { gui.pressButton("gui-controls-button-8"); };
 });
-gui.setButton("gui-controls-button-9", "SET FLAT", () => { socket.send("setflat"); });
+gui.setButton("gui-controls-button-9", "RESET MAH", () => { socket.send("resetMahCounter"); });
 gui.setButton("gui-controls-button-10", "CALIBRATE", () => { socket.send("calibrateAccelGyroBias"); });
+
+
 gui.setButton("gui-log-button-1", "ADD EVENT", () => {
     var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
     popup("Add event", msg, "Add", "Cancel", function () {
@@ -161,12 +153,16 @@ socket.on("hb", (data) => {
     gui.setInfo(12, latency)
 });
 
-socket.on("env", (data) => {
-
-    data = data.split(" ");
-    const type = data[0];
-    const value = data[1];
-
+socket.on("data", (data) => {
+    let type, value; 
+    try {
+        data = JSON.parse(data);
+        type = data.type;
+        value = data.value;
+    }
+    catch(err) {
+        console.log(`Unable to parse ${data}`)
+    }
     switch (type) {
 
         case "iTemperature":
@@ -214,7 +210,7 @@ socket.on("env", (data) => {
             break;
 
         case "accumulatedMah":
-            dashboard.setScale(5, "MAH USED", parseInt(value), 5500, 1000);
+            dashboard.setScale(5, "MAH USED", value, 5500, 1000);
             dashboard.draw();
             break;
 
@@ -258,8 +254,21 @@ socket.on("env", (data) => {
             gui.setInfo(11, value);
             break;
 
+        case 'headingHold':
+            console.log(value, typeof value);
+            gui.buttonState("gui-controls-button-4", !isNaN(value));
+            break;
+
+        case 'depthHold':
+            gui.buttonState("gui-controls-button-6", !isNaN(value));
+            break;
+
+        case 'armed':
+            gui.buttonState("gui-controls-button-2", value);
+            break;
+
         default:
-            gui.log(`Unknown enviroment type received: ${type} (${value})`);
+            gui.log(`Unknown enviroment type received: ${type} (${value})`, undefined, undefined, "warn");
             return;
     }
 });
@@ -267,7 +276,7 @@ socket.on("env", (data) => {
 socket.on("log", function (data) {
     try {
         data = JSON.parse(data);
-        gui.log(data.message, data.time, true);
+        gui.log(data.message, data.time, true, data.level);
     } catch (e) { }
 })
 

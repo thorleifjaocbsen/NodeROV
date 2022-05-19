@@ -18,6 +18,8 @@
     --gradient-background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
     --border-color: #929ba8;
     --primary-color: #fb6362;
+    --log-warn-color: #fada5e;
+    --log-info-color: #ffffff;
 }
 
 body {

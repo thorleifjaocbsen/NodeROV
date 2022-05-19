@@ -9,12 +9,12 @@ const PIDController = require('./PIDController');
 
 module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
-  #environment;
+  #data;
 
   constructor(options) {
     super()
 
-    this.#environment = {
+    this.#data = {
       iTemperature: 0,
       iPressure: 0,
       iHumidity: 0,
@@ -42,7 +42,9 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       camera: 0,
 
       depthHold: undefined,
-      headingHold: undefined
+      headingHold: undefined,
+
+      armed: false
     };
 
     // uS Overview
@@ -68,7 +70,6 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       }
     }
 
-    this.armed = false
     this.controlData = {
       roll: 0,
       pitch: 0,
@@ -88,16 +89,16 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
   map(x, in_min, in_max, out_min, out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min }
   update(type, value) {
     // Check if old value is different from new value
-    if (this.#environment[type] != value) {
-      this.#environment[type] = value;
-      super.emit("environmentChanged", type, value);
+    if (this.#data[type] != value) {
+      this.#data[type] = value;
+      super.emit("dataChanged", type, value);
 
-      if (type == 'depth' && this.#environment.depthHold) {
-        let thrusterOutput = this.depthPID.update(this.#environment.depthHold, value);
+      if (type == 'depth' && this.#data.depthHold) {
+        let thrusterOutput = this.depthPID.update(this.#data.depthHold, value);
         this.ascend(thrusterOutput);
       }
-      else if (type == 'heading' && this.#environment.headingHold) {
-        let thrusterOutput = this.headingPID.update(this.#environment.headingHold, value);
+      else if (type == 'heading' && this.#data.headingHold) {
+        let thrusterOutput = this.headingPID.update(this.#data.headingHold, value);
         //console.log(`Hold heading: ${this.#environment.headingHold}, newHeading: ${value}, thrusterOutput: ${thrusterOutput}`);
         this.yaw(thrusterOutput);
       }
@@ -105,38 +106,21 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     }
   }
 
-  getEnviromentData(type) {
-    return type ? this.#environment[type] : this.#environment;
-  }
-
-
-  // Generate telemetry data
-  getTelemetry() {
-    const motors = [];
-
-    for (let id in this.motors) {
-      motors.push(this.motors[id].output * 100);
-    };
-
-    return {
-      battery: this.battery,
-      attitude: this.attitude,
-      environment: this.environment,
-      motors
-    }
+  getROVData(type) {
+    return type ? this.#data[type] : this.#data;
   }
 
   calculateThrusterOutput() {
 
     // Cancel if not armed
-    if (!this.armed) return
+    if (!this.#data.armed) return
 
     // to keep track of changes
     let changes = false
 
     // If not armed calculate all to 0, if not get actual control data
     let roll, pitch, yaw, ascend, forward, lateral
-    if (!this.armed) [roll, pitch, yaw, ascend, forward, lateral] = [0, 0, 0, 0, 0, 0]
+    if (!this.#data.armed) [roll, pitch, yaw, ascend, forward, lateral] = [0, 0, 0, 0, 0, 0]
     else ({ roll, pitch, yaw, ascend, forward, lateral } = this.controlData)
 
     // Loop through each motor to calculate output of it
@@ -158,7 +142,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       let output = this.constrain(rollPitchYaw + linear, -100, 100);
 
       // Adjust output to fit gain
-      output = output * this.#environment.gain / 100;
+      output = output * this.#data.gain / 100;
 
       // Tracking changes and storing changes.
       changes = changes || motor.output != output
@@ -211,15 +195,19 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
   arm() {
 
-    if (this.armed) return
-    this.armed = true
+    if (this.#data.armed) return
+    this.update("armed", true);
     super.emit("arm")
   }
 
   disarm(force = false) {
 
-    if (!this.armed && !force) return
-    this.armed = false
+    if (!this.#data.armed && !force) return
+    this.update("armed", false);
+
+    // Disable heading / depth hold
+    this.depthHoldOff();
+    this.headingHoldOff();
 
     // Set all motors off
     this.calculateThrusterOutput()
@@ -229,68 +217,82 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
   toggleArm() {
 
-    if (this.armed) this.disarm()
+    if (this.#data.armed) this.disarm()
     else this.arm()
   }
 
   adjustCamera(modifier) {
-    let cameraPercentage = this.#environment.camera + parseInt(modifier);
+    let cameraPercentage = this.#data.camera + parseInt(modifier);
     cameraPercentage = this.constrain(cameraPercentage, 0, 100);
     this.update('camera', cameraPercentage);
-    this.emit("cameraChange", this.#environment.camera);
+    this.emit("cameraChange", this.#data.camera);
   }
 
   centerCamera() {
     this.update("camera", 50);
-    this.emit("cameraChange", this.#environment.camera);
+    this.emit("cameraChange", this.#data.camera);
   }
 
   adjustGain(modifier) {
-    let gain = this.#environment.gain + parseInt(modifier);
+    let gain = this.#data.gain + parseInt(modifier);
     gain = this.constrain(gain, 0, 100);
     this.update("gain", gain);
-    this.emit("gainChange", this.#environment.gain);
+    this.emit("gainChange", this.#data.gain);
   }
 
   gripperClose(value) { if (value > 0) console.log("Close gripper", value) }
   gripperOpen(value) { if (value > 0) console.log("Open gripper", value) }
 
   adjustLight(value) {
-    let light = this.#environment.light + parseInt(value);
+    let light = this.#data.light + parseInt(value);
     light = this.constrain(light, 0, 100);
     this.update("light", light);
-    this.emit("lightChange", this.#environment.light);
+    this.emit("lightChange", this.#data.light);
   }
 
   setLight(value) {
-    this.adjustLight(value - this.#environment.light);
+    this.adjustLight(value - this.#data.light);
   }
 
+  headingHoldOn() {
+    if(!this.#data.armed) throw "Cannot enable heading hold on unarmed ROV"; 
+    this.update("headingHold", this.#data.heading);
+    this.headingPID.reset();
+  }
+
+  headingHoldOff() {
+    this.update("headingHold", undefined);
+    this.yaw(0);
+  }
 
   headingHoldToggle() { 
-    if (this.#environment.headingHold) {
-      this.update("headingHold", undefined);
-      this.yaw(0);
+    if (!this.#data.headingHold) {
+      this.headingHoldOn();
     } else {
-      this.update("headingHold", this.#environment.heading);
-      this.headingPID.reset();
+      this.headingHoldOff();
     }
   }
 
+  depthHoldOn() {
+    if(!this.#data.armed) throw "Cannot enable depth hold on unarmed ROV"; 
+    this.update("depthHold", this.#data.depth);
+    this.headingPID.reset();
+  }
+
+  depthHoldOff() {
+    this.update("depthHold", undefined);
+    this.ascend(0);
+  }
+
   depthHoldToggle() { 
-    if (this.#environment.depthHold) {
-      this.update("depthHold", undefined);
-      this.ascend(0);
+    if (!this.#data.depthHold) {
+      this.depthHoldOn();
     } else {
-      this.update("depthHold", this.#environment.depth);
-      this.depthPID.reset();
+      this.depthHoldOff();
     }
   }
 
   trimRollLeft(value) { if (value != 0) console.log("Trim roll left") }
   trimRollRight(value) { if (value != 0) console.log("Trim roll right") }
-
-  // Create setters and getters for all private variables
-
 
 }

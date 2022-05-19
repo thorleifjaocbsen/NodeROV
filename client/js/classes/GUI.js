@@ -18,13 +18,15 @@ export default class GUI extends EventEmitter {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     };
 
-    log(text, time, doNotEmit) {
+    log(text, time, doNotEmit, level = "info") {
         if (time == undefined) time = Date.now();
 
         if(!doNotEmit) super.emit("log", text, time);
 
         let d = new Date(time).toISOString();
         let timestamp = d.split('T')[1].split('.')[0] + " | " + d.split('T')[0];
+
+        text = `<span style='color:var(--log-${level}-color);'>${text}</span>`;
 
         const table = document.getElementById("logTable")
         const tr = document.createElement("tr")

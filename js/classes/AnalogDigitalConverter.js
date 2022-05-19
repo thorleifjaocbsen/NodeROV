@@ -92,6 +92,12 @@ module.exports = class AnalogDigitalConverter extends EventEmitter {
     return Math.round(this.accumulatedCurrent);
   }
 
+  resetAccumulatedMah() {
+    
+    this.accumulatedCurrent = 0;
+    super.emit('read');
+  }
+
 
   calculateAccumulatedMah() {
 
