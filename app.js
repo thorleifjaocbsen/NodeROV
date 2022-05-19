@@ -68,8 +68,8 @@ rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('thusterOutputChanged', (output) => {
   output.forEach((output) => {
-    log.info(`Pin: ${output.pin} = ${output.us}us`);
-    pwm.setPWM(output.pin, 1550);
+    log.debug(`Pin: ${output.pin} = ${output.us}us`);
+    pwm.setPWM(output.pin, output.us);
   })
 
   wss.broadcast(`ts ${JSON.stringify(output)}`);
@@ -93,8 +93,6 @@ rov.on('cameraChange', (newPercentage) => {
 })
 
 rov.on('gripperChange', (newState) => {
-  console.log("gripperChange", newState);
-  return;
   if (newState == -1) { pwm.setPWM(9, 1400); }
   else if (newState == 1) { pwm.setPWM(9, 1600); }
   else { pwm.setPWM(9, 1550); }

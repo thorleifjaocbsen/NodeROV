@@ -62,6 +62,9 @@ module.exports = class PCA9685 {
 
   // Usage: setPWM(channel, microsecounds);
   setPWM(no, us) {
+
+    if(no == 9) { us = 1550; console.log("Override gripper"); }
+    if(no > -1 && no < 6) { us = 1550; console.log("Override thruster"); }
    
     const steps = this.usToSteps(us);
     // 0x06 -> 0x09 (LED0_ON_L,LED0_ON_H,LED0_OFF_L,LED0_OFF_H)
