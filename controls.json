@@ -58,7 +58,7 @@
   "b6": {
     "name": "Close gripper",
     "func": "gripper",
-    "type": "button",
+    "type": "analogue",
     "invert": true
   },
   "b7": {
@@ -169,5 +169,22 @@
     "name": "Gain decrement",
     "forward": "b13",
     "invert": false
+  },
+  "k49": {
+    "name": "Camera down",
+    "forward": "b4"
+  },
+  "k50": {
+    "name": "Camera center",
+    "forward": "b10"
+  },
+  "k51": {
+    "name": "Camera up",
+    "forward": "b4",
+    "invert": true
+  },
+  "k32": {
+    "name": "Disarm",
+    "forward": "b8"
   }
 }

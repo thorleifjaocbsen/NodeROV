@@ -122,11 +122,12 @@ export default class Controls {
   }
 
   keyDown(e) {
-    
+
     if(this.keyboard[e.keyCode] != e.keyCode && !this.debounce[e.keyCode]) {
       this.keyboard[e.keyCode] = 100;
       this.debounce[e.keyCode] = true;
       this.change(`k${e.keyCode}`, 100);
+      e.preventDefault();
     }
   }
 
@@ -136,6 +137,7 @@ export default class Controls {
       this.keyboard[e.keyCode] = 0;
       this.debounce[e.keyCode] = false;
       this.change(`k${e.keyCode}`, 0);
+      e.preventDefault();
     }
   }
 }

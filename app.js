@@ -88,7 +88,7 @@ rov.on('lightChange', (newPercentage) => {
 })
 
 rov.on('cameraChange', (newPercentage) => {
-  let us = rov.map(newPercentage, 0, 100, 1000, 2000);
+  let us = rov.map(newPercentage, 0, 100, 1100, 1950);
   pwm.setPWM(8, us).catch((err) => console.log(err));
 })
 

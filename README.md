@@ -66,3 +66,17 @@ Current sensor consists of a shunt resistor (Rs) and a voltage dividor resistor 
 The current multiplier is calculated using this formula: 
 
 Multiplier = 1000 / (Rs * Rd) = 1000 / (0.0005 * 56 000) = 1000 / 28 = 35.714285714285715
+
+# Default controls on keyboard:
+
+Some buttons are set for GUI only. E.g. ARM is only on gui but emergency arm from "space".
+
+WS = Left stick forward (fwd / back)
+AD = Left stick lateral (left / right)
+↑↓ = Right stick ascend (ascend, descend)
+←→ = Right stick yaw (left, right)
+QE = Gripper (close / open)
+PG UP = Gain increment
+PG DOWN = Gain decrement
+123 = Light decrement, center, increment
+SPACE = DISARM
