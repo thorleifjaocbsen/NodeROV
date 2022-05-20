@@ -109,7 +109,9 @@
 					"rotation": 0
 				}
 			}
-		]
+		],
+		"headingHoldPID": { "p":3, "i": 0.0002, "d": 0 },
+		"depthHoldPID": { "p": 3, "i": 0.0002, "d": 0 }
 	},
 	"auxiliary": {
 		"devices": [
