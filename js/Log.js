@@ -23,7 +23,8 @@ log.socketIOTransport = function(client) {
     this.level = 'info';
     this.client = client;
     this.log = function(level, msg) {  
-      if(msg.substr(0,6) == "CLIENT") { return; }  
+      if(msg.substr(0,6).toUpperCase() == "CLIENT") { return; }  
+      if(msg.substr(0,2).toUpperCase() == "WS") { return; }  
       client.send("log " + JSON.stringify({ type : 'log', level : level, message : msg, time : Date.now() }));
     };
     this.on = function() { };

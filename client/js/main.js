@@ -55,7 +55,7 @@ gui.setButton("gui-controls-button-5", "Depthchart", () => {
     }
 });
 
-gui.setButton("gui-controls-button-2", "ARM", () => { socket.send("togglearm"); });
+gui.setButton("gui-controls-button-2", "ARM", () => { socket.send("toggleArm"); });
 gui.setButton("gui-controls-button-4", "HEADING HOLD", () => { socket.send("headingHoldToggle"); });
 gui.setButton("gui-controls-button-6", "DEPTH HOLD", () => { socket.send("depthHoldToggle"); });
 gui.setButton("gui-controls-button-7", "RECORD", () => {
@@ -68,9 +68,10 @@ gui.setButton("gui-controls-button-7", "RECORD", () => {
     }
 
 });
+
 video.on("recordStateChange", (state) => {
     gui.buttonState("gui-controls-button-7", state == "recording");
-    gui.log(`Recording state changed to ${state}`);
+    gui.log(`Recording state changed to: ${state}`);
 })
 
 gui.setButton("gui-controls-button-8", "FULLSCREEN", () => {

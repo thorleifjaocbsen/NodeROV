@@ -214,15 +214,15 @@ const webServer = https.createServer({ key, cert }, app).listen(Configuration.po
  *
  ************************/
 const wss = new ws.WebSocketServer({ perMessageDeflate: false, server: webServer })
-log.info(`Websocket: Listning on ${Configuration.socketPort}`)
+log.info(`WS: Listning on ${Configuration.socketPort}`)
 wss.on('connection', (client) => {
 
   client.ip = client._socket.remoteAddress;
   client.port = client._socket.remotePort;
 
-  log.info(`Websocket: Remote connection from: ${client.ip}:${client.port}`)
+  log.info(`WS: Remote connection from: ${client.ip}:${client.port}`)
   log.add(log.socketIOTransport, client)
-  log.info('Websocket: Starting heartbeat')
+  log.info('WS: Starting heartbeat')
 
 
   client.heartbeat = new HeartbeatController();
@@ -236,7 +236,7 @@ wss.on('connection', (client) => {
 
   client.on('message', parseWebsocketData)
   client.on('close', () => {
-    log.info(`Websocket: Close from ${client.ip}:${client.port}`)
+    log.info(`WS: Close from ${client.ip}:${client.port}`)
 
     rov.disarm()
     log.remove(`socket_${client._socket.remoteAddress}:${client._socket.remotePort}`, client)
@@ -273,22 +273,7 @@ function parseWebsocketData(data) {
   switch (cmd) {
 
     case "clog":
-      //log.info(`Websocket: Client data:  ${cmd} (${JSON.stringify(data)}`);
-      break;
-
-    case 'arm':
-      log.info(`Websocket: Arm command from ${client.ip}:${client.port}`);
-      rov.arm();
-      break;
-
-    case 'disarm':
-      log.info(`Websocket: Disarm command from ${client.ip}:${client.port}`);
-      rov.disarm();
-      break;
-
-    case 'togglearm':
-      log.info(`Websocket: Arm toggle command from ${client.ip}:${client.port}`);
-      rov.toggleArm();
+      log.info(`WS: Client data:  ${cmd} (${JSON.stringify(data)}`);
       break;
 
     case 'hb':
@@ -296,22 +281,9 @@ function parseWebsocketData(data) {
       break;
 
     case 'gripper':
-      if (data[0] < -10) {
-        rov.gripperState(-1);
-      }
-      else if (data[0] > 10) {
-        rov.gripperState(1);
-      }
-      else {
-        rov.gripperState(0);
-      }
-
-      break;
-
-    case 'setflat':
-      console.log("I should go flat now ! how the heck do I do that?");
-      //imu.calibrateLevel();
-      imu.calibrateMagnometerBias();
+      if (data[0] < -10) { rov.gripperState(-1); }
+      else if (data[0] > 10) { rov.gripperState(1); }
+      else { rov.gripperState(0); }
       break;
 
     case 'calibrateAccelGyroBias':
@@ -321,6 +293,10 @@ function parseWebsocketData(data) {
     case 'resetMahCounter': // OK
       adc.resetAccumulatedMah();
       break;
+
+    case 'arm': // OK
+    case 'disarm': // OK
+    case 'toggleArm': // OK
     case 'lateral': // OK
     case 'forward': // OK
     case 'yaw': // OK
@@ -333,6 +309,7 @@ function parseWebsocketData(data) {
     case 'depthHoldToggle': // OK
       try {
         rov.command(cmd, data[0]);
+        log.info(`WS: Command ${cmd} reveived`);
       }
       catch (err) {
         log.warn(`Failed to execute ROV command, error was: ${err}`);
@@ -340,8 +317,8 @@ function parseWebsocketData(data) {
       break;
 
     default:
-      log.warn(`Websocket: Unknown command from ${client.ip}:${client.port}`);
-      log.warn(`Websocket: Unknown command: ${cmd} (${JSON.stringify(data)})`);
+      log.warn(`WS: Unknown command from ${client.ip}:${client.port}`);
+      log.warn(`WS: Unknown command: ${cmd} (${JSON.stringify(data)})`);
       break;
   }
 }
