@@ -53,21 +53,23 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
 
   readSensorData() {
 
-    this.#sensor.readAccel()
-      .catch((err) => { super.emit('readError', err); })
-      .then(() => this.#sensor.readMag())
-      .catch((err) => { super.emit('readError', err); })
-      .then(() => this.#sensor.readTemp())
-      .catch((err) => { super.emit('readError', err); })
-      .then(() => this.#sensor.readGyro()) // Reading gyro last to get most accurate timing on when it was last read.
-      .catch((err) => { super.emit('readError', err); })
-      .then(() => this.parseData())
-      .catch((err) => { super.emit('readError', err); })
-      .finally(() => {
-        if (this.autoRead) {
-          setTimeout(() => this.readSensorData(), this.readInterval);
-        }
-      });
+    return Promise.all([
+      this.#sensor.readAccel(),
+      this.#sensor.readMag(),
+      this.#sensor.readTemp(),
+      this.#sensor.readGyro() // Reading gyro last to get most accurate timing on when it was last read.
+    ])
+    .catch((err) => { 
+      if(err == "Calibration in progress") return;
+      super.emit('readError', err); 
+    })
+    .then(() => this.parseData())
+    .catch((err) => { super.emit('readError', err); })
+    .finally(() => {
+      if (this.autoRead) {
+        setTimeout(() => this.readSensorData(), this.readInterval);
+      }
+    });
   }
 
   calibrateAccelGyroBias() {
