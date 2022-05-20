@@ -309,7 +309,7 @@ function parseWebsocketData(data) {
     case 'depthHoldToggle': // OK
       try {
         rov.command(cmd, data[0]);
-        log.info(`WS: Command ${cmd} reveived`);
+        log.debug(`WS: Command ${cmd} reveived`);
       }
       catch (err) {
         log.warn(`Failed to execute ROV command, error was: ${err}`);
