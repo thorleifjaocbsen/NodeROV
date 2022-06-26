@@ -1,4 +1,7 @@
 import Socket from './Socket.js';
+import '../broadway/decoder.js';
+import '../broadway/yuvcanvas.js';
+import '../broadway/player.js';
 import EventEmitter from './EventEmitter.js';
 
 export default class Video extends EventEmitter {
@@ -12,39 +15,12 @@ export default class Video extends EventEmitter {
         this.ws.onerror = this.onerror.bind(this);
         this.ws.onclose = this.onclose.bind(this);
 
+        this.player = new Player({});
+        this.canvas = this.player.canvas;
         this.skipFrames = false;
 
-        this.canvas = document.createElement('canvas');
-        this.canvas.width = 1280;
-        this.canvas.height = 720;
-        this.canvas.style.width = 1280;
-        this.canvas.style.height = 720;
-        this.canvas.style.position = "absolute";
-        this.ctx = this.canvas.getContext("2d");
         this.videoElement = videoElement;
         videoElement.appendChild(this.canvas);
-
-
-        this.decoder = new VideoDecoder({
-            output: (frame) => {
-                this.canvas.width = frame.codedWidth;
-                this.canvas.height = frame.codedHeight;
-                this.ctx.drawImage(frame, 0, 0);
-                frame.close();
-            },
-            error: (err) => { console.warn(err); }
-        });
-
-        const decoderConfig = {
-            // "codec": 'avc1.4d401e',
-            // "codec": 'avc1.4d002a',
-            //"codec": 'avc1.4d0028',
-             "codec": "avc1.420034",
-            "optimizeForLatency": true
-        }
-
-        this.decoder.configure(decoderConfig);
-
 
         this.recordState = null;
 
@@ -81,29 +57,19 @@ export default class Video extends EventEmitter {
                     return false;
             }
 
-
+            
         };
         if (this.skipFrames) { return; }
         try {
             const frame = new Uint8Array(e.data);
-            const isKeyFrame = [5,6,7,8,10,11].includes(frame[4] & 0b00011111);
-            if (this.decoder.state == "configured" && frame.length > 0) {
-                let chunk = new EncodedVideoChunk({
-                    type: isKeyFrame ? 'key' : 'delta',
-                    data: frame,
-                    timestamp: Date.now(),
-                    duration: 16
-                })
-                this.decoder.decode(chunk);
-            }
-
+            this.player.decode(frame);
         } catch (e) {
             console.log(e)
         }
 
     }
 
-    onerror(e) { }
+    onerror(e) {}
 
     onclose() {
         // Reconnect every 5 seconds
@@ -111,14 +77,14 @@ export default class Video extends EventEmitter {
     }
 
     resizeToFit() {
-
-        let width = this.canvas.offsetWidth
-        let height = this.canvas.offsetHeight
-
+        
+        let width = this.player.canvas.offsetWidth
+        let height = this.player.canvas.offsetHeight
+    
         const videoMaxWidth = this.videoElement.clientWidth; // Size excluding border
         const videoMaxHeight = this.videoElement.clientHeight; // Size excluding border
         const zoom = Math.min(videoMaxWidth / width, videoMaxHeight / height);
-
+    
         this.canvas.style.zoom = zoom;
     }
 

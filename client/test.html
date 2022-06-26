@@ -9,15 +9,16 @@
       text-align: center;
       margin-top: 50px;
     }
+
     #credits {
       margin-top: 30px;
       font-size: 10px;
       color: #cccccc;
     }
+
     #credits a {
       color: #cccccc;
     }
-    
   </style>
 </head>
 
@@ -149,7 +150,11 @@
   <div id="credits">
     Remote Control SVG inspiration from: <a href="https://gamepad-tester.com/">https://gamepad-tester.com/</a>
   </div>
-  
+
+  <div id="vidCanvas">
+    <h1>Video Feed</h1>
+    <canvas id="video" style="width: 356px; height: 200px;; background-color: blue;"></canvas>
+  </div>
   <script>
     const ws = new WebSocket(`wss://${location.hostname}:${location.port}`)
     ws.onmessage = (event) => {
@@ -240,6 +245,77 @@
 
     window.requestAnimationFrame(mainLoop)
 
+  </script>
+  <script>
+
+    let sps = null;
+    let pps = null;
+
+    const canvas = document.getElementById("video");
+    const ctx = canvas.getContext('2d');
+
+    // Decoder
+    const decoder = new VideoDecoder({
+      output: (frame) => {
+
+              canvas.width = frame.codedWidth;
+              canvas.height = frame.codedHeight;
+              ctx.drawImage(frame,0,0);
+              frame.close();
+       },
+      error: (err) => { console.warn(err); }
+    });
+
+    const decoderConfig = {
+      // "codec": 'avc1.4d401e',
+      // "codec": 'avc1.4d002a',
+      "codec": 'avc1.4d0028',
+      // "codec": "avc1.420034",
+      "optimizeForLatency": true
+    }
+
+    decoder.configure(decoderConfig);
+
+    // Create websocket
+    const vws = new WebSocket(`wss://${location.hostname}:8282`);
+    vws.binaryType = 'arraybuffer';
+
+    // On frame data
+    vws.onmessage = async (e) => {
+
+      // Ignore string data - Just information from the camera streamer
+      if (typeof e.data == "string") { console.log(e.data); return; }
+
+      // Real binary data here!
+      try {
+        const frame = new Uint8Array(e.data); // Starts with 4 bytes 0x00 0x00 0x00 0x01
+        const header = frame[4]; // Get 5th byte frame header.
+        const forbiddenZeroBit = header >> 7  // Bit 1
+        const nalRefIdc = ((header & 0b01100000) >> 5) // Bit 2,3
+        const nalUnitType = header & 0b00011111; // Bit 4,5,6,7,8
+        const isKeyFrame = [5,6,7,8,10,11].includes(nalUnitType);
+
+        // To Read: https://stackoverflow.com/questions/24884827/possible-locations-for-sequence-picture-parameter-sets-for-h-264-stream/24890903#24890903
+
+        // Should use nal type 7 to figure out what codec to use and 
+        // configure the decoder.
+        if (nalUnitType == 7) { sps = frame; } // Sequence Parameter Set (SPS)
+        if (nalUnitType == 8) { pps = frame; } // Picture Parameter Set (PPS)
+
+        if (decoder.state == "configured") {
+          let chunk = new EncodedVideoChunk({
+            type: isKeyFrame ? 'key' : 'delta',
+            data: frame,
+            timestamp: Date.now(),
+            duration: 1
+          })
+
+          decoder.decode(chunk);
+        }
+      } catch (e) {
+        console.log(e)
+      }
+    };
   </script>
 </body>
 

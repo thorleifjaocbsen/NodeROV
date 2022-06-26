@@ -59,8 +59,9 @@ wss.broadcast = (package) => {
   const binary = typeof package != "string";
 
   wss.clients.forEach((client) => {
-    if (client.bufferedAmount > 0 && binary) {
-      console.log(`Video Streamer Service : Dropping frame, TCP socket still sending on client ${client._socket.remoteAddress}`);
+     // This can be better, now limiting to a buffer of 100 kilobytes. Two packets are around 30 each.
+    if (client.bufferedAmount > 102400 && binary) {
+      console.log(`Video Streamer Service : Dropping frame, TCP socket still sending on client ${client._socket.remoteAddress} ${client.bufferedAmount}`);
       return;
     }
 
@@ -85,7 +86,13 @@ function startCameraSoftware() {
   console.log("Video Streamer Service : Starting Camera Software");
   wss.broadcast("starting");
 
-  cameraSoftware = spawn('raspivid', ['-t', '0',
+  //h264-exec:raspivid -t 0 -pf high -lev 4.2 -g 10 -ih -qp 35 -o -
+
+ // https://news.mistserver.org/news/69/Raw+H.264+from+Raspberry+Pi+camera+to+MistServer
+  cameraSoftware = spawn('raspivid', [
+    //'-g', '20', // This setting makes sure there is a keyframe every 10 frames, which tends to make the camera more live, you can lower the number for an even more live stream, but bandwidth costs will be raised.
+    '-ih', // This will insert the headers inline, which MistServer requires in order to ingest the stream correctly.
+    '-t', '0',
     '-awb', 'auto',
     '-ex', 'auto',
     '-mm', 'average',
