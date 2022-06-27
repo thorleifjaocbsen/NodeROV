@@ -248,33 +248,20 @@
   </script>
   <script>
 
-    let sps = null;
-    let pps = null;
-
     const canvas = document.getElementById("video");
     const ctx = canvas.getContext('2d');
 
-    // Decoder
+    // Decoder - Just drawing frames to the canvas
     const decoder = new VideoDecoder({
       output: (frame) => {
-
-              canvas.width = frame.codedWidth;
-              canvas.height = frame.codedHeight;
-              ctx.drawImage(frame,0,0);
-              frame.close();
-       },
-      error: (err) => { console.warn(err); }
+        canvas.width = frame.codedWidth;
+        canvas.height = frame.codedHeight;
+        ctx.drawImage(frame, 0, 0);
+        frame.close();
+      },
+      error: (err) => { console.log(err); }
     });
 
-    const decoderConfig = {
-      // "codec": 'avc1.4d401e',
-      // "codec": 'avc1.4d002a',
-      "codec": 'avc1.4d0028',
-      // "codec": "avc1.420034",
-      "optimizeForLatency": true
-    }
-
-    decoder.configure(decoderConfig);
 
     // Create websocket
     const vws = new WebSocket(`wss://${location.hostname}:8282`);
@@ -293,21 +280,46 @@
         const forbiddenZeroBit = header >> 7  // Bit 1
         const nalRefIdc = ((header & 0b01100000) >> 5) // Bit 2,3
         const nalUnitType = header & 0b00011111; // Bit 4,5,6,7,8
-        const isKeyFrame = [5,6,7,8,10,11].includes(nalUnitType);
+        const isKeyFrame = [5, 6, 7, 8, 10, 11].includes(nalUnitType);
 
         // To Read: https://stackoverflow.com/questions/24884827/possible-locations-for-sequence-picture-parameter-sets-for-h-264-stream/24890903#24890903
-
+        // Where I've found most of the code to copy: https://github.com/NewChromantics/PopEngineCommon/blob/48baecf3a3b7b14dd419e6d15c5d6c96b62f6c28/PopH264WebApi.js#L174
+        
         // Should use nal type 7 to figure out what codec to use and 
         // configure the decoder.
-        if (nalUnitType == 7) { sps = frame; } // Sequence Parameter Set (SPS)
-        if (nalUnitType == 8) { pps = frame; } // Picture Parameter Set (PPS)
+
+        if (nalUnitType == 7) { 
+          // This code does NOT take in account that the NALU frame can be 001 aswell as 0001.
+          // Example frame:
+          // [0,0,0,1,39,66,128,40,149,160,20,1,110,128,120,145,54]
+          
+          // If unconfigured we now have the codec in the SPS frame. Love it, lets go!
+          if (decoder.state == "unconfigured") {
+
+            // Get byte 6 7 and 8 (starting from 0 it is 5-7 as below)
+            const codec = frame[5].toString(16).padStart(2,'0') +
+                          frame[6].toString(16).padStart(2,'0') +
+                          frame[7].toString(16).padStart(2,'0');
+
+            
+            // Configure the decoder! Ready to decode frames!!            
+            decoder.configure({ "codec": `avc1.${codec}`, "optimizeForLatency": true });
+          }
+        }
+
+        //if (nalUnitType == 8) { pps = frame; } // Picture Parameter Set (PPS)
+        //if (nalUnitType == 5) { sentIDR = true; }
+
+        console.log(`nalUnitType: ${nalUnitType} (${frame.length}bytes) isKeyFrame: ${isKeyFrame} - Decoder state: ${decoder.state}`)
 
         if (decoder.state == "configured") {
+
+
           let chunk = new EncodedVideoChunk({
             type: isKeyFrame ? 'key' : 'delta',
             data: frame,
             timestamp: Date.now(),
-            duration: 1
+            duration: 10
           })
 
           decoder.decode(chunk);

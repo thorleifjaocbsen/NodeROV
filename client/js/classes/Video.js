@@ -86,7 +86,13 @@ export default class Video extends EventEmitter {
         if (this.skipFrames) { return; }
         try {
             const frame = new Uint8Array(e.data);
-            const isKeyFrame = [5,6,7,8,10,11].includes(frame[4] & 0b00011111);
+            const header = frame[4]; // Get 5th byte frame header.
+            const forbiddenZeroBit = header >> 7  // Bit 1
+            const nalRefIdc = ((header & 0b01100000) >> 5) // Bit 2,3
+            const nalUnitType = header & 0b00011111; // Bit 4,5,6,7,8
+            const isKeyFrame = [5,6,7,8,10,11].includes(nalUnitType);
+
+
             if (this.decoder.state == "configured" && frame.length > 0) {
                 let chunk = new EncodedVideoChunk({
                     type: isKeyFrame ? 'key' : 'delta',
