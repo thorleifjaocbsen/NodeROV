@@ -83,15 +83,16 @@ function startCameraSoftware() {
   console.log("Video Streamer Service : Starting Camera Software");
   wss.broadcast("starting");
 
-  cameraSoftware = spawn('raspivid', ['-t', '0',
-    '-awb', 'auto',
-    '-ex', 'auto',
-    '-mm', 'average',
+  cameraSoftware = spawn('libcamera-vid', ['-t', '0',
+    '--awb', 'auto',
+    '--exposure', 'normal',
+    '--metering', 'average',
     '-o', '-',
-    '-w', config.width,
-    '-h', config.height,
-    '-fps', config.fps,
-    '-vf', '-hf', '-pf', 'baseline']);
+    '--width', config.width,
+    '--height', config.height,
+    '--framerate', config.fps,
+    '--inline', '-n',
+    '--profile', 'baseline']);
 
   cameraSoftware.on("error", (error) => {
     if (error.code == "ENOENT") {

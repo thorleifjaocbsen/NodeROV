@@ -17,9 +17,9 @@ const ThrusterControllerClass = require('./js/ThrusterController.js');
 const AuxiliaryControllerClass = require('./js/AuxiliaryController.js');
 const Hearthbeat = require('./js/Hearthbeat.js');
 
-const PCA9685 = require('./js/drivers/PCA9685.js');
-const pca9685 = new PCA9685();
-pca9685.init();
+// const PCA9685 = require('./js/drivers/PCA9685.js');
+// const pca9685 = new PCA9685();
+// pca9685.init();
 
 
 // LOOP
@@ -33,34 +33,34 @@ pca9685.init();
  * Initialize scripts
  *
  ************************/
-const ThrusterController = new ThrusterControllerClass(Configuration.thrusters)
-const AuxiliaryController = new AuxiliaryControllerClass(Configuration.auxiliary)
-const ROVController = new RemoteOperatedVehicleClass(Configuration.rov)
+// const ThrusterController = new ThrusterControllerClass(Configuration.thrusters)
+// const AuxiliaryController = new AuxiliaryControllerClass(Configuration.auxiliary)
+// const ROVController = new RemoteOperatedVehicleClass(Configuration.rov)
 
 /************************
  *
  * ROV Event Handlers
  *
  ************************/
-ROVController.on('arm', () => { log.info('ROV Armed') })
-ROVController.on('disarm', () => { log.info('ROV Disarmed') })
-ROVController.on('controlInputChange', (newInput) => {
-  log.info("Controller input changed")
-  ThrusterController.calculateOutput(newInput)
-})
+// ROVController.on('arm', () => { log.info('ROV Armed') })
+// ROVController.on('disarm', () => { log.info('ROV Disarmed') })
+// ROVController.on('controlInputChange', (newInput) => {
+//   log.info("Controller input changed")
+//   ThrusterController.calculateOutput(newInput)
+// })
 
 /************************
  *
  * Thruster Event Handlers
  *
  ************************/
-ThrusterController.on('thrusterOutputChange', (thrusters) => {
-  thrusters.forEach(thruster => {
-    log.debug(`Setting PWM for pin ${thruster.pin} to ${thruster.us}uS`)
-    // TODO: Add PWM Controller to SET PWM
-    pca9685.setPWM(thruster.pin, thruster.us);
-  });
-})
+// ThrusterController.on('thrusterOutputChange', (thrusters) => {
+//   thrusters.forEach(thruster => {
+//     log.debug(`Setting PWM for pin ${thruster.pin} to ${thruster.us}uS`)
+//     // TODO: Add PWM Controller to SET PWM
+//     pca9685.setPWM(thruster.pin, thruster.us);
+//   });
+// })
 
 
 /************************
@@ -68,20 +68,20 @@ ThrusterController.on('thrusterOutputChange', (thrusters) => {
  * Auxiliary Event Handlers
  *
  ************************/
-AuxiliaryController.on('deviceOutputChange', (device) => {
-  log.debug(`PWM Signal change on ${device.id} (pin: ${device.pin}, us: ${device.us})`)
-  // TODO: Add PWM Controller to SET PWM
-  pca9685.setPWM(device.pin, device.us);
-})
+// AuxiliaryController.on('deviceOutputChange', (device) => {
+//   log.debug(`PWM Signal change on ${device.id} (pin: ${device.pin}, us: ${device.us})`)
+//   // TODO: Add PWM Controller to SET PWM
+//   pca9685.setPWM(device.pin, device.us);
+// })
 
 
 
 
 // TEST: Testing that everything works on paper for now.
-ROVController.arm();
-ROVController.setControlInput({ forward: 1, yaw: 0.1 })
+// ROVController.arm();
+// ROVController.setControlInput({ forward: 1, yaw: 0.1 })
 
-AuxiliaryController.calculateOutput("camera", 1)
+// AuxiliaryController.calculateOutput("camera", 1)
 
 
 /************************
