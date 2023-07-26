@@ -11,10 +11,10 @@ const express = require('express');
 const app = express();
 const log = require('./js/Log.js');
 
-const Configuration = require('./configuration.json');
-const RemoteOperatedVehicleClass = require('./js/RemoteOperatedVehicle.js');
-const ThrusterControllerClass = require('./js/ThrusterController.js');
-const AuxiliaryControllerClass = require('./js/AuxiliaryController.js');
+// const Configuration = require('./configuration.json');
+// const RemoteOperatedVehicleClass = require('./js/RemoteOperatedVehicle.js');
+// const ThrusterControllerClass = require('./js/ThrusterController.js');
+// const AuxiliaryControllerClass = require('./js/AuxiliaryController.js');
 const Hearthbeat = require('./js/Hearthbeat.js');
 
 // const PCA9685 = require('./js/drivers/PCA9685.js');
@@ -149,7 +149,7 @@ function parseWebsocketMessage(client, data) {
 
       case "setlight":
         var d = data.split(" ");
-        ROVController.setLight(d[0], parseInt(d[1]));
+        // ROVController.setLight(d[0], parseInt(d[1]));
         break;
 
       case "armtoggle":
@@ -165,57 +165,57 @@ function parseWebsocketMessage(client, data) {
         break;
 
       case "depthhold":
-        if (!ROVController.armed) { log.info('Depth hold not activated, ROV not armed'); break; }
-        ROVController.depth.PID.reset();
-        ROVController.depth.wanted = parseInt(ptSensorExt.pressure);
-        if (ROVController.depth.hold) ROVController.depth.hold = false;
-        else ROVController.depth.hold = true;
-        log.log('info', 'Depth hold is: ' + (ROVController.depth.hold ? 'Activated' : 'Deactivated'));
+        // if (!ROVController.armed) { log.info('Depth hold not activated, ROV not armed'); break; }
+        // ROVController.depth.PID.reset();
+        // ROVController.depth.wanted = parseInt(ptSensorExt.pressure);
+        // if (ROVController.depth.hold) ROVController.depth.hold = false;
+        // else ROVController.depth.hold = true;
+        // log.log('info', 'Depth hold is: ' + (ROVController.depth.hold ? 'Activated' : 'Deactivated'));
         break;
 
       case "headinghold":
-        if (!ROVController.armed) {
-          log.log('info', 'Heading hold not activated, ROV not armed');
-          return;
-        }
-        ROVController.heading.PID.reset();
-        ROVController.heading.wanted = ROVController.heading.totalHeading * 10;
-        if (ROVController.heading.hold) ROVController.heading.hold = false;
-        else ROVController.heading.hold = true;
-        log.log('info', 'Heading hold is: ' + (ROVController.heading.hold ? 'Activated' : 'Deactivated'));
+        // if (!ROVController.armed) {
+        //   log.log('info', 'Heading hold not activated, ROV not armed');
+        //   return;
+        // }
+        // ROVController.heading.PID.reset();
+        // ROVController.heading.wanted = ROVController.heading.totalHeading * 10;
+        // if (ROVController.heading.hold) ROVController.heading.hold = false;
+        // else ROVController.heading.hold = true;
+        // log.log('info', 'Heading hold is: ' + (ROVController.heading.hold ? 'Activated' : 'Deactivated'));
         break;
 
       case "setdepth":
-        ROVController.depth.wanted = parseInt(data);
+        // ROVController.depth.wanted = parseInt(data);
         break;
 
       case "setgain":
-        ROVController.gain = parseInt(data);
-        if (ROVController.gain > 400) ROVController.gain = 400;
-        if (ROVController.gain < 50) ROVController.gain = 50;
+        // ROVController.gain = parseInt(data);
+        // if (ROVController.gain > 400) ROVController.gain = 400;
+        // if (ROVController.gain < 50) ROVController.gain = 50;
         break;
 
       case "setflat":
-        accmag.setFlat();
-        config.acc.flat = accmag.acc.flat;
-        utils.writeConfig(config);
+        // accmag.setFlat();
+        // config.acc.flat = accmag.acc.flat;
+        // utils.writeConfig(config);
         log.log('info', 'ROV Flat calibration set');
         break;
 
       case "calibrategyro":
-        gyro.calibrate(100, 10);
+        // gyro.calibrate(100, 10);
         log.log('info', 'ROV Gyro Calibration starting. Do not move ROV');
         break;
 
       case "setcamera":
-        ROVController.setCamera(data);
+        // ROVController.setCamera(data);
         break;
 
       case "gripopen":
-        ROVController.setGripper(1);
+        // ROVController.setGripper(1);
         break;
       case "gripclose":
-        ROVController.setGripper(-1);
+        // ROVController.setGripper(-1);
         break;
 
       case "controls":
