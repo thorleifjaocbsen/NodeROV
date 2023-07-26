@@ -13,7 +13,7 @@ const app = express();
 const https = require('https');
 const log = require('./js/Log.js');
 
-console.log = log.warn;
+console.log = log.info;
 console.error = log.error;
 
 const Configuration = require('./configuration.json');
