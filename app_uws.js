@@ -4,7 +4,7 @@
   const config = { width: 1280, height: 720, fps: 15, port: 8282, ip: "0.0.0.0" }
 
 
-  const uwsApp = require('uWebSockets.js').SSLApp
+  const uwsApp = require('@bdaenen/uwebsockets').SSLApp
   
   /* Non-SSL is simply App() */
   require('uWebSockets.js').SSLApp({
