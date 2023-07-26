@@ -14,8 +14,8 @@ const HttpsServer = require('https').createServer;
 const NALseparator = Buffer.from([0, 0, 0, 1]);//NAL break
 
 /* Start server */
-const cert = fs.readFileSync("assets/server.cert");
-const key = fs.readFileSync("assets/server.key");
+const cert = fs.readFileSync("assets/cert.pem");
+const key = fs.readFileSync("assets/key.pem");
 server = HttpsServer({ cert, key });
 wss = new WebSocketServer({ perMessageDeflate: false, server });
 server.listen(config.port, config.ip);
@@ -89,18 +89,16 @@ function startCameraSoftware() {
   //h264-exec:raspivid -t 0 -pf high -lev 4.2 -g 10 -ih -qp 35 -o -
 
  // https://news.mistserver.org/news/69/Raw+H.264+from+Raspberry+Pi+camera+to+MistServer
-  cameraSoftware = spawn('raspivid', [
-    //'-g', '20', // This setting makes sure there is a keyframe every 10 frames, which tends to make the camera more live, you can lower the number for an even more live stream, but bandwidth costs will be raised.
-    '-ih', // This will insert the headers inline, which MistServer requires in order to ingest the stream correctly.
-    '-t', '0',
-    '-awb', 'auto',
-    '-ex', 'auto',
-    '-mm', 'average',
-    '-o', '-',
-    '-w', config.width,
-    '-h', config.height,
-    '-fps', config.fps,
-    '-vf', '-hf', '-pf', 'baseline']);
+  cameraSoftware = spawn('libcamera-vid', ['-t', '0',
+  '--awb', 'auto',
+  '--exposure', 'normal',
+  '--metering', 'average',
+  '-o', '-',
+  '--width', config.width,
+  '--height', config.height,
+  '--framerate', config.fps,
+  '--inline', '-n',
+  '--profile', 'baseline']);
 
   cameraSoftware.on("error", (error) => {
     if (error.code == "ENOENT") {

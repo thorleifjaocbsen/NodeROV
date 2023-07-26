@@ -25,8 +25,8 @@ module.exports = class AnalogDigitalConverter extends EventEmitter {
         this.sensor.gain = 1
         this.readSensorData()
         super.emit('init')
-      });
-
+      })
+      .catch(err => { super.emit('initError', err) });
 
     this.voltageDividor = (options && options.hasOwnProperty('voltageDividor')) ? options.voltageDividor : 0.176029962546816;
     this.currentMultiplier = (options && options.hasOwnProperty('currentMultiplier')) ? options.currentMultiplier : 35.714285714285715;
@@ -49,9 +49,14 @@ module.exports = class AnalogDigitalConverter extends EventEmitter {
 
   async readSensorData() {
 
-    this.data.a0 = (await this.sensor.measure('0+GND') / MAX_RANGE * PGA); // Current
-    this.data.a1 = (await this.sensor.measure('1+GND') / MAX_RANGE * PGA); // Voltage
-    this.data.a2 = (await this.sensor.measure('2+GND') / MAX_RANGE * PGA); // Leak
+    try {
+      this.data.a0 = (await this.sensor.measure('0+GND') / MAX_RANGE * PGA); // Current
+      this.data.a1 = (await this.sensor.measure('1+GND') / MAX_RANGE * PGA); // Voltage
+      this.data.a2 = (await this.sensor.measure('2+GND') / MAX_RANGE * PGA); // Leak
+    }
+    catch (e) {
+      super.emit("readError", e);
+    }
 
     this.calculateAccumulatedMah();
 

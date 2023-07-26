@@ -8,8 +8,8 @@
 		}
 	},
 	"video": {
-		"width": 1280,
-		"height": 720,
+		"width": 960,
+		"height": 540,
 		"fps": 15,
 		"port": 8282,
 		"ip": "0.0.0.0"

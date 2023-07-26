@@ -3,6 +3,8 @@
 <head>
   <title>Controller Test</title>
   <script type="text/javascript" src="js/jquery.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="https://10.0.0.123:8080/http-live-player.js" charset="utf-8"></script>
+
   <style type="text/css">
     body {
       font-family: Arial, Helvetica, sans-serif;
@@ -204,36 +206,36 @@
         $("#gamepad #RightStick").attr('cy', 238 + gp.axes[3] * 12)
 
         console.log(gp)
-        let controls = {
-          "roll": 0,
-          "pitch": 0,
-          "yaw": gp.axes[2],
-          "ascend": gp.axes[3],
-          "forward": gp.axes[1],
-          "lateral": gp.axes[0],
-          "arm": gp.buttons[9].value,
-          "disarm": gp.buttons[8].value,
-          "toggleArm": 0,
-          "cameraTiltUp": gp.buttons[5].value,
-          "cameraTiltDown": gp.buttons[4].value,
-          "cameraCenter": gp.buttons[10].value,
-          "gainIncrease": gp.buttons[12].value,
-          "gainDecrease": gp.buttons[13].value,
-          "gripperClose": gp.buttons[6].value,
-          "gripperOpen": gp.buttons[7].value,
-          "lightsDimBrighter": gp.buttons[15].value,
-          "lightsDimDarker": gp.buttons[14].value,
-          "depthHoldEnable": 0,
-          "depthHoldDisable": 0,
-          "depthHoldToggle": gp.buttons[2].value,
-          "headingHoldEnable": 0,
-          "headingHoldDisable": 0,
-          "headingHoldToggle": gp.buttons[3].value,
-          "trimRollLeft": 0,
-          "trimRollRight": 0
-        }
+        // let controls = {
+        //   "roll": 0,
+        //   "pitch": 0,
+        //   "yaw": gp.axes[2],
+        //   "ascend": gp.axes[3],
+        //   "forward": gp.axes[1],
+        //   "lateral": gp.axes[0],
+        //   "arm": gp.buttons[9].value,
+        //   "disarm": gp.buttons[8].value,
+        //   "toggleArm": 0,
+        //   "cameraTiltUp": gp.buttons[5].value,
+        //   "cameraTiltDown": gp.buttons[4].value,
+        //   "cameraCenter": gp.buttons[10].value,
+        //   "gainIncrease": gp.buttons[12].value,
+        //   "gainDecrease": gp.buttons[13].value,
+        //   "gripperClose": gp.buttons[6].value,
+        //   "gripperOpen": gp.buttons[7].value,
+        //   "lightsDimBrighter": gp.buttons[15].value,
+        //   "lightsDimDarker": gp.buttons[14].value,
+        //   "depthHoldEnable": 0,
+        //   "depthHoldDisable": 0,
+        //   "depthHoldToggle": gp.buttons[2].value,
+        //   "headingHoldEnable": 0,
+        //   "headingHoldDisable": 0,
+        //   "headingHoldToggle": gp.buttons[3].value,
+        //   "trimRollLeft": 0,
+        //   "trimRollRight": 0
+        // }
 
-        ws.send(`controls ${JSON.stringify(controls)}`)
+        // ws.send(`controls ${JSON.stringify(controls)}`)
 
         controllerLastTimestamp = gp.timestamp
       }
@@ -247,88 +249,23 @@
 
   </script>
   <script>
+            var canvas = document.createElement("canvas");
+            document.body.appendChild(canvas);
 
-    const canvas = document.getElementById("video");
-    const ctx = canvas.getContext('2d');
-
-    // Decoder - Just drawing frames to the canvas
-    const decoder = new VideoDecoder({
-      output: (frame) => {
-        canvas.width = frame.codedWidth;
-        canvas.height = frame.codedHeight;
-        ctx.drawImage(frame, 0, 0);
-        frame.close();
-      },
-      error: (err) => { console.log(err); }
-    });
+    // Create h264 player
+    var uri = "wss://10.0.0.123:8080";
+    var wsavc = new WSAvcPlayer(canvas, "webgl", 1, 35);
+    wsavc.connect(uri);
 
 
-    // Create websocket
-    const vws = new WebSocket(`wss://${location.hostname}:8282`);
-    vws.binaryType = 'arraybuffer';
+    //expose instance for button callbacks
+    window.wsavc = wsavc;
 
-    // On frame data
-    vws.onmessage = async (e) => {
-
-      // Ignore string data - Just information from the camera streamer
-      if (typeof e.data == "string") { console.log(e.data); return; }
-
-      // Real binary data here!
-      try {
-        const frame = new Uint8Array(e.data); // Starts with 4 bytes 0x00 0x00 0x00 0x01
-        const header = frame[4]; // Get 5th byte frame header.
-        const forbiddenZeroBit = header >> 7  // Bit 1
-        const nalRefIdc = ((header & 0b01100000) >> 5) // Bit 2,3
-        const nalUnitType = header & 0b00011111; // Bit 4,5,6,7,8
-        const isKeyFrame = [5, 6, 7, 8, 10, 11].includes(nalUnitType);
-
-        // To Read: https://stackoverflow.com/questions/24884827/possible-locations-for-sequence-picture-parameter-sets-for-h-264-stream/24890903#24890903
-        // Where I've found most of the code to copy: https://github.com/NewChromantics/PopEngineCommon/blob/48baecf3a3b7b14dd419e6d15c5d6c96b62f6c28/PopH264WebApi.js#L174
-        
-        // Should use nal type 7 to figure out what codec to use and 
-        // configure the decoder.
-
-        if (nalUnitType == 7) { 
-          // This code does NOT take in account that the NALU frame can be 001 aswell as 0001.
-          // Example frame:
-          // [0,0,0,1,39,66,128,40,149,160,20,1,110,128,120,145,54]
-          
-          // If unconfigured we now have the codec in the SPS frame. Love it, lets go!
-          if (decoder.state == "unconfigured") {
-
-            // Get byte 6 7 and 8 (starting from 0 it is 5-7 as below)
-            const codec = frame[5].toString(16).padStart(2,'0') +
-                          frame[6].toString(16).padStart(2,'0') +
-                          frame[7].toString(16).padStart(2,'0');
-
-            
-            // Configure the decoder! Ready to decode frames!!            
-            decoder.configure({ "codec": `avc1.${codec}`, "optimizeForLatency": true });
-          }
-        }
-
-        //if (nalUnitType == 8) { pps = frame; } // Picture Parameter Set (PPS)
-        //if (nalUnitType == 5) { sentIDR = true; }
-
-        console.log(`nalUnitType: ${nalUnitType} (${frame.length}bytes) isKeyFrame: ${isKeyFrame} - Decoder state: ${decoder.state}`)
-
-        if (decoder.state == "configured") {
-
-
-          let chunk = new EncodedVideoChunk({
-            type: isKeyFrame ? 'key' : 'delta',
-            data: frame,
-            timestamp: Date.now(),
-            duration: 10
-          })
-
-          decoder.decode(chunk);
-        }
-      } catch (e) {
-        console.log(e)
-      }
-    };
   </script>
+          <button type="button" onclick="wsavc.playStream()">Start Video</button>
+          <button type="button" onclick="wsavc.stopStream()">Stop Video</button>
+          <button type="button" onclick="wsavc.disconnect()">Disconnect</button>
+  
 </body>
 
 </html>
