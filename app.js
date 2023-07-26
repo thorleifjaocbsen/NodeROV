@@ -11,7 +11,7 @@ const express = require('express');
 const app = express();
 const log = require('./js/Log.js');
 
-// const Configuration = require('./configuration.json');
+const Configuration = require('./configuration.json');
 // const RemoteOperatedVehicleClass = require('./js/RemoteOperatedVehicle.js');
 // const ThrusterControllerClass = require('./js/ThrusterController.js');
 // const AuxiliaryControllerClass = require('./js/AuxiliaryController.js');
