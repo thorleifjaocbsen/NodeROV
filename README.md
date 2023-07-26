@@ -10,41 +10,42 @@ I have had 5+ successful trips at the current date (21st April 17) but are still
 
 # Setup Raspberry PI
 
-1. Install raspberry pi
+1. Install Raspberry Pi OS Lite (64 Bit)
 2. Do the following:
-   *. sudo raspi-config
-   *. Expand File System
-   *. Enable Camera
-   *. Advance -> Enable I2C
-   *. sudo  reboot
-3. Enable i2c read-write: *sudo chmod o+rw /dev/i2c*
+   * `sudo apt update && sudo apt upgrade`
+   * `sudo raspi-config`
+   * Advanced Options -> Expand File System
+   * Enable Camera (Might not be needed anymore)
+   * Interface Options -> I2C -> Yes to enable
+   * Finish & Yes to reboot
+3. Enable i2c read-write: 
+   * `sudo chmod o+rw /dev/i2c*`
 4. install NodeJS and NPM with:
-   *. wget https://nodejs.org/dist/v6.9.5/node-v6.9.5-linux-armv7l.tar.xz
-   *. sudo mv node-v6.9.5-linux-armv7l.tar.xz /
-   *. cd /opt
-   *. sudo tar xf node-v6.9.5-linux-armv7l.tar.xz
-   *. sudo mv node-v6.9.5-linux-armv7l nodejs
-   *. sudo rm node-v6.9.5-linux-armv7l.tar.xz
-   *. sudo ln -s /opt/nodejs/bin/node /usr/bin/node
-   *. sudo ln -s /opt/nodejs/bin/npm /usr/bin/npm
+   * `sudo sudo apt-get install -y nodejs npm`
+   * `sudo npm install -g n && sudo n stable && sudo npm install -g npm`
+   * `PATH="$PATH"`
 
 # Extra setup (Recommended)
 
 * Allow node to gain access to ports below 1024 if you want to use port 80 and 82
-   * ```sudo setcap 'cap_net_bind_service=+ep' /opt/nodejs/bin/node```
+   * `sudo setcap 'cap_net_bind_service=+ep' $(which node)`
 * Disable HDMI add the following to ***/etc/rc.local***
-   * ```sudo /opt/vc/bin/tvservice -o```
+   * `sudo /opt/vc/bin/tvservice -o`
 * Enable pi to run the script at boot, add to ***/etc/rc.local***:
-   * ```sudo -H -u pi bash -c 'sh ~/NodeROV/start.sh```
+   * `sudo -H -u $USER bash -c 'sh ~/NodeROV/start.sh`
 
 # Installing NodeROV
 
-1. Login as user ***pi*** on your RaspberryPI
-2. Run command: ```cd ~```
-3. Run command: ```git clone https://github.com/thorleifjaocbsen/NodeROV.git```
-4. Run command: ```cd ~/NodeROV```
-5. Run command: ```npm install```
-6. Reboot your Pi (```sudo reboot```)
+1. Login as your user on your RaspberryPI
+2. Run command: `cd ~`
+3. Run command: `git clone https://github.com/thorleifjaocbsen/NodeROV.git```
+4. Run command: `cd ~/NodeROV`
+5. Run command: `npm install`
+6. Reboot your Pi (`sudo reboot`)
+
+# User Interface
+
+By default it listens to port 8000 so visit `https://noderov-ip-address:8000` to get the GUI. Accept the self-signed certificates and voila.
 
 # DISCLAIMER
 

@@ -48,15 +48,15 @@ const pwm = new PCA9685();
  * PWM Initialization
  *
  ************************/
-// pwm.init()
-//   .then(() => log.info("PWM Initialized"))
-//   .catch((err) => log.warn(err))
-//   .then(() => {
-//     rov.setLight(0);
-//     rov.centerCamera();
-//     rov.disarm(true);
-//   })
-//   .catch((err) => console.log(err))
+pwm.init()
+  .then(() => log.info("PWM Initialized"))
+  .catch((err) => log.warn(err))
+  .then(() => {
+    rov.setLight(0);
+    rov.centerCamera();
+    rov.disarm(true);
+  })
+  .catch((err) => console.log(err))
 
 
 /************************
@@ -151,23 +151,23 @@ adc.on('error', (err) => log.error(`ADS1015 read failed (${err})`));
  * Inertial Measurement Unit (IMU) 10hz update frequency
  *
  ************************/
-// imu.init(true, 10)
-//   .then(() => {
-//     log.info("IMU successfully initialized");
-//     imu.on('read', () => {
-//       log.debug(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
-//       rov.update("roll", imu.getRoll());
-//       rov.update("pitch", imu.getPitch());
-//       rov.update("heading", imu.getHeading());
-//     });
+imu.init(true, 10)
+  .then(() => {
+    log.info("IMU successfully initialized");
+    imu.on('read', () => {
+      log.debug(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
+      rov.update("roll", imu.getRoll());
+      rov.update("pitch", imu.getPitch());
+      rov.update("heading", imu.getHeading());
+    });
 
-//     imu.on('readError', (err) => log.error(`IMU read failed (${err})`));
-//   })
-//   .catch((err) => {
-//     log.error(`IMU initialization failed (${err})`);
-//   })
-//   .then(() => imu.calibrateAccelGyroBias())
-//   .catch((err) => log.error(`IMU calibration failed (${err})`));
+    imu.on('readError', (err) => log.error(`IMU read failed (${err})`));
+  })
+  .catch((err) => {
+    log.error(`IMU initialization failed (${err})`);
+  })
+  .then(() => imu.calibrateAccelGyroBias())
+  .catch((err) => log.error(`IMU calibration failed (${err})`));
 
 /************************
  *
