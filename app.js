@@ -26,6 +26,7 @@ const ExternalPressureSensor = require('./js/classes/ExternalPressureSensor');
 const AnalogDigitalConverter = require('./js/classes/AnalogDigitalConverter');
 const InertialMeasurementUnit = require('./js/classes/InertialMeasurementUnit');
 const SystemController = require('./js/classes/SystemController');
+const Video = require('./js/classes/LibCameraVideo');
 const PCA9685 = require('./js/drivers/PCA9685.js');
 
 
@@ -58,7 +59,6 @@ pwm.init()
   })
   .catch((err) => console.log(err))
 
-
 /************************
  *
  * ROV Event Handlers
@@ -69,7 +69,7 @@ rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('thusterOutputChanged', (output) => {
   output.forEach((output) => {
     log.debug(`Pin: ${output.pin} = ${output.us}us`);
-    pwm.setPWM(output.pin, output.us);
+    pwm.setPWM(output.pin, output.us).catch(e => console.error(`Unable to set PWM: ${e}`));
   })
 
   wss.broadcast(`ts ${JSON.stringify(output)}`);
@@ -93,9 +93,9 @@ rov.on('cameraChange', (newPercentage) => {
 })
 
 rov.on('gripperChange', (newState) => {
-  if (newState == -1) { pwm.setPWM(9, 1400); }
-  else if (newState == 1) { pwm.setPWM(9, 1600); }
-  else { pwm.setPWM(9, 1550); }
+  if (newState == -1) { pwm.setPWM(9, 1400).catch((err) => console.log(err)); }
+  else if (newState == 1) { pwm.setPWM(9, 1600).catch((err) => console.log(err)); }
+  else { pwm.setPWM(9, 1550).catch((err) => console.log(err)); }
 })
 
 /************************
@@ -139,7 +139,7 @@ eps.on('read', () => {
 adc.on('init', () => { log.info("ADC successfully initialized") })
 adc.on('read', () => {
 
-  log.debug(`ADS1015 Read: ${adc.getCurrent().toFixed(3)}a, ${adc.getVoltage().toFixed(2)}v, Leak: ${adc.getLeak()}, ${adc.getAccumulatedMah()}mAh`);
+  log.silly(`ADS1015 Read: ${adc.getCurrent().toFixed(3)}a, ${adc.getVoltage().toFixed(2)}v, Leak: ${adc.getLeak()}, ${adc.getAccumulatedMah()}mAh`);
   rov.update("voltage", adc.getVoltage());
   rov.update("current", adc.getCurrent());
   rov.update("leak", adc.getLeak());
@@ -151,23 +151,18 @@ adc.on('error', (err) => log.error(`ADS1015 read failed (${err})`));
  * Inertial Measurement Unit (IMU) 10hz update frequency
  *
  ************************/
-imu.init(true, 10)
-  .then(() => {
-    log.info("IMU successfully initialized");
-    imu.on('read', () => {
-      log.debug(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
-      rov.update("roll", imu.getRoll());
-      rov.update("pitch", imu.getPitch());
-      rov.update("heading", imu.getHeading());
-    });
-
-    imu.on('readError', (err) => log.error(`IMU read failed (${err})`));
-  })
-  .catch((err) => {
-    log.error(`IMU initialization failed (${err})`);
-  })
-  .then(() => imu.calibrateAccelGyroBias())
-  .catch((err) => log.error(`IMU calibration failed (${err})`));
+imu.init(true, 10).catch((err) => { log.error(`IMU initialization failed (${err})`); })
+imu.on('init', () => { 
+  log.info("IMU successfully initialized");
+  imu.calibrateAccelGyroBias().catch((err) => log.error(`IMU calibration failed (${err})`));
+ })
+imu.on('read', () => {
+  log.debug(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
+  rov.update("roll", imu.getRoll());
+  rov.update("pitch", imu.getPitch());
+  rov.update("heading", imu.getHeading());
+});
+imu.on('readError', (err) => log.error(`IMU read failed (${err})`));
 
 /************************
  *
@@ -250,11 +245,34 @@ wss.on('connection', (client) => {
     client.send(`data ${JSON.stringify({ type, value: rovData[type] })}`)
   }
 
+  /* Send start frames for video initialization */
+  const startFrames = video.getInitFrames();
+  startFrames.forEach((frame) => {
+    client.send(frame);
+  });
 
 });
 
-wss.broadcast = (package) => wss.clients.forEach((client) => { client.send(package); });
+wss.broadcast = package => {
+  const binary = typeof package != "string";
 
+  wss.clients.forEach((client) => {
+     // This can be better, now limiting to a buffer of 100 kilobytes. Two packets are around 30 each.
+    if (client.bufferedAmount > 102400 && binary) {
+      console.log(`Dropping binary packet, TCP socket still sending on client ${client._socket.remoteAddress} ${client.bufferedAmount}`);
+      return;
+    }
+
+    client.send(package, { binary });
+  });
+};
+
+const video = new Video();
+video.on('start', () => { log.info('Video started') });
+video.on('stop', () => { log.info('Video stopped') });
+video.on('error', (err) => { log.error(`Video error: ${err}`) });
+video.on('frame', (frame) => { wss.broadcast(frame) });
+video.start(800,480,10);
 
 /************************
  *
@@ -307,8 +325,8 @@ function parseWebsocketData(data) {
     case 'headingHoldToggle': // OK
     case 'depthHoldToggle': // OK
       try {
-        rov.command(cmd, data[0]);
         log.debug(`WS: Command ${cmd} reveived`);
+        rov.command(cmd, data[0]);
       }
       catch (err) {
         log.warn(`Failed to execute ROV command, error was: ${err}`);

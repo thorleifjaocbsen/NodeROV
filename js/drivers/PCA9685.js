@@ -6,6 +6,7 @@ module.exports = class PCA9685 {
   #frequency = 50;
   #address = 0x40;
   #device = 1;
+  #initialized = false;
 
   constructor(address, device) {
     if (address) this.#address = address;
@@ -54,6 +55,7 @@ module.exports = class PCA9685 {
       .catch((err) => { throw `Could not set mode1 to ALLCALL: ${err}`; })
       // Sleep 1ms so the oscillator can start up
       .then(() => this.sleep(1))
+      .then(() => { this.#initialized = true; })
   }
 
   turnOffPWM() {
@@ -62,6 +64,8 @@ module.exports = class PCA9685 {
 
   // Usage: setPWM(channel, microsecounds);
   setPWM(no, us) {
+    // Check if initialized:
+    if (!this.#initialized) { return Promise.reject(); }
 
     if(no == 9) { us = 1550; }
     if(no > -1 && no < 6) { us = 1550; }
@@ -85,6 +89,9 @@ module.exports = class PCA9685 {
 
   // Usage: setPWM(microsecounds);
   setAllPWM(us) {
+    // Check if initialized:
+    if (!this.#initialized) { return Promise.reject(); }
+
     const steps = this.usToSteps(us);
 
     // Steps are maxmimum between 0 and 4096

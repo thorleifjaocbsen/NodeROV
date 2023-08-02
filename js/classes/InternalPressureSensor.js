@@ -15,10 +15,10 @@ module.exports = class InternalPressureSensor extends EventEmitter {
     this.bme280 = new BME280_SENSOR({ i2cBusNo: 1, i2cAddress: 0x77 })
     this.bme280.init()
     .then(() => {
-      super.emit("init")
+      this.emit("init")
       this.readSensorData()
     })
-    .catch(err => super.emit('initError', err))
+    .catch(err => this.emit('initError', err))
 
     // Default values = 0
     this.temperature = 0
@@ -35,7 +35,7 @@ module.exports = class InternalPressureSensor extends EventEmitter {
 
     this.bme280.readSensorData()
     .then((data) => this.parseData(data))
-    .catch(err => super.emit('readError', err))
+    .catch(err => this.emit('readError', err))
 
     if (this.autoRead) setTimeout(() => { this.readSensorData() }, this.readInterval)
   }
@@ -45,7 +45,7 @@ module.exports = class InternalPressureSensor extends EventEmitter {
 
     // Check if data has changed
     if (this.data != data) {
-      super.emit("change");
+      this.emit("change");
       this.data = data;
     }
 
@@ -54,7 +54,7 @@ module.exports = class InternalPressureSensor extends EventEmitter {
     this.humidity = data.humidity
     this.pressure = data.pressure_hPa
 
-    super.emit('read')
+    this.emit('read')
   }
 
   getHumidity(digits = 0) {

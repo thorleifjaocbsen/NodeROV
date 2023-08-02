@@ -107,7 +107,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     // Check if old value is different from new value
     if (this.#data[type] != value) {
       this.#data[type] = value;
-      super.emit("dataChanged", type, value);
+      this.emit("dataChanged", type, value);
 
       // Update PID controller if depth is changed and depthhold is on.
       if (type == 'depth' && this.#data.depthHold) {
@@ -170,7 +170,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     }
 
     if (changes == true) {
-      super.emit('thusterOutputChanged', this.getOutputUS())
+      this.emit('thusterOutputChanged', this.getOutputUS())
     }
   }
 
@@ -217,7 +217,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
     if (this.#data.armed) return
     this.update("armed", true);
-    super.emit("arm")
+    this.emit("arm")
   }
 
   disarm(force = false) {
@@ -232,7 +232,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     // Set all motors off
     this.calculateThrusterOutput(true)
 
-    super.emit("disarm")
+    this.emit("disarm")
   }
 
   toggleArm() {

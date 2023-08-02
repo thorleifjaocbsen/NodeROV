@@ -1,0 +1,127 @@
+{
+  "a0": {
+    "name": "Lateral",
+    "func": "lateral",
+    "type": "analogue",
+    "invert": false
+  },
+  "a1": {
+    "name": "Forward",
+    "func": "forward",
+    "type": "analogue",
+    "invert": false
+  },
+  "a2": {
+    "name": "Forward",
+    "forward": "a3"
+  },
+  "a3": {
+    "name": "Yaw",
+    "func": "yaw",
+    "type": "analogue",
+    "invert": false
+  },
+  "a4": {
+    "name": "Ascend/Descend",
+    "func": "ascend",
+    "type": "analogue",
+    "invert": true
+  },
+  "b0": {
+    "name": "Camera down",
+    "func": "adjustCamera",
+    "type": "step",
+    "step": -5,
+    "invert": false
+  },
+  "b1": {
+    "name": "Camera up",
+    "forward": "b0",
+    "invert": true
+  },
+  "b2": {
+    "name": "Close gripper",
+    "func": "gripper",
+    "type": "analogue"
+  },
+  "b3": {
+    "name": "Open gripper",
+    "forward": "b2",
+    "invert": true
+  },
+  "k38": {
+    "name": "Ascend",
+    "forward": "a3",
+    "invert": true
+  },
+  "k37": {
+    "name": "Yaw left",
+    "forward": "a2",
+    "invert": true
+  },
+  "k39": {
+    "name": "Yaw right",
+    "forward": "a2",
+    "invert": false
+  },
+  "k40": {
+    "name": "Descend",
+    "forward": "a3",
+    "invert": false
+  },
+  "k65": {
+    "name": "Lateral left",
+    "forward": "a0",
+    "invert": true
+  },
+  "k68": {
+    "name": "Lateral right",
+    "forward": "a0",
+    "invert": false
+  },
+  "k69": {
+    "name": "Open gripper",
+    "forward": "b7"
+  },
+  "k81": {
+    "name": "Close gripper",
+    "forward": "b6"
+  },
+  "k83": {
+    "name": "Backwars",
+    "forward": "a1",
+    "invert": false
+  },
+  "k87": {
+    "name": "Forward",
+    "forward": "a1",
+    "invert": true
+  },
+  "k33": {
+    "name": "Gain increment",
+    "forward": "b12",
+    "invert": false
+  },
+  "k34": {
+    "name": "Gain decrement",
+    "forward": "b13",
+    "invert": false
+  },
+  "k49": {
+    "name": "Camera down",
+    "forward": "b4"
+  },
+  "k50": {
+    "name": "Camera center",
+    "forward": "b10"
+  },
+  "k51": {
+    "name": "Camera up",
+    "forward": "b4",
+    "invert": true
+  },
+  "k32": {
+    "name": "Disarm",
+    "forward": "b8"
+  }
+}

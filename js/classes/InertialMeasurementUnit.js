@@ -42,10 +42,10 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     this.#sensor = new LSM9DS1();
 
     return this.#sensor.init().then(() => {
-      super.emit('init');
+      this.emit('init');
       if (autoRead) this.readSensorData();
     }).catch((err) => {
-      super.emit('initError', err);
+      this.emit('initError', err);
       console.log("error");
       throw err;
     });
@@ -61,10 +61,10 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     ])
     .catch((err) => { 
       if(err == "Calibration in progress") return;
-      super.emit('readError', err); 
+      this.emit('readError', err); 
     })
     .then(() => this.parseData())
-    .catch((err) => { super.emit('readError', err); })
+    .catch((err) => { this.emit('readError', err); })
     .finally(() => {
       if (this.autoRead) {
         setTimeout(() => this.readSensorData(), this.readInterval);
@@ -163,7 +163,7 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     this.theta.filtered = (this.theta.filtered + Yg * dt) * .95 + (this.theta.measured * .05)
     //this.psi.filtered = (this.psi.filtered + -Zg * dt) * .95 + (this.psi.measured * .05)
 
-    super.emit('read')
+    this.emit('read')
   }
 
 

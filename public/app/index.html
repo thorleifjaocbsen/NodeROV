@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>NodeROV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta content='True' name='HandheldFriendly' />
+
+
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/base.css">
+  <script src="dist/bundle.js" charset="utf-8" defer></script>
+  <style>
+    body {
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+
+    #video {
+      width: 800px;
+      height: 480px;
+      background: #000;
+    }
+
+    #data {
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: white;
+      font-size: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <section id="video"></section>
+  <canvas id="dataGraphicsCanvas">DataGraphics</canvas>
+</body>
+
+</html>

@@ -19,10 +19,10 @@ module.exports = class ExternalPressureSensor extends EventEmitter {
     this.#sensor = new MS5837(1, 0x76);
     this.#sensor.init()
       .then(() => {
-        super.emit("init");
+        this.emit("init");
         this.read();
       })
-      .catch(err => super.emit('initError', err));
+      .catch(err => this.emit('initError', err));
 
     // Auto Read Sensor 
     this.autoRead = autoRead == true;
@@ -43,13 +43,13 @@ module.exports = class ExternalPressureSensor extends EventEmitter {
 
     this.#sensor.readSensor()
       .then(() => {
-        super.emit('read');
+        this.emit('read');
 
         if (this.autoRead) {
           setTimeout(() => this.read(), this.readInterval);
         }
       })
-      .catch(err => super.emit('readError', err));
+      .catch(err => this.emit('readError', err));
   }
 
   temperature(conversion = "c") {

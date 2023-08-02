@@ -1,0 +1,27 @@
+{
+  "name": "v2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "browserify app.js -o bundle.js",
+    "watch": "watchify-server app.js -h 0.0.0.0 -p 8080 -d ./ -o bundle.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "sourceType": "module",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "events": "^3.3.0",
+    "jquery": "^3.7.0"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.29.3",
+    "browserify": "^17.0.0",
+    "gulp": "^4.0.2",
+    "gulp-util": "^3.0.8",
+    "vinyl-source-stream": "^2.0.0",
+    "watchify": "^4.0.0",
+    "watchify-server": "^1.0.2"
+  }
+}

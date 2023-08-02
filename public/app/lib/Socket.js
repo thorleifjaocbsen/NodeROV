@@ -1,30 +1,31 @@
 /*
- * HudBlock Drawer
+ * My custom socket class.
  * Author: Thorleif Jacobsen
  * Credits: Myself, my family and my girlfriend and child.
  */
 
+const EventEmitter = require('./EventEmitter.js');
 
-export default class Socket {
+module.exports = class Socket extends EventEmitter {
 
   constructor() {
+    super();
+
     this.ws = null;
     this.callbacks = {};
     this.reconnectTime = 5;
-    this.ip = null;
-    this.port = null;
+    this.url = null;
   };
 
   log(data) {
-    if(!this.emit("log", data)) {
+    if (!this.emit("log", data)) {
       console.log(data);
     }
   };
 
-  connect(ip, port) {
-    this.ip = ip;
-    this.port = port;
-    this.ws = new WebSocket('wss://' + ip + ':' + port)
+  connect(url) {
+    this.url = url;
+    this.ws = new WebSocket(url)
     this.ws.onopen = (e) => this.onopen(e);
     this.ws.onclose = (e) => this.onclose(e);
     this.ws.onerror = (e) => this.onerror(e);
@@ -33,25 +34,25 @@ export default class Socket {
   };
 
   reconnect() {
-    this.log('Reconnecting to ' + this.ip + ':' + this.port)
-    this.connect(this.ip, this.port);
+    this.log(`Reconnecting to ${this.url}`);
+    this.connect(this.url);
   };
 
   onerror(e) {
-    this.log("Error on socket: " + e);
+    this.log(`Error on socket: ${e}`);
   };
 
   onopen(e) {
-    this.log('Connected to ' + this.ip + ':' + this.port)
+    this.log(`Connected to to ${this.url}`);
   };
 
   onclose(e) {
     if (this.reconnectTime > 0) {
       setTimeout(() => this.reconnect(), this.reconnectTime * 1000);
-      this.log('Lost connection with socket on ' + this.ip + ':' + this.port + ', reconnecting in ' + this.reconnectTime + ' seconds.');
+      this.log(`Lost connection with socket on ${this.url}, reconnecting in ${this.reconnectTime} seconds.`);
     }
     else {
-      this.log('Lost connection with socket on ' + this.ip + ':' + this.port);
+      this.log(`Lost connection with socket on ${this.url}`);
     }
   };
 
@@ -62,7 +63,9 @@ export default class Socket {
       if (!this.emit(event, data)) {
         this.log('Unknown data: ' + e.data);
       }
-
+    }
+    else {
+      this.emit('binary', e.data);
     }
   };
 
@@ -70,16 +73,4 @@ export default class Socket {
     try { this.ws.send(data); }
     catch (e) { }
   };
-
-  on(event, callback) {
-    this.callbacks[event] = callback;
-  };
-
-  emit(event, data) {
-    if (typeof this.callbacks[event] == 'function') {
-      this.callbacks[event](data);
-      return true;
-    }
-    return false;
-  }
 }

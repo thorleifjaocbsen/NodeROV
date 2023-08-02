@@ -3,17 +3,17 @@
 const winston  = require('winston');
 
 const log = new winston.Logger({
-  level: 'info', 
+  level: 'debug', 
   transports: [
     new winston.transports.Console({
       timestamp: (new Date()).toLocaleTimeString(),
       colorize: true,
-      level : 'info'
+      level : 'debug'
     }),
 
     new winston.transports.File({ 
       filename: 'logs/'+new Date().toISOString().split('T')[0]+'.log',
-      level: 'info'  
+      level: 'silly'  
     })
   ]
 });

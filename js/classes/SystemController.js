@@ -37,12 +37,12 @@ module.exports = class Systemcontroller extends EventEmitter {
       .then(() => this.getCPULoad())
       .then(load => { this.cpuLoad = Math.round(load); })
       .then(() => this.emit('read'))
-      .then(() => {
+      .catch(err => this.emit("readFailed", err))
+      .finally(() => {
         if (this.autoRead) {
           setTimeout(() => this.read(), this.readInterval);
         }
       })
-      .catch(err => this.emit("readFailed", err))
   }
 
 
