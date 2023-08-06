@@ -6,6 +6,7 @@
 
 const EventEmitter = require('events');
 const PIDController = require('./PIDController');
+const { log } = require('console');
 
 module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
@@ -183,7 +184,13 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       const pin = motor.pwmPin;
       const motorOutput = motor.output;
 
-      let us = this.map(motorOutput, -100, 100, this.minUS, this.maxUS);
+      let us = this.idleUS;
+      if (motorOutput > 0) {
+        us = this.map(motorOutput, 0, 100, this.idleUS, this.maxUS);
+      } else {
+        us = this.map(motorOutput, -100, 0, this.minUS, this.idleUS);
+      }
+      if (id == "vertical_left") console.log(`pin: ${us}, motorOutput = ${motorOutput}, minUs: ${this.minUS} ${this.maxUS}`)
       if (motorOutput == 0 || !motorOutput) us = this.idleUS;
 
       us = Math.round(us)

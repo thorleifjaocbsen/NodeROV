@@ -27,6 +27,7 @@ module.exports = class LibCameraVideo extends EventEmitter {
         args.push('--awb', 'auto');
         args.push('--exposure', 'normal');
         args.push('--metering', 'average');
+        args.push('--rotation', '180');
         args.push('-o', '-');
         args.push('--width', width);
         args.push('--height', height);

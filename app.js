@@ -27,7 +27,7 @@ const AnalogDigitalConverter = require('./js/classes/AnalogDigitalConverter');
 const InertialMeasurementUnit = require('./js/classes/InertialMeasurementUnit');
 const SystemController = require('./js/classes/SystemController');
 const Video = require('./js/classes/LibCameraVideo');
-const PCA9685 = require('./js/drivers/PCA9685.js');
+const PWM = require('./js/classes/PWM.js');
 
 
 /************************
@@ -42,7 +42,7 @@ const eps = new ExternalPressureSensor(true, 100);
 const imu = new InertialMeasurementUnit();
 const adc = new AnalogDigitalConverter(Configuration.calibration.adc);
 const sc = new SystemController();
-const pwm = new PCA9685();
+const pwm = new PWM();
 
 /************************
  *
@@ -57,7 +57,7 @@ pwm.init()
     rov.centerCamera();
     rov.disarm(true);
   })
-  .catch((err) => console.log(err))
+  .catch((err) => console.error(err))
 
 /************************
  *
@@ -68,28 +68,31 @@ rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('thusterOutputChanged', (output) => {
   output.forEach((output) => {
-    log.debug(`Pin: ${output.pin} = ${output.us}us`);
+    if(output.pin == 4) log.debug(`Pin: ${output.pin} = ${output.us}us`);
     pwm.setPWM(output.pin, output.us).catch(e => console.error(`Unable to set PWM: ${e}`));
   })
 
   wss.broadcast(`ts ${JSON.stringify(output)}`);
 
 });
+let lastROVDataSent = 0;
 rov.on('dataChanged', (type, value) => {
+  lastROVDataSent = Date.now();
+
   wss.broadcast(`data ${JSON.stringify({ type, value })}`)
-  log.debug(`Data variable ${type} changed to ${value}`);
+  log.silly(`Data variable ${type} changed to ${value}`);
 });
 
 rov.on('lightChange', (newPercentage) => {
   let us = 1100; // Off!
   if (newPercentage > 0) { us = rov.map(newPercentage, 0, 100, 1300, 1900); }
-  pwm.setPWM(6, us).catch((err) => console.log(err));
   pwm.setPWM(7, us).catch((err) => console.log(err));
+  pwm.setPWM(8, us).catch((err) => console.log(err));
 })
 
 rov.on('cameraChange', (newPercentage) => {
   let us = rov.map(newPercentage, 0, 100, 1100, 1950);
-  pwm.setPWM(8, us).catch((err) => console.log(err));
+  pwm.setPWM(6, us).catch((err) => console.log(err));
 })
 
 rov.on('gripperChange', (newState) => {
@@ -108,7 +111,7 @@ ips.on('readError', (err) => log.error(`Internal Pressure Sensor read failed (${
 ips.on('init', () => log.info("Internal Pressure Sensor successfully initialized"))
 ips.on('change', () => {
 
-  log.debug(`IPS Change: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
+  log.silly(`IPS Change: ${ips.temperature}c, ${ips.humidity.toFixed(0)}%, ${ips.pressure.toFixed(3)}hPa`)
   rov.update("iPressure", ips.getPressure());
   rov.update("iTemperature", ips.getTemperature());
   rov.update("iHumidity", ips.getHumidity());
@@ -124,7 +127,7 @@ eps.on('readError', (err) => log.error(`External Pressure Sensor read failed (${
 eps.on('init', () => log.info('External Pressure Sensor Initialized'));
 eps.on('read', () => {
 
-  log.debug(`EPS Read: ${eps.temperature()}c, ${eps.pressure()}psi, ${eps.depth()}m depth`);
+  log.silly(`EPS Read: ${eps.temperature()}c, ${eps.pressure()}psi, ${eps.depth()}m depth`);
   rov.update("ePressure", eps.pressure());
   rov.update("eTemperature", eps.temperature());
   rov.update("depth", eps.depth());
@@ -157,10 +160,10 @@ imu.on('init', () => {
   imu.calibrateAccelGyroBias().catch((err) => log.error(`IMU calibration failed (${err})`));
  })
 imu.on('read', () => {
-  log.debug(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading()}deg`);
-  rov.update("roll", imu.getRoll());
-  rov.update("pitch", imu.getPitch());
-  rov.update("heading", imu.getHeading());
+  log.silly(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading(1)}deg`);
+  rov.update("roll", imu.getRoll(1));
+  rov.update("pitch", imu.getPitch(1));
+  rov.update("heading", imu.getHeading(0));
 });
 imu.on('readError', (err) => log.error(`IMU read failed (${err})`));
 
@@ -171,7 +174,7 @@ imu.on('readError', (err) => log.error(`IMU read failed (${err})`));
  ************************/
 sc.on('read', () => {
 
-  log.debug(`System Controller: temp=${sc.cpuTemperature}c, load=${sc.cpuLoad}%, memory=${sc.memory}%, disk=${sc.disk}%`);
+  log.silly(`System Controller: temp=${sc.cpuTemperature}c, load=${sc.cpuLoad}%, memory=${sc.memory}%, disk=${sc.disk}%`);
   rov.update("cpuTemperature", sc.cpuTemperature);
   rov.update("cpuLoad", sc.cpuLoad);
   rov.update("memoryUsed", sc.memory);
@@ -198,7 +201,7 @@ log.log('info', 'Starting webserver')
 const key = fs.readFileSync('assets/key.pem');
 const cert = fs.readFileSync('assets/cert.pem');
 
-app.use('/', express.static(__dirname + '/public'));
+app.use('/', express.static(__dirname + '/public/app'));
 app.use('/controls.json', express.static(__dirname + '/controls.json'));
 const webServer = https.createServer({ key, cert }, app).listen(Configuration.port, Configuration.ip, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
 
@@ -287,6 +290,7 @@ function parseWebsocketData(data) {
   const cmd = data.shift(1)
   const client = this;
 
+
   switch (cmd) {
 
     case "clog":
@@ -319,13 +323,13 @@ function parseWebsocketData(data) {
     case 'yaw': // OK
     case 'ascend': // OK
     case 'adjustLight': // OK
+    case 'setLight': // OK
     case 'adjustGain': // OK
     case 'adjustCamera': // OK 
     case 'centerCamera': // OK
     case 'headingHoldToggle': // OK
     case 'depthHoldToggle': // OK
       try {
-        log.debug(`WS: Command ${cmd} reveived`);
         rov.command(cmd, data[0]);
       }
       catch (err) {

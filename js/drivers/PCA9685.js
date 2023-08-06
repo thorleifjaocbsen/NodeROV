@@ -37,6 +37,12 @@ module.exports = class PCA9685 {
     return i2cbus.openPromisified(this.#device)
       .then((i2c) => { this.#sensor = i2c; })
       .catch((err) => { throw `Could not open i2c bus: ${err}`; })
+      // Restart pwm chip
+      .then(() => this.send(0x00, 0x01)) // MODE1 -> SLEEP
+      .catch((err) => { throw `Could not set mode1 to SLEEP: ${err}`; })
+      .then(() => this.send(0x0, 0x01)) // MODE1 -> SLEEP
+      .catch((err) => { throw `Could not set mode1 to SLEEP: ${err}`; })
+
       // Set all PWM to 0
       .then(() => this.setAllPWM(0))
       .catch((err) => { throw `Could not set all pwm signals to 0: ${err}`; })
@@ -65,6 +71,7 @@ module.exports = class PCA9685 {
   // Usage: setPWM(channel, microsecounds);
   setPWM(no, us) {
     // Check if initialized:
+    return false
     if (!this.#initialized) { return Promise.reject(); }
 
     if(no == 9) { us = 1550; }
@@ -87,7 +94,7 @@ module.exports = class PCA9685 {
     ]);
   }
 
-  // Usage: setPWM(microsecounds);
+  // Usage: setAllPWM(microsecounds);
   setAllPWM(us) {
     // Check if initialized:
     if (!this.#initialized) { return Promise.reject(); }

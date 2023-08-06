@@ -21,63 +21,43 @@
 		"motors": [
 			{
 				"id": "front_left",
-				"pwmPin": 0,
-				"roll": 0,
-				"pitch": 0,
-				"yaw": -1.0,
-				"ascend": 0,
-				"forward": 1.0,
-				"lateral": -1.0,
-				"gui": {
-					"offsetX": 0,
-					"offsetY": 0,
-					"rotation": 45
-				}
-			},
-			{
-				"id": "front_right",
-				"pwmPin": 1,
-				"roll": 0,
-				"pitch": 0,
-				"yaw": 1.0,
-				"ascend": 0,
-				"forward": 1.0,
-				"lateral": 1.0,
-				"gui": {
-					"offsetX": 100,
-					"offsetY": 0,
-					"rotation": 315
-				}
-			},
-			{
-				"id": "back_left",
-				"pwmPin": 2,
-				"roll": 0,
-				"pitch": 0,
-				"yaw": -1.0,
-				"ascend": 0,
-				"forward": 1.0,
-				"lateral": 1.0,
-				"gui": {
-					"offsetX": 0,
-					"offsetY": 200,
-					"rotation": 135
-				}
-			},
-			{
-				"id": "back_right",
 				"pwmPin": 3,
 				"roll": 0,
 				"pitch": 0,
+				"yaw": -1.0,
+				"ascend": 0,
+				"forward": 1.0,
+				"lateral": -1.0
+			},
+			{
+				"id": "front_right",
+				"pwmPin": 0,
+				"roll": 0,
+				"pitch": 0,
 				"yaw": 1.0,
 				"ascend": 0,
 				"forward": 1.0,
-				"lateral": -1.0,
-				"gui": {
-					"offsetX": 100,
-					"offsetY": 200,
-					"rotation": 225
-				}
+				"lateral": 1.0
+			},
+			{
+				"id": "back_left",
+				"pwmPin": 5,
+				"roll": 0,
+				"pitch": 0,
+				"yaw": -1.0,
+				"ascend": 0,
+				"forward": 1.0,
+				"lateral": 1.0
+			},
+			{
+				"id": "back_right",
+				"pwmPin": 2,
+				"roll": 0,
+				"pitch": 0,
+				"yaw": 1.0,
+				"ascend": 0,
+				"forward": 1.0,
+				"lateral": -1.0
 			},
 			{
 				"id": "vertical_left",
@@ -85,29 +65,19 @@
 				"roll": 0,
 				"pitch": 0,
 				"yaw": 0,
-				"ascend": -1.0,
+				"ascend": 1.0,
 				"forward": 0,
-				"lateral": 0,
-				"gui": {
-					"offsetX": 20,
-					"offsetY": 100,
-					"rotation": 0
-				}
+				"lateral": 0
 			},
 			{
 				"id": "vertical_right",
-				"pwmPin": 5,
+				"pwmPin": 1,
 				"roll": 0,
 				"pitch": 0,
 				"yaw": 0,
-				"ascend": 1.0,
+				"ascend": -1.0,
 				"forward": 0,
-				"lateral": 0,
-				"gui": {
-					"offsetX": 80,
-					"offsetY": 100,
-					"rotation": 0
-				}
+				"lateral": 0
 			}
 		],
 		"headingHoldPID": { "p":3, "i": 0.0002, "d": 0 },
@@ -129,7 +99,7 @@
 				"name": "Right Light",
 				"type": "hold",
 				"pin": 8,
-				"minUS": 1200,
+				"minUS": 1100,
 				"idleUS": 1000,
 				"maxUS": 1900
 			},
@@ -146,7 +116,7 @@
 				"id": "camera",
 				"name": "Camera",
 				"type": "hold",
-				"pin": 10,
+				"pin": 6,
 				"minUS": 1000,
 				"idleUS": 1500,
 				"maxUS": 2000

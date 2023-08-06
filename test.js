@@ -1,29 +1,49 @@
-const LSM9DS1 = require('./js/drivers/LSM9DS1_OTHER')
+var i2cBus = require("i2c-bus");
+var Pca9685Driver = require("pca9685").Pca9685Driver;
 
-var bus = 1;
-var bufferSize = 32;
+var options = {
+    i2c: i2cBus.openSync(1),
+    address: 0x40,
+    frequency: 50,
+    debug: true
+};
 
-var g_xl_address = 0x6B;
-var m_address    = 0x1E;
+function pulse(channel) {
+    return new Promise((resolve, reject) => {
+        pwm.setPulseLength(channel, 1600);
+        setTimeout(() => {
+            pwm.setPulseLength(channel, 1550);
+            resolve();
+        }, 200);
+    });
+}
 
-var sensor = new LSM9DS1(g_xl_address, m_address);
+pwm = new Pca9685Driver(options, function(err) {
+    if (err) {
+        console.error("Error initializing PCA9685");
+        process.exit(-1);
+    }
+    console.log("Initialization done");
 
-sensor.setBufferSize(bufferSize)
-sensor.init(bus)
-.then((message) => {
-  console.log(message)
-  sensor.useFIFO()
-  .then((message) => {
-    console.log(message)
-    sensor.readAll()
-    .then((result) => {
-      console.log(`Gyro (X: ${result.gyro.x} Y: ${result.gyro.y} Z:${result.gyro.z})`)
-      console.log(`Accel(X: ${result.accel.x} Y: ${result.accel.y} Z:${result.accel.z})`)
-      console.log(`Mag  (X: ${result.mag.x} Y: ${result.mag.x} Z:${result.mag.x} HEADING:${180 * Math.atan2(result.mag.y, result.mag.x) / Math.PI})\n`)
-      sensor.close()
-      .then((message) => {
-        console.log(message)
-      })
-    })
-  })
-})
+
+    // IDENTIFY MOTORS :P 
+    setTimeout(async () => {
+        for (let i = 0; i < 6; i++) {
+            setTimeout(async () => { await pulse(i); }, i * 2000);
+        }
+    }, 2000);
+
+    // runDelay(2000, () => { pwm.setPulseLength(7, 1500) });
+    // runDelay(3000, () => { pwm.setPulseLength(7, 1000) });
+    // pwm.setPulseLength(8, 1000)
+});
+
+
+function runDelay(time, funciton) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            funciton();
+            resolve();
+        }, time);
+    });
+}

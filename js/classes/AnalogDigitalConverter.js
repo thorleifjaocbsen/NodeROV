@@ -40,7 +40,7 @@ module.exports = class AnalogDigitalConverter extends EventEmitter {
 
     // Auto Read Sensor 
     this.autoRead = true;
-    this.readInterval = 250;
+    this.readInterval = 10;
     this.lastRead = null;
     this.lastMAH = null;
     this.accumulatedCurrent = 0;
