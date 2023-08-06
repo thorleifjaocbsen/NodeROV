@@ -25,6 +25,7 @@ gulp.task('watch', function () {
     watcher.on('log', gutil.log);
 
     browserSync.init({
+        open: false,
         server: './app',
         logFileChanges: false,
         https: {

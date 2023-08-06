@@ -18,7 +18,6 @@ window.c = controls;
 controls.onPress("adjustGain", (step) => { socket.send(`adjustGain ${step}`); });
 controls.onPress("adjustCamera", (step) => { socket.send(`adjustCamera ${step}`); }, 250);
 controls.onPress("centerCamera", () => { socket.send(`centerCamera`); }, 250);
-
 controls.onPress("adjustLight", (step) => { socket.send(`adjustLight ${step}`); }, 250);
 controls.onPress("fullScreen", () => { gui.pressButton("gui-controls-button-8"); }, 1000)
 controls.onPress("arm", () => { socket.send("arm"); });
@@ -58,6 +57,58 @@ gui.showChip("voltage", "12.3", { title: "Voltage", unit: "V", sub: true, x: 10,
 gui.showChip("current", "13.2", { title: "Current", unit: "A", sub: true, x: 10, y: 380 });
 gui.showChip("accumulatedMah", "3212", { title: "MAH", unit: "mA", sub: true, x: 10, y: 430 });
 
+// x = 100 if two rows. x = 400 if 1 row.
+gui.button("armtoggle", { title: "Arm", x: 300, y: 50, color: "#0000ff80" });
+gui.button("level", { title: "Calibrate flat", x: 300, y: 110, color: "#0000ff80" });
+gui.button("headinghold", { title: "Heading Hold", x: 300, y: 170, color: "#0000ff80" });
+gui.button("depthhold", { title: "Depth Hold", x: 300, y: 230, color: "#0000ff80" });
+gui.button("light+", { title: "Light +", x: 300, y: 290, color: "#0000ff80" });
+gui.button("light-", { title: "Light -", x: 300, y: 350, color: "#0000ff80" });
+gui.button("lightoff", { title: "Light: 0%", x: 300, y: 410, color: "#0000ff80" });
+
+// gui.button("b1", { title: "Arm", x: 500, y: 50, color: "#0000ff80" });
+// gui.button("buatton2", { title: "Arm", x: 500, y: 110, color: "#0000ff80" });
+// gui.button("butaton3", { title: "Arm", x: 500, y: 170, color: "#0000ff80" });
+// gui.button("buttaon4", { title: "Arm", x: 500, y: 230, color: "#0000ff80" });
+// gui.button("buttoan5", { title: "Arm", x: 500, y: 290, color: "#0000ff80" });
+// gui.button("buttonaa6", { title: "Arm", x: 500, y: 350, color: "#0000ff80" });
+// gui.button("buttona7", { title: "Arm", x: 500, y: 410, color: "#0000ff80" });
+
+gui.hideAllButtons();
+$('#video').on('click', () => {
+    if (gui.ifButtonVisible()) gui.hideAllButtons();
+    else gui.showButtons();
+})
+
+
+gui.on("click", (button) => {
+    switch (button.name) {
+        case "armtoggle":
+            socket.send("toggleArm");
+            break;
+        case "headinghold":
+            socket.send("headingHoldToggle");
+            break;
+        case "depthhold":
+            socket.send("depthHoldToggle");
+            break;
+        case "level":
+            socket.send("calibrateAccelGyroBias");
+            break;
+        case "light+":
+            socket.send("adjustLight +10");
+            break;
+        case "light-":
+            socket.send("adjustLight -10");
+            break;
+        case "lightoff":
+            socket.send("setLight 0");
+            break;
+        default:
+            break;
+    }
+});
+
 gui.canvas = $("#dataGraphicsCanvas")[0];
 
 socket.on("binary", (data) => {
@@ -65,13 +116,13 @@ socket.on("binary", (data) => {
 });
 
 socket.on("data", (data) => {
-    let type, value; 
+    let type, value;
     try {
         data = JSON.parse(data);
         type = data.type;
         value = data.value;
     }
-    catch(err) {
+    catch (err) {
         console.log(`Unable to parse ${data}`)
     }
     switch (type) {
@@ -94,7 +145,7 @@ socket.on("data", (data) => {
             break;
 
         case "roll":
-            // if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, value, undefined);
+            $("#ah").css("transform", `translate(-50%, -50%) rotate(${value}deg)`);
             break;
 
         case "pitch":
@@ -103,7 +154,7 @@ socket.on("data", (data) => {
 
         case "heading":
             gui.drawCompass(value);
-            gui.showChip("heading", value);        
+            gui.showChip("heading", value);
             break;
 
         case 'memoryUsed':
@@ -117,25 +168,28 @@ socket.on("data", (data) => {
         case 'gain':
             // gui.setInfo(9, value);
             break;
-        
+
         case 'camera':
             // gui.setInfo(10, value);
             break;
-        
+
         case 'light':
-            // gui.setInfo(11, value);
+            gui.button("lightoff", { title: `Light: ${value}%`, color: value == 0 ? "#0000ff80" : "#00ff0080"});
             break;
 
         case 'headingHold':
-            console.log(value, typeof value);
-            // gui.buttonState("gui-controls-button-4", !isNaN(value));
+            if (value) gui.button("headinghold", { title: "Heading Hold", color: "#00ff0080" });
+            else gui.button("headinghold", { title: "Heading Hold", color: "#0000ff80" });
             break;
 
         case 'depthHold':
-            // gui.buttonState("gui-controls-button-6", !isNaN(value));
+            if (value) gui.button("depthhold", { title: "Depth Hold", color: "#00ff0080" });
+            else gui.button("depthhold", { title: "Depth Hold", color: "#0000ff80" });
             break;
 
         case 'armed':
+            if (value) gui.button("armtoggle", { title: "Disarm", color: "#00ff0080" });
+            else gui.button("armtoggle", { title: "Arm", color: "#0000ff80" });
             // gui.buttonState("gui-controls-button-2", value);
             break;
 
@@ -161,5 +215,5 @@ socket.on("ts", (data) => {
             dashboard.setThruster(thruster.pin, thruster.percentage);
         });
 
-    } catch (e) { } 
+    } catch (e) { }
 });

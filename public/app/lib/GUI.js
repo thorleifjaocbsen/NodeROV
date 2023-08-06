@@ -50,6 +50,59 @@ module.exports = class GUI extends EventEmitter {
         chip.options = options;
     }
 
+    showButtons() {
+        // Show all buttons:
+        const buttons = document.getElementsByTagName("button");
+        for (let i = 0; i < buttons.length; i++) {
+            buttons[i].style.display = "block";
+        }
+    }
+
+    ifButtonVisible() {
+        // Show all buttons:
+        const buttons = document.getElementsByTagName("button");
+        for (let i = 0; i < buttons.length; i++) {
+            if(buttons[i].style.display == "block") return true;
+        }
+        return false;
+    }
+
+    hideAllButtons() {
+        // Hide all buttons:
+        const buttons = document.getElementsByTagName("button");
+        for (let i = 0; i < buttons.length; i++) {
+            buttons[i].style.display = "none";
+        }
+    }
+
+    button(id, options = {}) {
+
+        // if chip does not exist, create it
+        let button = document.getElementById(`button_${id}`);
+        if (!button) {
+            button = document.createElement("button");
+            button.id = `button_${id}`;
+            button.name = id;
+            document.body.appendChild(button);
+            button.onclick = () => this.emit("click", button);
+        }
+
+        // Merge existing options if exists
+        if (button.options) options = { ...button.options, ...options };
+
+        // set options
+        if (options.color) button.style.backgroundColor = options.color;
+        if (options.x) button.style.left = `${options.x}px`;
+        if (options.y) button.style.top = `${options.y}px`;
+        if (options.title) button.innerHTML = options.title;
+        
+
+
+ 
+        // Save options
+        button.options = options;
+    }
+
 
     drawCompass(heading) {
         const width = this.canvas.width;

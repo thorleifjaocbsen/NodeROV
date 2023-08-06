@@ -49,9 +49,13 @@
     "forward": "b2",
     "invert": true
   },
+  "b4": {
+    "name": "Center Camera",
+    "func": "centerCamera"
+  },
   "k38": {
     "name": "Ascend",
-    "forward": "a3",
+    "forward": "a4",
     "invert": true
   },
   "k37": {
@@ -66,7 +70,7 @@
   },
   "k40": {
     "name": "Descend",
-    "forward": "a3",
+    "forward": "a4",
     "invert": false
   },
   "k65": {
@@ -81,11 +85,12 @@
   },
   "k69": {
     "name": "Open gripper",
-    "forward": "b7"
+    "forward": "b3"
   },
   "k81": {
     "name": "Close gripper",
-    "forward": "b6"
+    "forward": "b3",
+    "invert": true
   },
   "k83": {
     "name": "Backwars",
@@ -109,15 +114,15 @@
   },
   "k49": {
     "name": "Camera down",
-    "forward": "b4"
+    "forward": "b0"
   },
   "k50": {
     "name": "Camera center",
-    "forward": "b10"
+    "func": "centerCamera"
   },
   "k51": {
     "name": "Camera up",
-    "forward": "b4",
+    "forward": "b0",
     "invert": true
   },
   "k32": {
