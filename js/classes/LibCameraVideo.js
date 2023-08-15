@@ -80,7 +80,7 @@ module.exports = class LibCameraVideo extends EventEmitter {
     
                 if (this.#recordState == RecordState.WAITINGIDR) {
                     // Send SPS and PPS IDR frames
-                    startFrames.forEach((frame) => { this.#recordWriteStream.write(frame); });
+                    this.#startFrames.forEach((frame) => { this.#recordWriteStream.write(frame); });
                     this.setRecordState(RecordState.RECORDING);
 
                 }
@@ -124,5 +124,10 @@ module.exports = class LibCameraVideo extends EventEmitter {
     setRecordState(state) {
         this.#recordState = state;
         this.emit("recordStateChange", state);
+    }
+
+    isRecording() {
+        this.setRecordState(this.#recordState);
+        return this.#recordState == RecordState.RECORDING;
     }
 }

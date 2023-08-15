@@ -2259,6 +2259,8 @@ gui.showChip("eTemperature", "0", { title: "Water", unit: "°", sup: true, x: 73
 
 gui.showChip("turns", "3.2", { title: "Turns", x: 10, y: 10 });
 gui.showChip("heading", "360", { title: "Heading", x: 10, y: 60 });
+gui.showChip("roll", "360", { title: "Roll", x: 80, y: 10 });
+gui.showChip("pitch", "360", { title: "Pitch", x: 10, y: 120 });
 
 
 gui.showChip("voltage", "12.3", { title: "Voltage", unit: "V", sub: true, x: 10, y: 330 });
@@ -2266,21 +2268,21 @@ gui.showChip("current", "13.2", { title: "Current", unit: "A", sub: true, x: 10,
 gui.showChip("accumulatedMah", "3212", { title: "MAH", unit: "mA", sub: true, x: 10, y: 430 });
 
 // x = 100 if two rows. x = 400 if 1 row.
-gui.button("armtoggle", { title: "Arm", x: 300, y: 50, color: "#0000ff80" });
-gui.button("level", { title: "Calibrate flat", x: 300, y: 110, color: "#0000ff80" });
-gui.button("headinghold", { title: "Heading Hold", x: 300, y: 170, color: "#0000ff80" });
-gui.button("depthhold", { title: "Depth Hold", x: 300, y: 230, color: "#0000ff80" });
-gui.button("light+", { title: "Light +", x: 300, y: 290, color: "#0000ff80" });
-gui.button("light-", { title: "Light -", x: 300, y: 350, color: "#0000ff80" });
-gui.button("lightoff", { title: "Light: 0%", x: 300, y: 410, color: "#0000ff80" });
+gui.button("armtoggle", { title: "Arm", x: 100, y: 50, color: "#0000ff80" });
+gui.button("level", { title: "Calibrate flat", x: 100, y: 110, color: "#0000ff80" });
+gui.button("headinghold", { title: "Heading Hold", x: 100, y: 170, color: "#0000ff80" });
+gui.button("depthhold", { title: "Depth Hold", x: 100, y: 230, color: "#0000ff80" });
+gui.button("light+", { title: "Light +", x: 100, y: 290, color: "#0000ff80" });
+gui.button("light-", { title: "Light -", x: 100, y: 350, color: "#0000ff80" });
+gui.button("lightoff", { title: "Light: 0%", x: 100, y: 410, color: "#0000ff80" });
 
 // gui.button("b1", { title: "Arm", x: 500, y: 50, color: "#0000ff80" });
 // gui.button("buatton2", { title: "Arm", x: 500, y: 110, color: "#0000ff80" });
-// gui.button("butaton3", { title: "Arm", x: 500, y: 170, color: "#0000ff80" });
-// gui.button("buttaon4", { title: "Arm", x: 500, y: 230, color: "#0000ff80" });
-// gui.button("buttoan5", { title: "Arm", x: 500, y: 290, color: "#0000ff80" });
-// gui.button("buttonaa6", { title: "Arm", x: 500, y: 350, color: "#0000ff80" });
-// gui.button("buttona7", { title: "Arm", x: 500, y: 410, color: "#0000ff80" });
+gui.button("recordToggle", { title: "Record", x: 500, y: 170, color: "#0000ff80" });
+gui.button("resetMahCounter", { title: "Reset mAh", x: 500, y: 230, color: "#0000ff80" });
+gui.button("gain+", { title: "Gain +5", x: 500, y: 290, color: "#0000ff80" });
+gui.button("gain-", { title: "Gain -5", x: 500, y: 350, color: "#0000ff80" });
+gui.button("gainoff", { title: "Gain: 0", x: 500, y: 410, color: "#0000ff80" });
 
 gui.hideAllButtons();
 $('#video').on('click', () => {
@@ -2312,6 +2314,21 @@ gui.on("click", (button) => {
         case "lightoff":
             socket.send("setLight 0");
             break;
+        case "gain+":
+            socket.send("adjustGain +5");
+            break;
+        case "gain-":
+            socket.send("adjustGain -5");
+            break;
+        case "gainoff":
+            socket.send("setGain 0");
+            break;
+        case "resetMahCounter":
+            socket.send("resetMahCounter");
+            break;
+        case "recordToggle":
+            socket.send("recordToggle");
+            break;    
         default:
             break;
     }
@@ -2353,16 +2370,20 @@ socket.on("data", (data) => {
             break;
 
         case "roll":
-            $("#ah").css("transform", `translate(-50%, -50%) rotate(${value}deg)`);
+            gui.showChip("roll", value);
             break;
 
         case "pitch":
-            // if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(value, undefined, undefined)
+            gui.showChip("pitch", value);
             break;
 
         case "heading":
             gui.drawCompass(value);
             gui.showChip("heading", value);
+            break;
+
+        case "turns":
+            gui.showChip("turns", value);
             break;
 
         case 'memoryUsed':
@@ -2374,7 +2395,7 @@ socket.on("data", (data) => {
             break;
 
         case 'gain':
-            // gui.setInfo(9, value);
+            gui.button("gainoff", { title: `Gain: ${value}%`, color: value == 0 ? "#0000ff80" : "#00ff0080"});
             break;
 
         case 'camera':
@@ -2401,9 +2422,17 @@ socket.on("data", (data) => {
             // gui.buttonState("gui-controls-button-2", value);
             break;
 
+        case 'recordStateChange':
+            let color = "#0000ff80";
+            if (value == "stopped") color = "#0000ff80";
+            if (value == "waitingidr") color = "#ffff0080";
+            if (value == "recording") color = "#ff000080";
+            gui.button("recordToggle", { title: "Record", color });
+            break;
+
         default:
-            // gui.log(`Unknown enviroment type received: ${type} (${value})`, undefined, undefined, "warn");
-            return;
+            gui.log(`Unknown enviroment type received: ${type} (${value})`, undefined, undefined, "warn");
+            break;
     }
 });
 

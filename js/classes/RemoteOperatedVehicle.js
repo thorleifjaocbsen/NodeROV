@@ -32,6 +32,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       roll: 0,
       pitch: 0,
       heading: 0,
+      turns: 0,
 
       cpuTemperature: 0,
       cpuLoad: 0,
@@ -122,6 +123,19 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
         let thrusterOutput = this.headingPID.update(this.#data.headingHold, value);
         //console.log(`Hold heading: ${this.#environment.headingHold}, newHeading: ${value}, thrusterOutput: ${thrusterOutput}`);
         this.yaw(thrusterOutput);
+      }
+
+      if (type == 'heading') {
+          // Turn Calculator - Thanks to IaTsI for helping me.
+          // let diff = Math.abs(oH-nH);
+          // if(diff > 180 && oH > nH) { rov.heading.turns ++; }
+          // if(diff > 180 && nH > oH) { rov.heading.turns --; }
+          // // End of Fun! :/
+
+          let diff = Math.abs(this.#data.heading - value);
+          if (diff > 180 && this.#data.heading > value) { this.#data.turns++; }
+          if (diff > 180 && value > this.#data.heading) { this.#data.turns--; }
+          
       }
 
     }
@@ -262,6 +276,10 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
   adjustGain(modifier) {
     let gain = this.#data.gain + parseInt(modifier);
+    this.setGain(gain)
+  }
+
+  setGain(gain) {
     gain = this.constrain(gain, 0, 100);
     this.update("gain", gain);
     this.emit("gainChange", this.#data.gain);

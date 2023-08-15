@@ -248,6 +248,8 @@ wss.on('connection', (client) => {
     client.send(`data ${JSON.stringify({ type, value: rovData[type] })}`)
   }
 
+  video.isRecording();
+
   /* Send start frames for video initialization */
   const startFrames = video.getInitFrames();
   startFrames.forEach((frame) => {
@@ -275,6 +277,11 @@ video.on('start', () => { log.info('Video started') });
 video.on('stop', () => { log.info('Video stopped') });
 video.on('error', (err) => { log.error(`Video error: ${err}`) });
 video.on('frame', (frame) => { wss.broadcast(frame) });
+video.on('recordStateChange', (value) => { 
+  log.info(`Video record state changed to ${value}`)
+  const type = "recordStateChange";
+  wss.broadcast(`data ${JSON.stringify({ type, value })}`)
+});
 video.start(800,480,10);
 
 /************************
@@ -315,6 +322,16 @@ function parseWebsocketData(data) {
       adc.resetAccumulatedMah();
       break;
 
+    case 'recordToggle':
+      if(video.isRecording()) {
+        video.stopRecording();
+      } else {
+        // Generate filename, date + time:
+        let filename = new Date().toISOString().replaceAll(":", "-").split(".")[0];
+        video.startRecording(`${filename}.h264`);
+      }
+      break;
+
     case 'arm': // OK
     case 'disarm': // OK
     case 'toggleArm': // OK
@@ -325,6 +342,7 @@ function parseWebsocketData(data) {
     case 'adjustLight': // OK
     case 'setLight': // OK
     case 'adjustGain': // OK
+    case 'setGain': // OK
     case 'adjustCamera': // OK 
     case 'centerCamera': // OK
     case 'headingHoldToggle': // OK
