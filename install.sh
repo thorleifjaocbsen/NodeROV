@@ -2,9 +2,7 @@
 node ascii.js
 
 scriptDir=$(dirname $(readlink -f $0))
-cameraFile=$scriptDir/app_camera.js
 softwareFile=$scriptDir/app.js
-cameraSystemdFile=/lib/systemd/system/noderov_camera.service
 softwareSystemdFile=/lib/systemd/system/noderov.service
 
 pushd $scriptDir  > /dev/null
@@ -17,7 +15,6 @@ if [ "$1" == "-r" ]; then
     read -p "Proceed? [y/N] " -n 1 -r
     echo
     [[ ! $REPLY =~ ^[Yy]$ ]] && exit 1
-    rm $cameraSystemdFile > /dev/null 2>&1
     rm $softwareSystemdFile > /dev/null 2>&1
     systemctl daemon-reload > /dev/null 2>&1
     echo "Removed files"
@@ -25,7 +22,7 @@ if [ "$1" == "-r" ]; then
 fi
 
 # Check if camera and software is already installed
-if [ -f $cameraSystemdFile ] && [ -f $softwareSystemdFile ]; then
+if [ -f $softwareSystemdFile ]; then
     # Explain how systemctl works
     echo "System service files already installed."
     echo "System service names are: noderov and noderov_camera".
@@ -55,23 +52,6 @@ read -p "Install software? (user who runs the software is '$startSoftwareAsUser'
 echo
 [[ ! $REPLY =~ ^[Yy]$ ]] && exit 1
 
-
-# Create camera service file
-echo "[Unit]
-Description=NodeROV Camera Service
-Documentation=https://github.com/thorleifjacobsen/no.tjweb.noderov/
-After=network.target
-
-[Service]
-WorkingDirectory=$scriptDir
-Type=simple
-User=$startSoftwareAsUser
-ExecStart=/usr/bin/node $cameraFile
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target" > $cameraSystemdFile
-
 # Create NodeROV service file
 echo "[Unit]
 Description=NodeROV Service
@@ -82,7 +62,7 @@ After=network.target
 WorkingDirectory=$scriptDir
 Type=simple
 User=$startSoftwareAsUser
-ExecStart=/usr/bin/node $softwareFile
+ExecStart=/usr/local/bin/node $softwareFile
 Restart=on-failure
 
 [Install]
@@ -90,10 +70,9 @@ WantedBy=multi-user.target" > $softwareSystemdFile
 
 systemctl daemon-reload > /dev/null 2>&1
 systemctl enable noderov > /dev/null 2>&1
-systemctl enable noderov_camera > /dev/null 2>&1
 
 echo "-------------------------------------------"
 echo "To start the software, run: systemctl start <service name>"
-echo "Service name is: noderov and noderov_camera"
+echo "Service name is: noderov"
 
 popd > /dev/null
