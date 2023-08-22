@@ -3,12 +3,44 @@ const Socket = require('./lib/Socket.js')
 const Video = require('./lib/Video.js')
 const Controls = require('./lib/Controls.js')
 const GUI = require('./lib/GUI.js')
+const HUDBlock = require('./lib/HUDBlock.js')
+const Dashboard = require('./lib/Dashboard.js')
+const LineChart = require('./lib/LineChart.js')
 
 /* Initialize classes */
 const socket = new Socket();
 const video = new Video($('#video')[0]);
 const controls = new Controls();
 const gui = new GUI();
+const dashboard = new Dashboard(document.getElementById("dataGraphicsCanvas"))
+const hudBlock = new HUDBlock(document.getElementById("HUD"))
+const lineChart = new LineChart(document.getElementById("HUD"))
+
+/************************
+ * Scaling
+ ************************/
+
+const containerEl = document.getElementById('container');
+const containerMaxWidth = containerEl.offsetWidth;
+const containerMaxHeight = containerEl.offsetHeight;
+
+function resize() {
+    const sWidth = window.innerWidth;
+    const sHeight = window.innerHeight;
+    containerEl.style.zoom = Math.min(sWidth / containerMaxWidth, sHeight / containerMaxHeight);
+};
+
+resize();
+
+window.addEventListener("resize", resize);
+
+
+// Fix canvas width/height.
+const allCanvas = document.getElementsByTagName("canvas");
+for (let i = 0; i < allCanvas.length; i++) {
+    allCanvas[i].height = allCanvas[i].offsetHeight;
+    allCanvas[i].width = allCanvas[i].offsetWidth;
+}
 
 /************************
   * Controls on press e.t.c
@@ -19,7 +51,7 @@ controls.onPress("adjustGain", (step) => { socket.send(`adjustGain ${step}`); })
 controls.onPress("adjustCamera", (step) => { socket.send(`adjustCamera ${step}`); }, 250);
 controls.onPress("centerCamera", () => { socket.send(`centerCamera`); }, 250);
 controls.onPress("adjustLight", (step) => { socket.send(`adjustLight ${step}`); }, 250);
-controls.onPress("fullScreen", () => { gui.pressButton("gui-controls-button-8"); }, 1000)
+controls.onPress("fullscreen", () => { gui.pressButton("gui-controls-button-8"); }, 1000)
 controls.onPress("arm", () => { socket.send("arm"); });
 controls.onPress("disarm", () => { socket.send("disarm"); }, 1000);
 controls.onPress("depthHold", () => { socket.send("depthHoldToggle"); });
@@ -39,92 +71,108 @@ socket.connect(`wss://${location.hostname}:8000`);
 socket.on("hb", (data) => {
     const [sendtTime, latency] = data.split(" ");
     socket.send("hb " + sendtTime);
-    gui.showChip("latency", latency);
+    gui.setInfo(12, latency + "ms");
 });
 
-gui.showChip("cpuTemperature", "0", { title: "Temp", unit: "°", sup: true, x: 730, y: 330, rightAlign: true });
-gui.showChip("cpuLoad", "0", { title: "Load", unit: "%", sub: true, x: 730, y: 380, rightAlign: true });
-gui.showChip("latency", "0", { title: "Latency", unit: "ms", sub: true, x: 730, y: 430, rightAlign: true });
+/************************
+ * GUI Preparations
+ ************************/
 
-gui.showChip("depth", "0", { title: "Depth", unit: "m", sub: true, x: 730, y: 10, rightAlign: true });
-gui.showChip("eTemperature", "0", { title: "Water", unit: "°", sup: true, x: 730, y: 60, rightAlign: true });
+gui.log("Initializing NodeROV GUI");
+gui.overlayText("Connecting to NodeROV...", 2000);
 
-gui.showChip("turns", "3.2", { title: "Turns", x: 10, y: 10 });
-gui.showChip("heading", "360", { title: "Heading", x: 10, y: 60 });
-gui.showChip("roll", "360", { title: "Roll", x: 80, y: 10 });
-gui.showChip("pitch", "360", { title: "Pitch", x: 10, y: 120 });
-
-
-gui.showChip("voltage", "12.3", { title: "Voltage", unit: "V", sub: true, x: 10, y: 330 });
-gui.showChip("current", "13.2", { title: "Current", unit: "A", sub: true, x: 10, y: 380 });
-gui.showChip("accumulatedMah", "3212", { title: "MAH", unit: "mA", sub: true, x: 10, y: 430 });
-
-// x = 100 if two rows. x = 400 if 1 row.
-gui.button("armtoggle", { title: "Arm", x: 100, y: 50, color: "#0000ff80" });
-gui.button("level", { title: "Calibrate flat", x: 100, y: 110, color: "#0000ff80" });
-gui.button("headinghold", { title: "Heading Hold", x: 100, y: 170, color: "#0000ff80" });
-gui.button("depthhold", { title: "Depth Hold", x: 100, y: 230, color: "#0000ff80" });
-gui.button("light+", { title: "Light +", x: 100, y: 290, color: "#0000ff80" });
-gui.button("light-", { title: "Light -", x: 100, y: 350, color: "#0000ff80" });
-gui.button("lightoff", { title: "Light: 0%", x: 100, y: 410, color: "#0000ff80" });
-
-// gui.button("b1", { title: "Arm", x: 500, y: 50, color: "#0000ff80" });
-// gui.button("buatton2", { title: "Arm", x: 500, y: 110, color: "#0000ff80" });
-gui.button("recordToggle", { title: "Record", x: 500, y: 170, color: "#0000ff80" });
-gui.button("resetMahCounter", { title: "Reset mAh", x: 500, y: 230, color: "#0000ff80" });
-gui.button("gain+", { title: "Gain +5", x: 500, y: 290, color: "#0000ff80" });
-gui.button("gain-", { title: "Gain -5", x: 500, y: 350, color: "#0000ff80" });
-gui.button("gainoff", { title: "Gain: 0", x: 500, y: 410, color: "#0000ff80" });
-
-gui.hideAllButtons();
-$('#video').on('click', () => {
-    if (gui.ifButtonVisible()) gui.hideAllButtons();
-    else gui.showButtons();
+gui.on("log", (data) => {
+    //socket.send(`clog ${data}`);
 })
 
 
-gui.on("click", (button) => {
-    switch (button.name) {
-        case "armtoggle":
-            socket.send("toggleArm");
-            break;
-        case "headinghold":
-            socket.send("headingHoldToggle");
-            break;
-        case "depthhold":
-            socket.send("depthHoldToggle");
-            break;
-        case "level":
-            socket.send("calibrateAccelGyroBias");
-            break;
-        case "light+":
-            socket.send("adjustLight +10");
-            break;
-        case "light-":
-            socket.send("adjustLight -10");
-            break;
-        case "lightoff":
-            socket.send("setLight 0");
-            break;
-        case "gain+":
-            socket.send("adjustGain +5");
-            break;
-        case "gain-":
-            socket.send("adjustGain -5");
-            break;
-        case "gainoff":
-            socket.send("setGain 0");
-            break;
-        case "resetMahCounter":
-            socket.send("resetMahCounter");
-            break;
-        case "recordToggle":
-            socket.send("recordToggle");
-            break;    
-        default:
-            break;
+gui.accelCanvas = document.getElementById("accelerometerCanvas");
+gui.compassCanvas = document.getElementById("compassCanvas");
+gui.dataGraphCanvas = document.getElementById("dataGraphicsCanvas");
+
+gui.setButton("gui-controls-button-1", "LIGHT + 5", () => {
+    socket.send(`adjustLight 5`);
+});
+gui.setButton("gui-controls-button-3", "LIGHT - 5", () => {
+    socket.send(`adjustLight -5`);
+});
+
+gui.setButton("gui-controls-button-5", "Depthchart", () => {
+    if (gui.buttonState("gui-controls-button-5")) {
+        hudBlock.draw();
+        gui.buttonState("gui-controls-button-5", false);
+    } else {
+        lineChart.draw();
+        gui.buttonState("gui-controls-button-5", true);
     }
 });
+
+gui.setButton("gui-controls-button-2", "ARM", () => { socket.send("toggleArm"); });
+gui.setButton("gui-controls-button-4", "HEADING HOLD", () => { socket.send("headingHoldToggle"); });
+gui.setButton("gui-controls-button-6", "DEPTH HOLD", () => { socket.send("depthHoldToggle"); });
+gui.setButton("gui-controls-button-7", "RECORD", () => { socket.send("recordToggle"); });
+
+gui.setButton("gui-controls-button-8", "FULLSCREEN", () => {
+    const videoEl = document.getElementById("video");
+    videoEl.classList.toggle("fullscreen");
+    gui.buttonState("gui-controls-button-8", videoEl.classList.contains("fullscreen"));
+    videoEl.onclick = () => { gui.pressButton("gui-controls-button-8"); };
+});
+gui.setButton("gui-controls-button-9", "RESET MAH", () => { socket.send("resetMahCounter"); });
+gui.setButton("gui-controls-button-10", "CALIBRATE", () => { socket.send("calibrateAccelGyroBias"); });
+
+gui.setButton("gui-controls-button-11", "PID Tuning", () => {
+    $("#pidTuning").toggle();
+});
+
+
+gui.setButton("gui-log-button-1", "ADD EVENT", () => {
+    var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
+    popup("Add event", msg, "Add", "Cancel", function () {
+        gui.log("Custom event: " + $("#eventmsg").val());
+        popup_hide();
+    });
+    $("#eventmsg").focus();
+});
+
+gui.setButton("gui-log-button-2", "SCREENSHOT", (e) => {
+    var data = video.player.canvas.toDataURL("image/jpeg", 1);
+    var filename = "noderov_" + (Date.now() / 1000) + ".jpg";
+    gui.log("Screenshot saved (" + filename + ")");
+    $("<a download='" + filename + "' href='" + data + "'></a>")[0].click();
+});
+
+gui.setInfo(1, 0, "Int. temp:");
+gui.setInfo(2, 0, "Int. pressure:");
+gui.setInfo(3, 0, "Int. humidity:");
+gui.setInfo(4, 0, "Leak:");
+gui.setInfo(5, 0, "CPU temp:");
+gui.setInfo(6, 0, "CPU usage:");
+gui.setInfo(7, 0, "Memory:");
+gui.setInfo(8, 0, "Disk:");
+gui.setInfo(9, 0, "Gain");
+gui.setInfo(10, 0, "Camera");
+gui.setInfo(11, 0, "Light");
+gui.setInfo(12, 0, "Latency:");
+
+$("#pidTuning .close").on('click', () => {
+    gui.pressButton("gui-controls-button-11");
+});
+$("#pidTuning .save").on('click', () => {
+    const newPid = {
+        depthPid: {
+            p: $("input[name=depthP").val(),
+            i: $("input[name=depthI").val(),
+            d: $("input[name=depthD").val()
+        },
+        headingPid: {
+            p: $("input[name=headingP").val(),
+            i: $("input[name=headingI").val(),
+            d: $("input[name=headingD").val()
+        }
+    }
+    socket.send(`newPid ${JSON.stringify(newPid)}`);
+})
 
 gui.canvas = $("#dataGraphicsCanvas")[0];
 
@@ -144,87 +192,120 @@ socket.on("data", (data) => {
     }
     switch (type) {
 
-        case "iTemperature": // gui.showChip("temperature", "Temperature", `${value}<sup>°</sup>`, 730, 380);
-        case "iPressure": // gui.setInfo(2, Math.round(value * 0.145038) / 10 + " PSI");
-        case "iHumidity": // gui.setInfo(3, value + "%");
-        case "ePressure": // dashboard.setScale(0, "PRESSURE", value, 1300, 30);
-        case "leak": // gui.setInfo(4, value);
+        case "iTemperature":
+            gui.setInfo(1, value + "°C");
+            break;
+
+        case "iPressure":
+            gui.setInfo(2, Math.round(value * 0.145038) / 10 + " PSI");
+
+            break;
+
+        case "iHumidity":
+            gui.setInfo(3, value + "%");
             break;
 
         case "eTemperature":
+            dashboard.setScale(2, "TEMPERATURE", value, 30, 0);
+            dashboard.draw();
+            break;
+
+        case "ePressure":
+            dashboard.setScale(0, "PRESSURE", value, 1300, 30);
+            dashboard.draw();
+            break;
+
         case "depth":
+            dashboard.setScale(1, "DEPTH", value, 100, 30);
+            dashboard.draw();
+            lineChart.addDataPoint(value);
+            if (gui.buttonState("gui-controls-button-5")) lineChart.draw();
+            break;
+
+        case "leak":
+            gui.setInfo(4, value);
+            break;
+
         case "voltage":
+            dashboard.setScale(3, "VOLTAGE", value, 16.8, -6.8);
+            dashboard.draw();
+            break;
+
         case "current":
+            dashboard.setScale(4, "CURRENT", value, 90, 10);
+            dashboard.draw();
+            break;
+
         case "accumulatedMah":
-        case 'cpuLoad':
-        case 'cpuTemperature':
-            gui.showChip(type, value);
+            dashboard.setScale(5, "MAH USED", value, 5500, 1000);
+            dashboard.draw();
             break;
 
         case "roll":
-            gui.showChip("roll", value);
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, value, undefined);
             break;
 
         case "pitch":
-            gui.showChip("pitch", value);
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(value, undefined, undefined)
             break;
 
         case "heading":
-            gui.drawCompass(value);
-            gui.showChip("heading", value);
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, undefined, value)
             break;
 
-        case "turns":
-            gui.showChip("turns", value);
+        case 'cpuTemperature':
+            gui.setInfo(5, Math.round(value * 10) / 10 + "°C");
+            break;
+
+        case 'cpuLoad':
+            gui.setInfo(6, Math.round(value * 10) / 10 + "%");
             break;
 
         case 'memoryUsed':
-            // gui.setInfo(7, Math.round(value * 10) / 10 + "%");
+            gui.setInfo(7, Math.round(value * 10) / 10 + "%");
             break;
 
         case 'diskUsed':
-            // gui.setInfo(8, Math.round(value * 10) / 10 + "%");
+            gui.setInfo(8, Math.round(value * 10) / 10 + "%");
             break;
 
         case 'gain':
-            gui.button("gainoff", { title: `Gain: ${value}%`, color: value == 0 ? "#0000ff80" : "#00ff0080"});
+            gui.setInfo(9, value);
             break;
 
         case 'camera':
-            // gui.setInfo(10, value);
+            gui.setInfo(10, value);
             break;
 
         case 'light':
-            gui.button("lightoff", { title: `Light: ${value}%`, color: value == 0 ? "#0000ff80" : "#00ff0080"});
+            gui.setInfo(11, value);
             break;
 
         case 'headingHold':
-            if (value) gui.button("headinghold", { title: "Heading Hold", color: "#00ff0080" });
-            else gui.button("headinghold", { title: "Heading Hold", color: "#0000ff80" });
+            gui.buttonState("gui-controls-button-4", value.setPoint !== false);
+            $("input[name=headingP").val(value.p);
+            $("input[name=headingI").val(value.i);
+            $("input[name=headingD").val(value.d);
             break;
 
         case 'depthHold':
-            if (value) gui.button("depthhold", { title: "Depth Hold", color: "#00ff0080" });
-            else gui.button("depthhold", { title: "Depth Hold", color: "#0000ff80" });
+            gui.buttonState("gui-controls-button-6", value.setPoint !== false);
+            $("input[name=depthP").val(value.p);
+            $("input[name=depthI").val(value.i);
+            $("input[name=depthD").val(value.d);
             break;
 
         case 'armed':
-            if (value) gui.button("armtoggle", { title: "Disarm", color: "#00ff0080" });
-            else gui.button("armtoggle", { title: "Arm", color: "#0000ff80" });
-            // gui.buttonState("gui-controls-button-2", value);
+            gui.buttonState("gui-controls-button-2", value);
             break;
 
         case 'recordStateChange':
-            let color = "#0000ff80";
-            if (value == "stopped") color = "#0000ff80";
-            if (value == "waitingidr") color = "#ffff0080";
-            if (value == "recording") color = "#ff000080";
-            gui.button("recordToggle", { title: "Record", color });
+            gui.buttonState("gui-controls-button-7", value == "recording" || value == "waitingidr");
             break;
 
         default:
             gui.log(`Unknown enviroment type received: ${type} (${value})`, undefined, undefined, "warn");
-            break;
+            return;
     }
 });
 
@@ -236,7 +317,6 @@ socket.on("log", function (data) {
 })
 
 socket.on("ts", (data) => {
-    return;
     try {
         data = JSON.parse(data);
         console.log(data);

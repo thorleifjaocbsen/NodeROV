@@ -17,7 +17,6 @@ console.log = log.info;
 console.error = log.error;
 
 const Configuration = require('./configuration.json');
-const defaultControls = require('./controls.json');
 const RemoteOperatedVehicle = require('./js/classes/RemoteOperatedVehicle');
 const AuxiliaryController = require('./js/classes/AuxiliaryController');
 const HeartbeatController = require('./js/classes/Heartbeat');
@@ -68,17 +67,14 @@ rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('thusterOutputChanged', (output) => {
   output.forEach((output) => {
-    if(output.pin == 4) log.debug(`Pin: ${output.pin} = ${output.us}us`);
+    output.us = 1550;
     pwm.setPWM(output.pin, output.us).catch(e => console.error(`Unable to set PWM: ${e}`));
   })
 
   wss.broadcast(`ts ${JSON.stringify(output)}`);
 
 });
-let lastROVDataSent = 0;
 rov.on('dataChanged', (type, value) => {
-  lastROVDataSent = Date.now();
-
   wss.broadcast(`data ${JSON.stringify({ type, value })}`)
   log.silly(`Data variable ${type} changed to ${value}`);
 });
@@ -202,7 +198,6 @@ const key = fs.readFileSync('assets/key.pem');
 const cert = fs.readFileSync('assets/cert.pem');
 
 app.use('/', express.static(__dirname + '/public/app'));
-app.use('/controls.json', express.static(__dirname + '/controls.json'));
 const webServer = https.createServer({ key, cert }, app).listen(Configuration.port, Configuration.ip, () => { log.info(`Webserver started on port: ${Configuration.port}`) })
 
 /************************
@@ -226,6 +221,7 @@ wss.on('connection', (client) => {
 
   client.heartbeat.on("timeout", () => {
     log.warn(`Heartbeat timeout, disarm ROV (${client.ip}:${client.port})`)
+    if (client.heartbeat.isAlive() == false) { client.close(); }
     rov.disarm()
   });
   client.heartbeat.on('beat', (data, latency) => { client.send(`hb ${data} ${latency}`) });
@@ -246,6 +242,7 @@ wss.on('connection', (client) => {
   for (let type in rovData) {
     log.debug(`Sending data to client ${client.ip}:${client.port}: type: ${type}, value ${rovData[type]}, typeof: ${typeof rovData[type]}`)
     client.send(`data ${JSON.stringify({ type, value: rovData[type] })}`)
+    log.debug(`data ${JSON.stringify({ type, value: rovData[type] })}`)
   }
 
   video.isRecording();
@@ -263,7 +260,7 @@ wss.broadcast = package => {
 
   wss.clients.forEach((client) => {
      // This can be better, now limiting to a buffer of 100 kilobytes. Two packets are around 30 each.
-    if (client.bufferedAmount > 102400 && binary) {
+    if (client.bufferedAmount > (123008*2) && binary) {
       console.log(`Dropping binary packet, TCP socket still sending on client ${client._socket.remoteAddress} ${client.bufferedAmount}`);
       return;
     }
@@ -276,13 +273,15 @@ const video = new Video();
 video.on('start', () => { log.info('Video started') });
 video.on('stop', () => { log.info('Video stopped') });
 video.on('error', (err) => { log.error(`Video error: ${err}`) });
-video.on('frame', (frame) => { wss.broadcast(frame) });
+video.on('frame', (frame) => { 
+  wss.broadcast(frame)
+});
 video.on('recordStateChange', (value) => { 
   log.info(`Video record state changed to ${value}`)
   const type = "recordStateChange";
   wss.broadcast(`data ${JSON.stringify({ type, value })}`)
 });
-video.start(800,480,10);
+video.start(Configuration.video.width,Configuration.video.height,Configuration.video.fps);
 
 /************************
  *
@@ -295,6 +294,7 @@ function parseWebsocketData(data) {
 
   data = data.toString().split(" ")
   const cmd = data.shift(1)
+  data = data[0]
   const client = this;
 
 
@@ -305,12 +305,12 @@ function parseWebsocketData(data) {
       break;
 
     case 'hb':
-      client.heartbeat.pulse(data[0]);
+      client.heartbeat.pulse(data);
       break;
 
     case 'gripper':
-      if (data[0] < -10) { rov.gripperState(-1); }
-      else if (data[0] > 10) { rov.gripperState(1); }
+      if (data < -10) { rov.gripperState(-1); }
+      else if (data > 10) { rov.gripperState(1); }
       else { rov.gripperState(0); }
       break;
 
@@ -332,6 +332,23 @@ function parseWebsocketData(data) {
       }
       break;
 
+    case 'newPid': 
+      data = JSON.parse(data);
+      rov.depthPID.P = data.depthPid.p;
+      rov.depthPID.I = data.depthPid.i;
+      rov.depthPID.D = data.depthPid.d;
+      rov.update("depthHold.p", data.depthPid.p)
+      rov.update("depthHold.i", data.depthPid.i)
+      rov.update("depthHold.d", data.depthPid.d)
+
+      rov.headingPID.P = data.headingPid.p;
+      rov.headingPID.I = data.headingPid.i;
+      rov.headingPID.D = data.headingPid.d;
+      rov.update("headingHold.p", data.headingPid.p)
+      rov.update("headingHold.i", data.headingPid.i)
+      rov.update("headingHold.d", data.headingPid.d)
+      break;
+
     case 'arm': // OK
     case 'disarm': // OK
     case 'toggleArm': // OK
@@ -348,7 +365,7 @@ function parseWebsocketData(data) {
     case 'headingHoldToggle': // OK
     case 'depthHoldToggle': // OK
       try {
-        rov.command(cmd, data[0]);
+        rov.command(cmd, data);
       }
       catch (err) {
         log.warn(`Failed to execute ROV command, error was: ${err}`);

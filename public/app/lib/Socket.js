@@ -70,7 +70,6 @@ module.exports = class Socket extends EventEmitter {
   };
 
   send(data) {
-    debugger;
     try { this.ws.send(data); }
     catch (e) { }
   };

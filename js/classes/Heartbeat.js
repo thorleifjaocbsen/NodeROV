@@ -17,7 +17,7 @@ module.exports = class HeartbeatController extends EventEmitter {
     this.starttime = 0;
     this.timeout = 2;
     this.alive = false;
-    this.offTime = 0;
+    this.timeoutTimes = 0;
     this.timer = null;
   }
 
@@ -26,7 +26,7 @@ module.exports = class HeartbeatController extends EventEmitter {
 
     this.stop();
     this.startime = 0;
-    this.offTime = 0;
+    this.timeoutTimes = 0;
     this.timer = setTimeout(() => { this.beat(); }, this.frequency*1000);
   }
 
@@ -56,7 +56,7 @@ module.exports = class HeartbeatController extends EventEmitter {
         // new packet instead
         this.starttime = 0;
         this.connected = false;
-        this.offTime += this.timeout;
+        this.timeoutTimes += 1;
         super.emit('timeout');
       }
     }
@@ -70,9 +70,10 @@ module.exports = class HeartbeatController extends EventEmitter {
     this.latency = Math.ceil((Date.now() - data) / 2);
     this.starttime = 0;
     this.connected = true;
+    this.timeoutTimes = 0;
   }
 
   isAlive() {
-    return this.alive;
+    return this.timeoutTimes < 5;
   }
 }

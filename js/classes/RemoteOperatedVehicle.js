@@ -43,8 +43,15 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       light: 0,
       camera: 0,
 
-      depthHold: undefined,
-      headingHold: undefined,
+      depthHold: {
+        setPoint: false,
+        ...options.depthHoldPID
+      },
+
+      headingHold: {
+        setPoint: false,
+        ...options.headingHoldPID
+      },
 
       armed: false
     };
@@ -89,7 +96,7 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       min: -100,
       max: 100
     });
-    
+
     this.headingPID = new PIDController({
       kP: options.headingHoldPID.p,
       kI: options.headingHoldPID.i,
@@ -106,38 +113,49 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
   map(x, in_min, in_max, out_min, out_max) { return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min }
 
   update(type, value) {
-    // Check if old value is different from new value
-    if (this.#data[type] != value) {
-      this.#data[type] = value;
-      this.emit("dataChanged", type, value);
+    const propertyPath = type.split('.'); // Split the type string by dot
+    let currentData = this.#data;
 
-      // Update PID controller if depth is changed and depthhold is on.
-      if (type == 'depth' && this.#data.depthHold) {
-        // Calculate new thruster output and set it
-        let thrusterOutput = this.depthPID.update(this.#data.depthHold, value);
-        this.ascend(thrusterOutput);
-      }
-      // Update PID controller if heading is changed and heading hold is on.
-      else if (type == 'heading' && this.#data.headingHold) {
-        // Calculate new thruster output and set it
-        let thrusterOutput = this.headingPID.update(this.#data.headingHold, value);
-        //console.log(`Hold heading: ${this.#environment.headingHold}, newHeading: ${value}, thrusterOutput: ${thrusterOutput}`);
-        this.yaw(thrusterOutput);
-      }
-
-      if (type == 'heading') {
-          // Turn Calculator - Thanks to IaTsI for helping me.
-          // let diff = Math.abs(oH-nH);
-          // if(diff > 180 && oH > nH) { rov.heading.turns ++; }
-          // if(diff > 180 && nH > oH) { rov.heading.turns --; }
-          // // End of Fun! :/
-
-          let diff = Math.abs(this.#data.heading - value);
-          if (diff > 180 && this.#data.heading > value) { this.#data.turns++; }
-          if (diff > 180 && value > this.#data.heading) { this.#data.turns--; }
+    for (const property of propertyPath) {
+      if (currentData.hasOwnProperty(property)) {
+        if (propertyPath.indexOf(property) === propertyPath.length - 1) {
           
-      }
+          // Check if old value is different from new value
+          if (currentData[property] !== value) {
+            currentData[property] = value;
+            this.emit("dataChanged", propertyPath[0], this.#data[propertyPath[0]]);
+            
+            // Update PID controller if depth is changed and depthhold is on.
+            if (property === 'depth' && currentData.depthHold.setPoint) {
+              // Calculate new thruster output and set it
+              let thrusterOutput = this.depthPID.update(currentData.depthHold.setPoint, value);
+              this.ascend(thrusterOutput);
+            }
+            // Update PID controller if heading is changed and heading hold is on.
+            else if (property === 'heading' && currentData.headingHold.setPoint) {
+              // Calculate new thruster output and set it
+              let thrusterOutput = this.headingPID.update(currentData.headingHold.setPoint, value);
+              this.yaw(thrusterOutput);
+            }
 
+
+            if (type == 'heading') {
+              // Turn Calculator - Thanks to IaTsI for helping me.
+              // let diff = Math.abs(oH-nH);
+              // if(diff > 180 && oH > nH) { rov.heading.turns ++; }
+              // if(diff > 180 && nH > oH) { rov.heading.turns --; }
+              // // End of Fun! :/
+
+              let diff = Math.abs(this.#data.heading - value);
+              if (diff > 180 && this.#data.heading > value) { this.#data.turns++; }
+              if (diff > 180 && value > this.#data.heading) { this.#data.turns--; }
+
+            }
+          }
+        } else {
+          currentData = currentData[property]; // Traverse deeper into the data object
+        }
+      }
     }
   }
 
@@ -204,7 +222,6 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
       } else {
         us = this.map(motorOutput, -100, 0, this.minUS, this.idleUS);
       }
-      if (id == "vertical_left") console.log(`pin: ${us}, motorOutput = ${motorOutput}, minUs: ${this.minUS} ${this.maxUS}`)
       if (motorOutput == 0 || !motorOutput) us = this.idleUS;
 
       us = Math.round(us)
@@ -302,17 +319,17 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
   headingHoldOn() {
     if (!this.#data.armed) throw "Cannot enable heading hold on unarmed ROV";
-    this.update("headingHold", this.#data.heading);
+    this.update("headingHold.setPoint", this.#data.heading);
     this.headingPID.reset();
   }
 
   headingHoldOff() {
-    this.update("headingHold", undefined);
+    this.update("headingHold.setPoint", false);
     this.yaw(0);
   }
 
   headingHoldToggle() {
-    if (!this.#data.headingHold) {
+    if (!this.#data.headingHold.setPoint) {
       this.headingHoldOn();
     } else {
       this.headingHoldOff();
@@ -321,17 +338,17 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
 
   depthHoldOn() {
     if (!this.#data.armed) throw "Cannot enable depth hold on unarmed ROV";
-    this.update("depthHold", this.#data.depth);
+    this.update("depthHold.setPoint", this.#data.depth);
     this.headingPID.reset();
   }
 
   depthHoldOff() {
-    this.update("depthHold", undefined);
+    this.update("depthHold.setPoint", false);
     this.ascend(0);
   }
 
   depthHoldToggle() {
-    if (!this.#data.depthHold) {
+    if (!this.#data.depthHold.setPoint) {
       this.depthHoldOn();
     } else {
       this.depthHoldOff();

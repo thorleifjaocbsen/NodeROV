@@ -13,46 +13,88 @@
   },
   "a2": {
     "name": "Yaw right stick",
-    "forward": "a3",
-    "invert": true
-  },
-  "a3": {
-    "name": "Yaw",
     "func": "yaw",
     "type": "analogue",
     "invert": true
   },
-  "a4": {
+  "a3": {
     "name": "Ascend/Descend",
     "func": "ascend",
     "type": "analogue",
     "invert": true
   },
   "b0": {
+    "name": "Full Screen",
+    "func": "fullscreen"
+  },
+  "b1": {
+    "name": "Depth hold",
+    "func": "depthHold"
+  },
+  "b2": {
+    "name": "Heading hold",
+    "func": "headingHold"
+  },
+  "b4": {
     "name": "Camera down",
     "func": "adjustCamera",
     "type": "step",
     "step": -5,
     "invert": false
   },
-  "b1": {
+  "b5": {
     "name": "Camera up",
-    "forward": "b0",
+    "forward": "b4",
     "invert": true
   },
-  "b2": {
-    "name": "Close gripper",
+  "b6": {
+    "name": "Open gripper",
     "func": "gripper",
     "type": "analogue"
   },
-  "b3": {
-    "name": "Open gripper",
-    "forward": "b2",
+  "b7": {
+    "name": "Close gripper",
+    "forward": "b6",
     "invert": true
   },
-  "b4": {
+  "b8": {
+    "name": "Disarm",
+    "func": "disarm"
+  },
+  "b9": {
+    "name": "Arm",
+    "func": "arm"
+  },
+  "b10": {
     "name": "Center Camera",
     "func": "centerCamera"
+  },
+  "b11": {
+    "name": "Center Camera",
+    "func": "adjustCamera",
+    "value": 100
+  },
+  "b12": {
+    "name": "Gain up",
+    "func": "adjustGain",
+    "type": "step",
+    "step": 5
+  },
+  "b13": {
+    "name": "Gain down",
+    "forward": "b12",
+    "invert": true
+  },
+  "b14": {
+    "name": "Light down",
+    "func": "adjustLight",
+    "type": "step",
+    "step": -5
+  },
+  "b15": {
+    "name": "Light up",
+    "forward": "b14",
+    "invert": true
   },
   "k38": {
     "name": "Ascend",
@@ -113,15 +155,15 @@
     "forward": "b13",
     "invert": false
   },
-  "k49": {
+  "k99": {
     "name": "Camera down",
     "forward": "b0"
   },
-  "k50": {
+  "k98": {
     "name": "Camera center",
     "func": "centerCamera"
   },
-  "k51": {
+  "k96": {
     "name": "Camera up",
     "forward": "b0",
     "invert": true

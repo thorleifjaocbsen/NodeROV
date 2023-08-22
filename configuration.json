@@ -8,13 +8,13 @@
 		}
 	},
 	"video": {
-		"width": 800,
-		"height": 480,
+		"width": 1920,
+		"height": 1080,
 		"fps": 15,
 		"port": 8282,
 		"ip": "0.0.0.0"
 	},
-	"rov": { 
+	"rov": {
 		"minUS": 1000,
 		"idleUS": 1550,
 		"maxUS": 2000,
@@ -80,8 +80,16 @@
 				"lateral": 0
 			}
 		],
-		"headingHoldPID": { "p":3, "i": 0.0002, "d": 0 },
-		"depthHoldPID": { "p": 3, "i": 0.0002, "d": 0 }
+		"headingHoldPID": {
+			"p": 3,
+			"i": 0.0002,
+			"d": 0
+		},
+		"depthHoldPID": {
+			"p": 3,
+			"i": 0.0002,
+			"d": 0
+		}
 	},
 	"auxiliary": {
 		"devices": [

@@ -1,51 +1,180 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>NodeROV</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="css/reset.css">
-  <link rel="stylesheet" href="css/base.css">
+  <meta name="viewport"
+    content="user-scalable=no, width=device-width, initial-scale=0.5, minimum-scale=0.5, maximum-scale=0.5" />
+  <link rel="stylesheet" type="text/css" href="css/reset.css">
+  <link rel="stylesheet" type="text/css" href="css/base.css">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+  <script type="text/javascript" src="js/scaling.js" charset="utf-8" defer></script>
+  <script type="text/javascript" src="js/controlMapping.js" charset="utf-8" defer></script>
   <script src="dist/bundle.js" charset="utf-8" defer></script>
-  <style>
-    body {
-      overflow: hidden;
-      width: 800px;
-      height: 480px;
-    }
-
-    #video {
-      width: 800px;
-      height: 480px;
-      background: #000;
-    }
-
-    #data {
-      position: absolute;
-      left: 0;
-      top: 0;
-      color: white;
-      font-size: 50px;
-    }
-
-    #ah {
-      width: 200px;
-      height: 1px;
-      background-color: white;
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      /* Roll it 2 degrees from the centre */
-      transform-origin: center center;
-      transform: translate(-50%, -50%) rotate(5deg);
-    }
-  </style>
 </head>
-
+ 
 <body>
-  <section id="video"></section>
-  <canvas id="dataGraphicsCanvas">DataGraphics</canvas>
-  <div id="ah"></div>
+  <div class="container" id="container">
+    <div class="msgbox-bg">&nbsp;</div>
+    <div class="msgbox">
+      <h1>My super custom love header abdc</h1>
+      <div class="content">
+        <p>Data</p>
+      </div>
+      <div class="button">
+        <button>OK</button>
+        <button>Cancel</button>
+      </div>
+    </div>
+
+    <section id="video">
+      <div id="overlay">EMERGENCY DATA</div>
+    </section>
+
+    <section class="info">
+      <h1>NodeROV</h1>
+      <aside>
+        <time>00:00:00</time><br />
+        <time>0000-00-00</time>
+      </aside>
+      <hr>
+      <ul>
+        <li><b>Dive nr.:</b><br />#0</li>
+        <li><b>Dive time:</b><br />0 min</li>
+        <li><b>Pilot:</b><br />Thorleif</li>
+        <li><b>Location:</b><br />Unknown</li>
+      </ul>
+    </section>
+
+    <section class="data">
+      <ul>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+      </ul>
+      <hr />
+      <ul>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+      </ul>
+      <hr />
+      <ul>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+        <li><b></b><br /><span></span></li>
+      </ul>
+    </section>
+
+    <section class="controls">
+      <button name="gui-controls-button-1">-</button>
+      <button name="gui-controls-button-2">-</button>
+      <button name="gui-controls-button-3">-</button>
+      <button name="gui-controls-button-4">-</button>
+      <button name="gui-controls-button-5">-</button>
+      <button name="gui-controls-button-6">-</button>
+      <button name="gui-controls-button-7">-</button>
+      <button name="gui-controls-button-8">-</button>
+      <button name="gui-controls-button-9">-</button>
+      <button name="gui-controls-button-10">-</button>
+      <button name="gui-controls-button-11">-</button>
+      <button name="gui-controls-button-12">-</button>
+    </section>
+
+    <section class="datagraphics">
+      <canvas id="dataGraphicsCanvas">DataGraphics</canvas>
+    </section>
+
+    <section class="vitals">
+      <canvas id="HUD">You'r browser does not support canvas, prick!</canvas>
+    </section>
+
+    <section class="log">
+      <button name="gui-log-button-1">1</button>
+      <button name="gui-log-button-2">2</button>
+      <h1>LOG</h1>
+      <hr />
+      <div class="logs">
+        <table id="logTable"></table>
+      </div>
+    </section>
+
+    <section class="configBox" style="display: none;">
+      <div id="controlMappingCover"><p>Press button to map to function<br /><br /><span>Arm</span><br /><br />Press Escape to unset</p></div>
+      <button class="save">Save</button>
+      <button class="reset">Reset</button>
+      <h1>Control Setup</h1>
+      <hr />
+      <div style="overflow: scroll; height: 810px; margin-top: 10px;">
+        <table id="controlTable">
+          <tr>
+            <th>Action</th>
+            <th>Keyboard</th>
+            <th>Controller</th>
+          </tr>
+          <tr>
+            <td>Arm</td>
+            <td class="buttonmap">&lt; Unset &gt;</td>
+            <td class="buttonmap">&lt; Unset &gt;</td>
+          </tr>
+          <tr><td>Disarm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Press left</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+          <tr><td>Arm</td><td class="buttonmap">&lt; Unset &gt;</td><td class="buttonmap">&lt; Unset &gt;</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="configBox" id="pidTuning">
+      <button class="save">Save</button>
+      <button class="close">Close</button>
+      <h1>PID Tuning</h1>
+      <hr />
+      <div style="overflow: hidden; margin: 10px;">
+        <table class="configTable">
+          <tr>
+            <th>&nbsp;</th>
+            <th>P</th>
+            <th>I</th>
+            <th>D</th>
+          </tr>
+          <tr>
+            <td style="text-align: left;">Depth</td>
+            <td><input type="text" name="depthP" size="5" /></td>
+            <td><input type="text" name="depthI" size="5" /></td>
+            <td><input type="text" name="depthD" size="5" /></td>
+          </tr>
+          <tr>
+            <td style="text-align: left;">Heading</td>
+            <td><input type="text" name="headingP" size="5" /></td>
+            <td><input type="text" name="headingI" size="5" /></td>
+            <td><input type="text" name="headingD" size="5" /></td>
+          </tr>
+        </table>
+      </div>
+    </section>
+  </div>
 </body>
 
 </html>

@@ -127,8 +127,7 @@ module.exports = class Controls {
     if(this.keyboard[e.keyCode] != e.keyCode && !this.debounce[e.keyCode]) {
       this.keyboard[e.keyCode] = 100;
       this.debounce[e.keyCode] = true;
-      this.change(`k${e.keyCode}`, 100);
-      e.preventDefault();
+      if (this.change(`k${e.keyCode}`, 100)) e.preventDefault();
     }
   }
 
@@ -137,12 +136,222 @@ module.exports = class Controls {
     if(this.keyboard[e.keyCode] != e.keyCode) {
       this.keyboard[e.keyCode] = 0;
       this.debounce[e.keyCode] = false;
-      this.change(`k${e.keyCode}`, 0);
-      e.preventDefault();
+      if (this.change(`k${e.keyCode}`, 0)) e.preventDefault();
     }
   }
 }
 },{}],2:[function(require,module,exports){
+/*
+ * Dashboard Drawer
+ * Author: Thorleif Jacobsen
+ * Credits: Myself, my family and my girlfriend and child.
+ */
+
+module.exports = class Dashboard {
+
+  constructor(canvas) {
+
+    this.canvas = canvas
+
+    this.normalColor = 'rgba(255,255,255,1)'
+    this.warningColor = 'rgba(231,96,98,1)'
+    this.scales = []
+
+    this.setScale(0, "PRESSURE", 0, 160, 30)
+    this.setScale(1, "DEPTH", 0, 100, 30)
+    this.setScale(2, "TEMPERATURE", 0, 30, 0)
+    this.setScale(3, "VOLTAGE", 0, 16.8, -6.8)
+    this.setScale(4, "CURRENT", 0, 90, 10)
+    this.setScale(5, "MAH USED", 0, 5500, 1000)
+
+    this.thrusters = []
+
+    this.setThruster(3, 0, 0, 0, 45+180) // Top left
+    this.setThruster(0, 0, 100, 0, 315+180) // Top right
+    this.setThruster(4, 0, 20, 100, 180) // Middle left
+    this.setThruster(1, 0, 80, 100, 0) // Middle right
+    this.setThruster(5, 0, 0, 200, 135) // Bottom left
+    this.setThruster(2, 0, 100, 200, 225) // Bottom right
+  }
+
+  setScale(scale, desc, value, maxValue, warningDiff) {
+
+    const diff = (maxValue - value) * Math.sign(warningDiff)
+    const color = diff < warningDiff ? this.warningColor : this.normalColor
+    const percentage = Math.round(value / maxValue * 100)
+
+    this.scales[scale] = { desc, value, maxValue, percentage, color }
+  }
+
+  setThruster(number, value, offsetX = false, offsetY = false, rotation = false) {
+    let defValues = { value: 0, offsetX: 0, offsetY: 0, rotation: 0 }
+
+    if (this.thrusters[number]) {
+
+      defValues = {...defValues, ...this.thrusters[number]}
+    }
+
+    const newValues = {}
+    newValues.value = parseInt(value)
+    
+    if(offsetX != false) newValues.offsetX = parseInt(offsetX)
+    if(offsetY != false) newValues.offsetY = parseInt(offsetY)
+    if(rotation != false) newValues.rotation = parseInt(rotation)
+
+    this.thrusters[number] = {...defValues, ...newValues}
+
+  }
+
+  draw() {
+
+    const width = this.canvas.width
+    const height = this.canvas.height
+    const ctx = this.canvas.getContext('2d')
+
+    ctx.clearRect(0, 0, width, height)
+    ctx.fillStyle = "rgba(255,255,255,.2)"
+    ctx.fillRect(200, 0, 1, height)
+    ctx.strokeStyle = "rgba(255,255,255,.2)"
+    ctx.lineWidth = 3
+
+    var x = 50
+    var y = height / 2 - 100
+    var w = 100
+    var h = 200
+    var r = 10
+    ctx.beginPath()
+    ctx.moveTo(x + r, y)
+    ctx.lineTo(x + w - r, y)
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+    ctx.lineTo(x + w, y + h - r)
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+    ctx.lineTo(x + r, y + h)
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+    ctx.lineTo(x, y + r)
+    ctx.quadraticCurveTo(x, y, x + r, y)
+    ctx.closePath()
+    ctx.stroke()
+
+    this.thrusters.forEach(thruster => {
+      this.drawThruster(x + thruster.offsetX, y + thruster.offsetY, thruster.value, thruster.rotation)
+    })
+
+    const grid = ((width - 200) / 6)
+    const height1 = (height / 4) + 20
+    const height2 = height / 4 * 3
+
+    this.drawScale(200 + grid * 1, height1, this.scales[0].desc, this.scales[0].percentage, this.scales[0].color, this.scales[0].value)
+    this.drawScale(200 + grid * 3, height1, this.scales[1].desc, this.scales[1].percentage, this.scales[1].color, this.scales[1].value)
+    this.drawScale(200 + grid * 5, height1, this.scales[2].desc, this.scales[2].percentage, this.scales[2].color, this.scales[2].value)
+
+    this.drawScale(200 + grid * 1, height2, this.scales[3].desc, this.scales[3].percentage, this.scales[3].color, this.scales[3].value)
+    this.drawScale(200 + grid * 3, height2, this.scales[4].desc, this.scales[4].percentage, this.scales[4].color, this.scales[4].value)
+    this.drawScale(200 + grid * 5, height2, this.scales[5].desc, this.scales[5].percentage, this.scales[5].color, this.scales[5].value)
+
+  }
+
+
+  drawScale(x, y, title, percentage, color, value) {
+
+    const ctx = this.canvas.getContext('2d')
+
+    ctx.save()
+    ctx.translate(x, y)
+
+    if (!value) value = percentage
+
+    ctx.font = "bold 20px Open Sans"
+    ctx.textAlign = "center"
+    ctx.fillStyle = color
+    ctx.fillText(value, 0, 7)
+
+    ctx.font = "bold 12px Open Sans"
+    ctx.textAlign = "center"
+    ctx.fillStyle = color
+    ctx.fillText(title, 0, -55)
+
+    ctx.beginPath()
+    ctx.arc(0, 0, 40, 0, 2 * Math.PI, false)
+    ctx.lineWidth = 6
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'
+    ctx.stroke()
+    ctx.closePath()
+    if (percentage > 0) {
+      var pos = -0.4999 + (1.999 / 100 * percentage)
+      // -0.4999 to 1.4999
+      ctx.beginPath()
+      ctx.arc(0, 0, 40, 1.5 * Math.PI, pos * Math.PI, false)
+      ctx.lineWidth = 6.5
+      ctx.strokeStyle = color
+      ctx.stroke()
+      ctx.closePath()
+    }
+    ctx.restore()
+  }
+
+
+  drawThruster(x, y, percentage, direction) {
+
+    const ctx = this.canvas.getContext('2d')
+
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.beginPath()
+    ctx.arc(0, 0, 15, 0, 2 * Math.PI, false)
+    ctx.fillStyle = 'rgba(255,255,255,.2)'
+    ctx.fill()
+    ctx.lineWidth = 3
+    ctx.strokeStyle = 'rgba(255,255,255,1)'
+    ctx.stroke()
+    ctx.closePath()
+
+    if (percentage != 0) {
+      var pos = -0.4999 + (1.999 / 100 * Math.abs(percentage))
+      // -0.4999 to 1.4999
+      ctx.beginPath()
+      ctx.arc(0, 0, 15, 1.5 * Math.PI, pos * Math.PI, false)
+      ctx.lineWidth = 3.5
+      ctx.strokeStyle = 'rgba(231,96,98,1)'
+      ctx.stroke()
+      ctx.closePath()
+
+      ctx.lineWidth = 2
+      ctx.strokeStyle = 'rgba(255,255,255,1)'
+      ctx.fillStyle = 'rgba(255,255,255,1)'
+
+      if (percentage < 0) {
+        direction += 180
+      }
+
+      // Arrow
+      ctx.rotate(direction * 0.0174532925)
+      ctx.translate(0, -10)
+      ctx.beginPath()
+      ctx.moveTo(0, 0)
+      ctx.lineTo(4, 6)
+      ctx.lineTo(1.5, 6)
+      ctx.lineTo(1.5, 10)
+      ctx.lineTo(-1.5, 10)
+      ctx.lineTo(-1.5, 6)
+      ctx.lineTo(-4, 6)
+      ctx.closePath()
+      ctx.fill()
+
+      // Two lines
+      ctx.beginPath()
+      ctx.moveTo(-7, 13)
+      ctx.lineTo(7, 13)
+      ctx.moveTo(-7, 17)
+      ctx.lineTo(7, 17)
+      ctx.closePath()
+      ctx.stroke()
+    }
+
+    ctx.restore()
+  }
+}
+
+},{}],3:[function(require,module,exports){
 /*
  * Small, Simple, EventEmitter
  * Author: Thorleif Jacobsen
@@ -169,150 +378,366 @@ module.exports = class EventEmitter {
         return true;
     }
 }
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 const EventEmitter = require('./EventEmitter.js');
 
 module.exports = class GUI extends EventEmitter {
 
     constructor() {
         super();
-
-        this.canvas = null;
+       
+        this.accelCanvas = null;
+        this.compassCanvas = null;
         this.compassRose = new Image();
+        this.dataGraphCanvasContext = null;
         this.compassRose.src = 'gfx/compass_rose.png';
+
+        this.overlayTimer = null;
     };
 
     map(x, in_min, in_max, out_min, out_max) {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     };
 
-    showChip(id, value, options = {}) {
+    log(text, time, doNotEmit, level = "info") {
+        if (time == undefined) time = Date.now();
 
-        // if chip does not exist, create it
-        let chip = document.getElementById(`chip_${id}`);
-        if (!chip) {
-            chip = document.createElement("chip");
-            chip.id = `chip_${id}`;
-            chip.innerHTML = `<title></title><value>${value}</value>`;
-            document.body.appendChild(chip);
-        }
+        if(!doNotEmit) super.emit("log", text, time);
 
-        // Merge existing options if exists
-        if (chip.options) options = { ...chip.options, ...options };
+        let d = new Date(time).toISOString();
+        let timestamp = d.split('T')[1].split('.')[0] + " | " + d.split('T')[0];
 
-        // Add unit to value if exists
-        if (options.unit) {
-            if (options.sup) value += `<sup>${options.unit}</sup>`;
-            else if (options.sub) value += `<sub>${options.unit}</sub>`;
-            else value += options.unit;
-        }
+        text = `<span style='color:var(--log-${level}-color);'>${text}</span>`;
 
-        // Set value
-        chip.getElementsByTagName("value")[0].innerHTML = value;
+        const table = document.getElementById("logTable")
+        const tr = document.createElement("tr")
+        tr.innerHTML = "<th>" + timestamp + "</th><td>" + text + "</td>";
+        table.prepend(tr);
+    };
 
-        // set options
-        if (options.color) chip.style.backgroundColor = options.color;
-        if (options.x) chip.style.left = `${options.x}px`;
-        if (options.y) chip.style.top = `${options.y}px`;
-        if (options.title) chip.getElementsByTagName("title")[0].innerHTML = options.title;
-        if (options.rightAlign) chip.classList.add("right");
-        else chip.classList.remove("right");
-
-        // Save options
-        chip.options = options;
+    setButton(name, text, callback) {
+        const btn = document.getElementsByName(name)[0];
+        if (!btn) return false;
+        if (text) btn.innerHTML = text;
+        if (callback) btn.onclick = (e) => callback(e);
+        return true;
     }
 
-    showButtons() {
-        // Show all buttons:
-        const buttons = document.getElementsByTagName("button");
-        for (let i = 0; i < buttons.length; i++) {
-            buttons[i].style.display = "block";
-        }
+    buttonState(name, newState) {
+        const btn = document.getElementsByName(name)[0];
+        if (!btn) return null;
+        else if (newState === true) { btn.classList.add("selected"); } 
+        else if (newState === false) { btn.classList.remove("selected"); }
+        return btn.classList.contains("selected");
     }
 
-    ifButtonVisible() {
-        // Show all buttons:
-        const buttons = document.getElementsByTagName("button");
-        for (let i = 0; i < buttons.length; i++) {
-            if(buttons[i].style.display == "block") return true;
-        }
-        return false;
-    }
+    pressButton(name) {
+        const btn = document.getElementsByName(name)[0];
+        return btn && btn.click();
+    };
 
-    hideAllButtons() {
-        // Hide all buttons:
-        const buttons = document.getElementsByTagName("button");
-        for (let i = 0; i < buttons.length; i++) {
-            buttons[i].style.display = "none";
-        }
-    }
+    overlayText(message, time) {
+        clearTimeout(this.overlayTimer);
+        const overlay = document.getElementById("overlay");
 
-    button(id, options = {}) {
+        overlay.innerHTML = message;
+        overlay.style.display = "block";
+        overlay.style.opacity = 1;
+        this.overlayTimer = setTimeout(() => { overlay.style.opacity = 0; }, time);
+    };
 
-        // if chip does not exist, create it
-        let button = document.getElementById(`button_${id}`);
-        if (!button) {
-            button = document.createElement("button");
-            button.id = `button_${id}`;
-            button.name = id;
-            document.body.appendChild(button);
-            button.onclick = () => this.emit("click", button);
-        }
+    setInfo(no, value, titleText = false) {
+        no--;
+        let parent = document.getElementsByClassName("data")[0];
+        let child = parent.getElementsByTagName("li")[no];
+        let title = child.getElementsByTagName("b")[0];
+        let text = child.getElementsByTagName("span")[0];
 
-        // Merge existing options if exists
-        if (button.options) options = { ...button.options, ...options };
-
-        // set options
-        if (options.color) button.style.backgroundColor = options.color;
-        if (options.x) button.style.left = `${options.x}px`;
-        if (options.y) button.style.top = `${options.y}px`;
-        if (options.title) button.innerHTML = options.title;
-        
-
-
- 
-        // Save options
-        button.options = options;
-    }
-
-
-    drawCompass(heading) {
-        const width = this.canvas.width;
-        const height = this.canvas.height;
-        const ctx = this.canvas.getContext("2d");
-
-        ctx.clearRect(0, 0, width, height);
-    
-        heading = Math.round(heading)
-    
-        // Rose
-        const left = (width / 2 - 74) - ((1200 / 360) * heading);
-        ctx.drawImage(this.compassRose, left, 0);
-        ctx.drawImage(this.compassRose, -1200 + left, 0);
-        ctx.drawImage(this.compassRose, 1200 + left, 0);
-    
-        // // Heading background
-        // ctx.save()
-        // ctx.beginPath()
-        // ctx.fillStyle = "rgba(0,0,255,0.2)";
-        // ctx.strokeStyle = "rgba(255,255,255,1)";
-        // ctx.lineWidth = 2;
-        // ctx.rect(width/2-35,-2,70,30)
-        // ctx.stroke()
-        // ctx.fill()
-        // ctx.closePath()
-        // ctx.restore()
-    
-        // // Heading
-        // ctx.font = "bold 25px Open Sans";
-        // ctx.textBaseline = "middle";
-        // ctx.textAlign = "center";
-        // ctx.fillStyle = "rgb(255,255,255)";
-        // ctx.fillText(heading.toString().padStart(3,'0'), width/2, 15);
-      }
+        if(titleText) title.innerHTML = titleText;
+        text.innerHTML = value;
+    };
 
 }
-},{"./EventEmitter.js":2}],4:[function(require,module,exports){
+},{"./EventEmitter.js":3}],5:[function(require,module,exports){
+/*
+ * HudBlock Drawer
+ * Author: Thorleif Jacobsen
+ * Credits: Myself, my family and my girlfriend and child.
+ */
+
+module.exports = class HUDBlock {
+  
+  constructor(canvas) {
+
+    this.canvas = canvas
+    this.compassRose = new Image()
+    this.compassRose.src = "gfx/compass_rose.png"
+    this.pitch = 0;
+    this.roll = 0;
+    this.heading = 0;
+  }
+
+
+  draw(pitch = this.pitch, roll = this.roll, heading = this.heading) {
+
+    this.roll = roll;
+    this.pitch = pitch;
+    this.heading = heading;
+
+    const width = this.canvas.width
+    const height = this.canvas.height
+    const ctx = this.canvas.getContext('2d')
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.save()
+    this.drawArtificialHorizon(pitch, roll)
+    this.drawCompass(heading)
+    ctx.restore()
+  }
+
+
+  drawArtificialHorizon(pitch, roll) {
+
+    const width         = this.canvas.width
+    const height        = this.canvas.height
+    const ctx           = this.canvas.getContext('2d')
+    const centerY       = height / 2
+    const centerX       = width / 2
+    const pixelPrDegree = (height / 2) / 30 // (Top = 30 deg bottom = -30 deg)
+
+    
+
+    // Draw background lines each 5deg
+    ctx.fillStyle = "rgba(145,152,169,0.2)";
+    ctx.fillRect(0, centerY - (pixelPrDegree * 20), width, 2) // +20 degrees
+    ctx.fillRect(0, centerY - (pixelPrDegree * 10), width, 2) // +10 degrees
+    ctx.fillRect(0, centerY, width, 2)                        // 0 degrees
+    ctx.fillRect(0, centerY + (pixelPrDegree * 10), width, 2) // -10 degrees
+    ctx.fillRect(0, centerY + (pixelPrDegree * 20), width, 2) // -20 degrees
+
+    // Draw square showing roll and pitch
+    ctx.beginPath()
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    if (Math.abs(roll) > 5 || Math.abs(pitch) > 5) { ctx.fillStyle = "rgba(231,96,98,.2)"; }
+    else { ctx.fillStyle = "rgba(255,255,255,.2)"; }
+    ctx.lineWidth = 2;
+    ctx.save()
+    ctx.translate(centerX, centerY + pitch * pixelPrDegree);
+    ctx.rotate(roll * Math.PI / 180);
+    ctx.translate(-centerX, 0);
+    ctx.rect(-centerX, 0, width * 2, height * 4);
+    ctx.restore()
+    ctx.stroke();
+    ctx.fill();
+    ctx.closePath()    
+
+
+    
+    roll = Math.round(roll);
+    pitch = Math.round(pitch);
+
+    // Common text formats
+    ctx.font = "bold 15px Open Sans";
+    ctx.textBaseline = "middle";
+
+    // Draw PITCH text    
+    ctx.fillStyle = "rgb(255,255,255)";
+    ctx.fillText("PITCH", 20, centerY);
+    ctx.fillStyle = "rgb(231,96,98)";
+    ctx.fillText(pitch + "°", 20 + ctx.measureText("PITCH ").width, centerY)
+
+    // Draw ROLL text
+    ctx.textAlign = "right";
+    ctx.fillStyle = "rgb(255,255,255)";
+    ctx.fillText("ROLL", width - 20 - ctx.measureText(roll + "° ").width, centerY);
+    ctx.fillStyle = "rgb(231,96,98)";
+    ctx.fillText(roll + "°", width - 20, centerY)
+  }
+
+
+  drawCompass(heading) {
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+    const ctx = this.canvas.getContext("2d");
+
+    heading = Math.round(heading)
+
+    // Rose
+    const left = (width / 2 - 74) - ((1200 / 360) * heading);
+    ctx.drawImage(this.compassRose, left, 0);
+    ctx.drawImage(this.compassRose, -1200 + left, 0);
+    ctx.drawImage(this.compassRose, 1200 + left, 0);
+
+    // Heading background
+    ctx.save()
+    ctx.beginPath()
+    ctx.fillStyle = "#fb6362";
+    ctx.strokeStyle = "rgba(145,152,169,1)";
+    ctx.lineWidth = 2;
+    ctx.rect(width/2-35,-2,70,30)
+    ctx.stroke()
+    ctx.fill()
+    ctx.closePath()
+    ctx.restore()
+
+    // Heading
+    ctx.font = "bold 25px Open Sans";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgb(255,255,255)";
+    ctx.fillText(heading.toString().padStart(3,'0'), width/2, 15);
+  }
+}
+
+},{}],6:[function(require,module,exports){
+/*
+ * LineChart Drawer
+ * Author: Thorleif Jacobsen
+ * Credits: Myself, my family and my girlfriend and child.
+ */
+
+module.exports = class LineChart {
+
+  #canvas;
+  #ctx;
+  #points;
+  #seaLevelOffset;
+
+  constructor(canvas) {
+
+    this.#canvas = canvas;
+    this.#ctx = this.#canvas.getContext("2d");
+
+    this.setDepthScale(10);
+    this.setTimeScale(60*3); // 2 minute
+
+    this.#seaLevelOffset = 1; // 1 meter down
+
+    this.#points = [];
+  }
+
+  setTimeScale(timeScale) {
+    this.timeScale = timeScale;
+    this.pixelsPerSecond = this.#canvas.width / this.timeScale;
+  }
+
+  setDepthScale(depthScale) {
+    this.depthScale = depthScale + this.#seaLevelOffset;
+    this.pixelsPerCentimeter = this.#canvas.height / (this.depthScale * 100);
+  }
+
+
+  addDataPoint(depth) {
+
+    this.#points.push({ depth, time: new Date() });
+    this.checkDatapoints();
+  }
+
+  // Remove all points outside of current time minus the time scale
+  checkDatapoints() {
+    let time = new Date();
+    let deepest = 0;
+    this.#points.forEach((point, index) => {
+
+      // Calculate time difference
+      const diff = (time - point.time) / 1000;
+      // Remove if diff is bigger than the time scale
+      if (diff > this.timeScale) {
+        this.#points.splice(index, 1);
+      }
+
+      // Find the deepets point 
+      if (point.depth > deepest) { deepest = point.depth; }
+    });
+
+    // Update depth scale if needed     
+    if (deepest < 5) deepest = 5;
+    this.setDepthScale(deepest);
+    this.setTimeScale(this.timeScale);
+  }
+
+  draw() {
+    this.drawPoints();
+    this.drawDepthScale();
+  }
+
+
+  drawPoints() {
+    this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+    this.#ctx.save();
+
+    let lastPointsTime = this.#points[0] ? this.#points[0].time : new Date();
+    let sealevel = (this.#seaLevelOffset * 100) * this.pixelsPerCentimeter;;
+
+    this.#ctx.beginPath();
+    this.#ctx.lineWidth = 3;
+    this.#ctx.strokeStyle = "rgba(255,255,255,0.9)";
+
+    // Draw lines between each point.
+    this.#points.forEach(point => {
+
+      // Calculate y axis position
+      let yPosition = (point.depth * 100) * this.pixelsPerCentimeter;
+
+      // Calculate x axis position
+      let timeDiff = (point.time - lastPointsTime) / 1000;  // In seconds
+      let xPosition = timeDiff * this.pixelsPerSecond;
+
+      // Draw line
+      this.#ctx.lineTo(xPosition, yPosition + sealevel);
+    });
+
+    this.#ctx.stroke();
+
+    this.#ctx.beginPath();
+    this.#ctx.strokeStyle = "rgba(0,255,0,0.1)";
+    this.#ctx.moveTo(0, sealevel);
+    this.#ctx.lineTo(this.#canvas.width, sealevel);
+    this.#ctx.stroke();
+    this.#ctx.restore();
+  }
+
+  drawDepthScale() {
+
+    // Common text formats
+    const offSet =  this.#seaLevelOffset * 100 * this.pixelsPerCentimeter;
+    let increment;
+    
+    if(this.depthScale < 10) { increment = 1; }
+    else if(this.depthScale < 20) { increment = 2; }
+    else if(this.depthScale < 50) { increment = 5; }
+    else if(this.depthScale < 100) { increment = 5; }
+    else { increment = 20; }
+
+    // Spread numbers of meters between depth scale
+    for (let i = 0; i < this.depthScale-1; i+=increment) {
+      let yPosition = (i * 100) * this.pixelsPerCentimeter + offSet;
+      this.writeText(i + "m", yPosition);
+    }
+
+  }
+
+
+
+  writeText(text, y, baseline = "middle") {
+    this.#ctx.font = "bold 15px Open Sans";
+    this.#ctx.textBaseline = baseline;
+
+    this.#ctx.textAlign = "left";
+
+    this.#ctx.fillStyle = "rgb(255,255,255)";
+    this.#ctx.fillText(text, 10, y);
+  }
+
+  toggleWide() {
+    this.#canvas.parentElement.classList.toggle("fullWidth");
+    this.#canvas.height = this.#canvas.offsetHeight;
+    this.#canvas.width = this.#canvas.offsetWidth;
+  }
+
+}
+
+},{}],7:[function(require,module,exports){
 /*
  * My custom socket class.
  * Author: Thorleif Jacobsen
@@ -385,12 +810,11 @@ module.exports = class Socket extends EventEmitter {
   };
 
   send(data) {
-    debugger;
     try { this.ws.send(data); }
     catch (e) { }
   };
 }
-},{"./EventEmitter.js":2}],5:[function(require,module,exports){
+},{"./EventEmitter.js":3}],8:[function(require,module,exports){
 const Decoder = require('./broadway/Decoder.js');
 const YUVCanvas = require('./broadway/YUVCanvas.js');
 const Player = require('./broadway/Player.js');
@@ -401,7 +825,10 @@ module.exports = class Video extends EventEmitter {
     constructor(videoElement) {
         super();
 
-        this.player = new Player({});
+        this.player = new Player({
+            useWorker: false,
+            webgl: true
+        });
         this.canvas = this.player.canvas;
         this.skipFrames = false;
 
@@ -417,11 +844,12 @@ module.exports = class Video extends EventEmitter {
 
  
     decodeFrame(frame) {
-
         if (this.skipFrames) { return; }
         try {
+            this.skipFrames = true;
             frame = new Uint8Array(frame);
             this.player.decode(frame);
+            this.skipFrames = false;
         } catch (e) {
             console.log(e)
         }
@@ -437,9 +865,19 @@ module.exports = class Video extends EventEmitter {
     
         const videoMaxWidth = this.videoElement.clientWidth; // Size excluding border
         const videoMaxHeight = this.videoElement.clientHeight; // Size excluding border
-        const zoom = Math.min(videoMaxWidth / width, videoMaxHeight / height);
-    
+
+        // Min will make no video dissapear, max will fill
+        const zoom = Math.max(videoMaxWidth / width, videoMaxHeight / height);
+
+        // lets center this aswell
+        const left = Math.abs(videoMaxWidth - width) / 2
+        const top = Math.abs(videoMaxHeight - height) / 2
+
         this.canvas.style.zoom = zoom;
+        this.canvas.style.left = left;
+        this.canvas.style.top = top;
+
+        console.log(zoom,left,top);
     }
 
     startRecord() {
@@ -454,7 +892,7 @@ module.exports = class Video extends EventEmitter {
         return this.ws.send('record state');
     }
 }
-},{"./EventEmitter.js":2,"./broadway/Decoder.js":6,"./broadway/Player.js":7,"./broadway/YUVCanvas.js":8}],6:[function(require,module,exports){
+},{"./EventEmitter.js":3,"./broadway/Decoder.js":9,"./broadway/Player.js":10,"./broadway/YUVCanvas.js":11}],9:[function(require,module,exports){
 (function (process,__dirname){(function (){
 // universal module definition
 (function (root, factory) {
@@ -1312,7 +1750,7 @@ var wa=[Db,rb];var xa=[Eb,qb,sb,pb];var ya=[Fb,Ya,Xa,Fb];var za=[Gb,tb];return{_
 
 
 }).call(this)}).call(this,require('_process'),"/app/lib/broadway")
-},{"_process":11}],7:[function(require,module,exports){
+},{"_process":14}],10:[function(require,module,exports){
 /*
 
 
@@ -1649,7 +2087,7 @@ p.decode(<binary>);
 }));
 
 
-},{"./Decoder":6,"./YUVCanvas":8}],8:[function(require,module,exports){
+},{"./Decoder":9,"./YUVCanvas":11}],11:[function(require,module,exports){
 //
 //  Copyright (c) 2015 Paperspace Co. All rights reserved.
 //
@@ -2205,18 +2643,50 @@ YUVCanvas.prototype.drawNextOuptutPictureRGBA = function(width, height, cropping
   
 }));
 
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 const $ = require('jquery');
 const Socket = require('./lib/Socket.js')
 const Video = require('./lib/Video.js')
 const Controls = require('./lib/Controls.js')
 const GUI = require('./lib/GUI.js')
+const HUDBlock = require('./lib/HUDBlock.js')
+const Dashboard = require('./lib/Dashboard.js')
+const LineChart = require('./lib/LineChart.js')
 
 /* Initialize classes */
 const socket = new Socket();
 const video = new Video($('#video')[0]);
 const controls = new Controls();
 const gui = new GUI();
+const dashboard = new Dashboard(document.getElementById("dataGraphicsCanvas"))
+const hudBlock = new HUDBlock(document.getElementById("HUD"))
+const lineChart = new LineChart(document.getElementById("HUD"))
+
+/************************
+ * Scaling
+ ************************/
+
+const containerEl = document.getElementById('container');
+const containerMaxWidth = containerEl.offsetWidth;
+const containerMaxHeight = containerEl.offsetHeight;
+
+function resize() {
+    const sWidth = window.innerWidth;
+    const sHeight = window.innerHeight;
+    containerEl.style.zoom = Math.min(sWidth / containerMaxWidth, sHeight / containerMaxHeight);
+};
+
+resize();
+
+window.addEventListener("resize", resize);
+
+
+// Fix canvas width/height.
+const allCanvas = document.getElementsByTagName("canvas");
+for (let i = 0; i < allCanvas.length; i++) {
+    allCanvas[i].height = allCanvas[i].offsetHeight;
+    allCanvas[i].width = allCanvas[i].offsetWidth;
+}
 
 /************************
   * Controls on press e.t.c
@@ -2227,7 +2697,7 @@ controls.onPress("adjustGain", (step) => { socket.send(`adjustGain ${step}`); })
 controls.onPress("adjustCamera", (step) => { socket.send(`adjustCamera ${step}`); }, 250);
 controls.onPress("centerCamera", () => { socket.send(`centerCamera`); }, 250);
 controls.onPress("adjustLight", (step) => { socket.send(`adjustLight ${step}`); }, 250);
-controls.onPress("fullScreen", () => { gui.pressButton("gui-controls-button-8"); }, 1000)
+controls.onPress("fullscreen", () => { gui.pressButton("gui-controls-button-8"); }, 1000)
 controls.onPress("arm", () => { socket.send("arm"); });
 controls.onPress("disarm", () => { socket.send("disarm"); }, 1000);
 controls.onPress("depthHold", () => { socket.send("depthHoldToggle"); });
@@ -2247,92 +2717,108 @@ socket.connect(`wss://${location.hostname}:8000`);
 socket.on("hb", (data) => {
     const [sendtTime, latency] = data.split(" ");
     socket.send("hb " + sendtTime);
-    gui.showChip("latency", latency);
+    gui.setInfo(12, latency + "ms");
 });
 
-gui.showChip("cpuTemperature", "0", { title: "Temp", unit: "°", sup: true, x: 730, y: 330, rightAlign: true });
-gui.showChip("cpuLoad", "0", { title: "Load", unit: "%", sub: true, x: 730, y: 380, rightAlign: true });
-gui.showChip("latency", "0", { title: "Latency", unit: "ms", sub: true, x: 730, y: 430, rightAlign: true });
+/************************
+ * GUI Preparations
+ ************************/
 
-gui.showChip("depth", "0", { title: "Depth", unit: "m", sub: true, x: 730, y: 10, rightAlign: true });
-gui.showChip("eTemperature", "0", { title: "Water", unit: "°", sup: true, x: 730, y: 60, rightAlign: true });
+gui.log("Initializing NodeROV GUI");
+gui.overlayText("Connecting to NodeROV...", 2000);
 
-gui.showChip("turns", "3.2", { title: "Turns", x: 10, y: 10 });
-gui.showChip("heading", "360", { title: "Heading", x: 10, y: 60 });
-gui.showChip("roll", "360", { title: "Roll", x: 80, y: 10 });
-gui.showChip("pitch", "360", { title: "Pitch", x: 10, y: 120 });
-
-
-gui.showChip("voltage", "12.3", { title: "Voltage", unit: "V", sub: true, x: 10, y: 330 });
-gui.showChip("current", "13.2", { title: "Current", unit: "A", sub: true, x: 10, y: 380 });
-gui.showChip("accumulatedMah", "3212", { title: "MAH", unit: "mA", sub: true, x: 10, y: 430 });
-
-// x = 100 if two rows. x = 400 if 1 row.
-gui.button("armtoggle", { title: "Arm", x: 100, y: 50, color: "#0000ff80" });
-gui.button("level", { title: "Calibrate flat", x: 100, y: 110, color: "#0000ff80" });
-gui.button("headinghold", { title: "Heading Hold", x: 100, y: 170, color: "#0000ff80" });
-gui.button("depthhold", { title: "Depth Hold", x: 100, y: 230, color: "#0000ff80" });
-gui.button("light+", { title: "Light +", x: 100, y: 290, color: "#0000ff80" });
-gui.button("light-", { title: "Light -", x: 100, y: 350, color: "#0000ff80" });
-gui.button("lightoff", { title: "Light: 0%", x: 100, y: 410, color: "#0000ff80" });
-
-// gui.button("b1", { title: "Arm", x: 500, y: 50, color: "#0000ff80" });
-// gui.button("buatton2", { title: "Arm", x: 500, y: 110, color: "#0000ff80" });
-gui.button("recordToggle", { title: "Record", x: 500, y: 170, color: "#0000ff80" });
-gui.button("resetMahCounter", { title: "Reset mAh", x: 500, y: 230, color: "#0000ff80" });
-gui.button("gain+", { title: "Gain +5", x: 500, y: 290, color: "#0000ff80" });
-gui.button("gain-", { title: "Gain -5", x: 500, y: 350, color: "#0000ff80" });
-gui.button("gainoff", { title: "Gain: 0", x: 500, y: 410, color: "#0000ff80" });
-
-gui.hideAllButtons();
-$('#video').on('click', () => {
-    if (gui.ifButtonVisible()) gui.hideAllButtons();
-    else gui.showButtons();
+gui.on("log", (data) => {
+    //socket.send(`clog ${data}`);
 })
 
 
-gui.on("click", (button) => {
-    switch (button.name) {
-        case "armtoggle":
-            socket.send("toggleArm");
-            break;
-        case "headinghold":
-            socket.send("headingHoldToggle");
-            break;
-        case "depthhold":
-            socket.send("depthHoldToggle");
-            break;
-        case "level":
-            socket.send("calibrateAccelGyroBias");
-            break;
-        case "light+":
-            socket.send("adjustLight +10");
-            break;
-        case "light-":
-            socket.send("adjustLight -10");
-            break;
-        case "lightoff":
-            socket.send("setLight 0");
-            break;
-        case "gain+":
-            socket.send("adjustGain +5");
-            break;
-        case "gain-":
-            socket.send("adjustGain -5");
-            break;
-        case "gainoff":
-            socket.send("setGain 0");
-            break;
-        case "resetMahCounter":
-            socket.send("resetMahCounter");
-            break;
-        case "recordToggle":
-            socket.send("recordToggle");
-            break;    
-        default:
-            break;
+gui.accelCanvas = document.getElementById("accelerometerCanvas");
+gui.compassCanvas = document.getElementById("compassCanvas");
+gui.dataGraphCanvas = document.getElementById("dataGraphicsCanvas");
+
+gui.setButton("gui-controls-button-1", "LIGHT + 5", () => {
+    socket.send(`adjustLight 5`);
+});
+gui.setButton("gui-controls-button-3", "LIGHT - 5", () => {
+    socket.send(`adjustLight -5`);
+});
+
+gui.setButton("gui-controls-button-5", "Depthchart", () => {
+    if (gui.buttonState("gui-controls-button-5")) {
+        hudBlock.draw();
+        gui.buttonState("gui-controls-button-5", false);
+    } else {
+        lineChart.draw();
+        gui.buttonState("gui-controls-button-5", true);
     }
 });
+
+gui.setButton("gui-controls-button-2", "ARM", () => { socket.send("toggleArm"); });
+gui.setButton("gui-controls-button-4", "HEADING HOLD", () => { socket.send("headingHoldToggle"); });
+gui.setButton("gui-controls-button-6", "DEPTH HOLD", () => { socket.send("depthHoldToggle"); });
+gui.setButton("gui-controls-button-7", "RECORD", () => { socket.send("recordToggle"); });
+
+gui.setButton("gui-controls-button-8", "FULLSCREEN", () => {
+    const videoEl = document.getElementById("video");
+    videoEl.classList.toggle("fullscreen");
+    gui.buttonState("gui-controls-button-8", videoEl.classList.contains("fullscreen"));
+    videoEl.onclick = () => { gui.pressButton("gui-controls-button-8"); };
+});
+gui.setButton("gui-controls-button-9", "RESET MAH", () => { socket.send("resetMahCounter"); });
+gui.setButton("gui-controls-button-10", "CALIBRATE", () => { socket.send("calibrateAccelGyroBias"); });
+
+gui.setButton("gui-controls-button-11", "PID Tuning", () => {
+    $("#pidTuning").toggle();
+});
+
+
+gui.setButton("gui-log-button-1", "ADD EVENT", () => {
+    var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
+    popup("Add event", msg, "Add", "Cancel", function () {
+        gui.log("Custom event: " + $("#eventmsg").val());
+        popup_hide();
+    });
+    $("#eventmsg").focus();
+});
+
+gui.setButton("gui-log-button-2", "SCREENSHOT", (e) => {
+    var data = video.player.canvas.toDataURL("image/jpeg", 1);
+    var filename = "noderov_" + (Date.now() / 1000) + ".jpg";
+    gui.log("Screenshot saved (" + filename + ")");
+    $("<a download='" + filename + "' href='" + data + "'></a>")[0].click();
+});
+
+gui.setInfo(1, 0, "Int. temp:");
+gui.setInfo(2, 0, "Int. pressure:");
+gui.setInfo(3, 0, "Int. humidity:");
+gui.setInfo(4, 0, "Leak:");
+gui.setInfo(5, 0, "CPU temp:");
+gui.setInfo(6, 0, "CPU usage:");
+gui.setInfo(7, 0, "Memory:");
+gui.setInfo(8, 0, "Disk:");
+gui.setInfo(9, 0, "Gain");
+gui.setInfo(10, 0, "Camera");
+gui.setInfo(11, 0, "Light");
+gui.setInfo(12, 0, "Latency:");
+
+$("#pidTuning .close").on('click', () => {
+    gui.pressButton("gui-controls-button-11");
+});
+$("#pidTuning .save").on('click', () => {
+    const newPid = {
+        depthPid: {
+            p: $("input[name=depthP").val(),
+            i: $("input[name=depthI").val(),
+            d: $("input[name=depthD").val()
+        },
+        headingPid: {
+            p: $("input[name=headingP").val(),
+            i: $("input[name=headingI").val(),
+            d: $("input[name=headingD").val()
+        }
+    }
+    socket.send(`newPid ${JSON.stringify(newPid)}`);
+})
 
 gui.canvas = $("#dataGraphicsCanvas")[0];
 
@@ -2352,87 +2838,120 @@ socket.on("data", (data) => {
     }
     switch (type) {
 
-        case "iTemperature": // gui.showChip("temperature", "Temperature", `${value}<sup>°</sup>`, 730, 380);
-        case "iPressure": // gui.setInfo(2, Math.round(value * 0.145038) / 10 + " PSI");
-        case "iHumidity": // gui.setInfo(3, value + "%");
-        case "ePressure": // dashboard.setScale(0, "PRESSURE", value, 1300, 30);
-        case "leak": // gui.setInfo(4, value);
+        case "iTemperature":
+            gui.setInfo(1, value + "°C");
+            break;
+
+        case "iPressure":
+            gui.setInfo(2, Math.round(value * 0.145038) / 10 + " PSI");
+
+            break;
+
+        case "iHumidity":
+            gui.setInfo(3, value + "%");
             break;
 
         case "eTemperature":
+            dashboard.setScale(2, "TEMPERATURE", value, 30, 0);
+            dashboard.draw();
+            break;
+
+        case "ePressure":
+            dashboard.setScale(0, "PRESSURE", value, 1300, 30);
+            dashboard.draw();
+            break;
+
         case "depth":
+            dashboard.setScale(1, "DEPTH", value, 100, 30);
+            dashboard.draw();
+            lineChart.addDataPoint(value);
+            if (gui.buttonState("gui-controls-button-5")) lineChart.draw();
+            break;
+
+        case "leak":
+            gui.setInfo(4, value);
+            break;
+
         case "voltage":
+            dashboard.setScale(3, "VOLTAGE", value, 16.8, -6.8);
+            dashboard.draw();
+            break;
+
         case "current":
+            dashboard.setScale(4, "CURRENT", value, 90, 10);
+            dashboard.draw();
+            break;
+
         case "accumulatedMah":
-        case 'cpuLoad':
-        case 'cpuTemperature':
-            gui.showChip(type, value);
+            dashboard.setScale(5, "MAH USED", value, 5500, 1000);
+            dashboard.draw();
             break;
 
         case "roll":
-            gui.showChip("roll", value);
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, value, undefined);
             break;
 
         case "pitch":
-            gui.showChip("pitch", value);
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(value, undefined, undefined)
             break;
 
         case "heading":
-            gui.drawCompass(value);
-            gui.showChip("heading", value);
+            if (!gui.buttonState("gui-controls-button-5")) hudBlock.draw(undefined, undefined, value)
             break;
 
-        case "turns":
-            gui.showChip("turns", value);
+        case 'cpuTemperature':
+            gui.setInfo(5, Math.round(value * 10) / 10 + "°C");
+            break;
+
+        case 'cpuLoad':
+            gui.setInfo(6, Math.round(value * 10) / 10 + "%");
             break;
 
         case 'memoryUsed':
-            // gui.setInfo(7, Math.round(value * 10) / 10 + "%");
+            gui.setInfo(7, Math.round(value * 10) / 10 + "%");
             break;
 
         case 'diskUsed':
-            // gui.setInfo(8, Math.round(value * 10) / 10 + "%");
+            gui.setInfo(8, Math.round(value * 10) / 10 + "%");
             break;
 
         case 'gain':
-            gui.button("gainoff", { title: `Gain: ${value}%`, color: value == 0 ? "#0000ff80" : "#00ff0080"});
+            gui.setInfo(9, value);
             break;
 
         case 'camera':
-            // gui.setInfo(10, value);
+            gui.setInfo(10, value);
             break;
 
         case 'light':
-            gui.button("lightoff", { title: `Light: ${value}%`, color: value == 0 ? "#0000ff80" : "#00ff0080"});
+            gui.setInfo(11, value);
             break;
 
         case 'headingHold':
-            if (value) gui.button("headinghold", { title: "Heading Hold", color: "#00ff0080" });
-            else gui.button("headinghold", { title: "Heading Hold", color: "#0000ff80" });
+            gui.buttonState("gui-controls-button-4", value.setPoint !== false);
+            $("input[name=headingP").val(value.p);
+            $("input[name=headingI").val(value.i);
+            $("input[name=headingD").val(value.d);
             break;
 
         case 'depthHold':
-            if (value) gui.button("depthhold", { title: "Depth Hold", color: "#00ff0080" });
-            else gui.button("depthhold", { title: "Depth Hold", color: "#0000ff80" });
+            gui.buttonState("gui-controls-button-6", value.setPoint !== false);
+            $("input[name=depthP").val(value.p);
+            $("input[name=depthI").val(value.i);
+            $("input[name=depthD").val(value.d);
             break;
 
         case 'armed':
-            if (value) gui.button("armtoggle", { title: "Disarm", color: "#00ff0080" });
-            else gui.button("armtoggle", { title: "Arm", color: "#0000ff80" });
-            // gui.buttonState("gui-controls-button-2", value);
+            gui.buttonState("gui-controls-button-2", value);
             break;
 
         case 'recordStateChange':
-            let color = "#0000ff80";
-            if (value == "stopped") color = "#0000ff80";
-            if (value == "waitingidr") color = "#ffff0080";
-            if (value == "recording") color = "#ff000080";
-            gui.button("recordToggle", { title: "Record", color });
+            gui.buttonState("gui-controls-button-7", value == "recording" || value == "waitingidr");
             break;
 
         default:
             gui.log(`Unknown enviroment type received: ${type} (${value})`, undefined, undefined, "warn");
-            break;
+            return;
     }
 });
 
@@ -2444,7 +2963,6 @@ socket.on("log", function (data) {
 })
 
 socket.on("ts", (data) => {
-    return;
     try {
         data = JSON.parse(data);
         console.log(data);
@@ -2454,7 +2972,7 @@ socket.on("ts", (data) => {
 
     } catch (e) { }
 });
-},{"./lib/Controls.js":1,"./lib/GUI.js":3,"./lib/Socket.js":4,"./lib/Video.js":5,"jquery":10}],10:[function(require,module,exports){
+},{"./lib/Controls.js":1,"./lib/Dashboard.js":2,"./lib/GUI.js":4,"./lib/HUDBlock.js":5,"./lib/LineChart.js":6,"./lib/Socket.js":7,"./lib/Video.js":8,"jquery":13}],13:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.7.0
  * https://jquery.com/
@@ -13160,7 +13678,7 @@ if ( typeof noGlobal === "undefined" ) {
 return jQuery;
 } );
 
-},{}],11:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -13346,4 +13864,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[9]);
+},{}]},{},[12]);

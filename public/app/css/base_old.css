@@ -1,0 +1,102 @@
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Open Sans Bold'), local('OpenSans-Bold'), url(../fonts/opensansnormal.woff2) format('woff2');
+    unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Open Sans Bold'), local('OpenSans-Bold'), url(../fonts/opensansbold.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+}
+
+:root {
+    --gradient-background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #3c5879), color-stop(1, #11192b));
+    --border-color: #929ba8;
+    --primary-color: #fb6362;
+    --log-warn-color: #fada5e;
+    --log-info-color: #ffffff;
+}
+
+body {
+    width: 1920px;
+    height: 1080px;
+    font-family: "Open Sans", sans-serif;
+    color: #ffffff;
+    overflow: hidden;
+}
+
+button {
+  width: 200px;
+  height: 50px;
+  position: absolute;
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: rgba(0, 0, 255, 0.8);
+  border: none;
+  border-radius: 3px;
+  padding: 10px 20px;
+  user-select: none;
+}
+  chip {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-start;
+    padding: 0 5px;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 50px;
+    height: 40px;
+    border-left: 2px solid white;
+    color: white;
+    user-select: none; 
+  }
+
+  chip.right {
+    border-left: none;
+    border-right: 2px solid white;
+    justify-content: flex-end;
+  }
+  
+  chip title {
+    display: block;
+    font-size: 8px;
+    text-transform: uppercase;
+    text-align: left;
+    text-shadow: rgba(0, 0, 255, 0.8) 0px 0px 4px;
+    width: 100%;
+  }
+
+  chip.right title {
+    text-align: right;
+  }
+  
+  chip value {
+    font-size: 25px;
+  }
+  
+  chip value sub {
+    font-size: 13px;
+    vertical-align: baseline;
+  }
+  
+  chip value sup {
+    font-size: 13px;
+    vertical-align: super;
+  }
+
+  canvas#dataGraphicsCanvas {
+    display: block;
+    position: absolute;
+    overflow: hidden;
+    left: 400px;
+    top: 10px;
+    margin-left: -150px;
+  }
