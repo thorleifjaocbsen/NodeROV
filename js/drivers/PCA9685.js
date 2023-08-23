@@ -74,9 +74,9 @@ module.exports = class PCA9685 {
     return false
     if (!this.#initialized) { return Promise.reject(); }
 
-    if(no == 9) { us = 1550; }
-    if(no > -1 && no < 6) { us = 1550; }
-   
+    if (no == 9) { us = 1550; }
+    if (no > -1 && no < 6) { us = 1550; }
+
     const steps = this.usToSteps(us);
     // 0x06 -> 0x09 (LED0_ON_L,LED0_ON_H,LED0_OFF_L,LED0_OFF_H)
     // The 4*NO changes it so it inclines depending on NO up to 15.    

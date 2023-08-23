@@ -192,9 +192,9 @@ module.exports = class LSM9DS1 {
     this.gBiasRaw = [0, 0, 0];
     this.aBiasRaw = [0, 0, 0];
     this.mBiasRaw = [419.358913, 3432.603446, 787.272714];
-    this.mSoftIron = [[1.226924,  0.049769,   0.067552],
-                      [0.049769,  1.173046,  -0.016976],
-                      [0.067552, -0.016976,   1.238414]];
+    this.mSoftIron = [[1.226924, 0.049769, 0.067552],
+    [0.049769, 1.173046, -0.016976],
+    [0.067552, -0.016976, 1.238414]];
 
 
   }
@@ -514,16 +514,16 @@ module.exports = class LSM9DS1 {
         let x = this.mag.xRaw - this.mBiasRaw[0];
         let y = this.mag.yRaw - this.mBiasRaw[1];
         let z = this.mag.zRaw - this.mBiasRaw[2];
-    
+
         // Calculate soft iron
         let calX = x * this.mSoftIron[0][0] + y * this.mSoftIron[1][0] + z * this.mSoftIron[2][0];
         let calY = x * this.mSoftIron[0][1] + y * this.mSoftIron[1][1] + z * this.mSoftIron[2][1];
         let calZ = x * this.mSoftIron[0][2] + y * this.mSoftIron[1][2] + z * this.mSoftIron[2][2];
-     
+
         this.mag.x = this.calcMag(calX);
         this.mag.y = this.calcMag(calY);
         this.mag.z = this.calcMag(calZ);
-      
+
       })
       .catch(err => { throw err });
   }
@@ -680,7 +680,7 @@ module.exports = class LSM9DS1 {
   }
 
   calibrateMagnometerBias() {
-    if(!this.#magIsCalibrating) {
+    if (!this.#magIsCalibrating) {
       this.#magIsCalibrating = true;
     }
     else {
@@ -697,15 +697,15 @@ module.exports = class LSM9DS1 {
 
       const fs = require('fs');
 
-      this.#magCalibrationSamples.forEach(({x,y,z}) => {
-        
+      this.#magCalibrationSamples.forEach(({ x, y, z }) => {
+
         // Add to min and max
-        if(x < minX) minX = x;
-        if(x > maxX) maxX = x;
-        if(y < minY) minY = y;
-        if(y > maxY) maxY = y;
-        if(z < minZ) minZ = z;
-        if(z > maxZ) maxZ = z;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+        if (z < minZ) minZ = z;
+        if (z > maxZ) maxZ = z;
 
         // Write to file
         fs.appendFileSync("test.txt", `${x}\t${y}\t${z}\n`);
