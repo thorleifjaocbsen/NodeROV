@@ -67,7 +67,6 @@ rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('thusterOutputChanged', (output) => {
   output.forEach((output) => {
-    output.us = 1550;
     pwm.setPWM(output.pin, output.us).catch(e => console.error(`Unable to set PWM: ${e}`));
   })
 
