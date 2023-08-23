@@ -25,16 +25,24 @@ module.exports = class LibCameraVideo extends EventEmitter {
         let args = [];
         args.push('-t', '0');
         args.push('--awb', 'auto');
+        // args.push('--denoise', 'cdn_fast');
+        args.push('--bitrate', 1*8*1024*1024); // Megabytes first.. 1 MB now
+        args.push('--brightness', '0'); // The value -1.0 produces an (almost) black image, the value 1.0 produces an almost entirely white image and the value 0.0 produces standard image brightness
+        args.push('--saturation', '1.1');
+        args.push('--sharpness', '2.0');
+        args.push('--contrast', '1');
+        args.push('--shutter', 1000*(1000/fps)); // Longest shutter we can based on fps.. 
+        args.push('--gain', '4');
         args.push('--exposure', 'normal');
-        args.push('--metering', 'average');
-        args.push('--rotation', '180');
-        args.push('-o', '-');
+        args.push('--metering', 'centre'); // centre, spot, average, custom
+        args.push('--rotation', '180'); // Camera rotation
+        args.push('-o', '-'); // Output to process
         args.push('--width', width);
         args.push('--height', height);
         args.push('--framerate', fps);
-        args.push('--inline',)
-        args.push('-n');
-        args.push('--profile', 'baseline');
+        args.push('--inline',) // forces the stream header information to be included with every I (intra) frame
+        args.push('-n'); // No preview
+        args.push('--profile', 'baseline'); // only thing broadway can decode
 
         this.#process = spawn('libcamera-vid', args);
 
@@ -50,15 +58,15 @@ module.exports = class LibCameraVideo extends EventEmitter {
             this.emit("close", "Camera Software closed");
 
             // Stop recording if it is running
-            stopRecording()
+            this.stopRecording()
 
             // Reset variables
-            cameraSoftware = null;
-            pipe = null;
+            this.cameraSoftware = null;
+            this.pipe = null;
 
             // Try to restart in 5 seconds
-            setTimeout(this.start(width, height, fps), 5000);
-            console.debug("Restarting video in 5 seconds");
+            setTimeout(() => { this.start(width, height, fps) }, 5000);
+            this.emit("error", "Restarting video in 5 seconds");
         });
 
 

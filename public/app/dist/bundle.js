@@ -475,14 +475,16 @@ module.exports = class HUDBlock {
     this.pitch = 0;
     this.roll = 0;
     this.heading = 0;
+    this.turns = 0;
   }
 
 
-  draw(pitch = this.pitch, roll = this.roll, heading = this.heading) {
+  draw(pitch = this.pitch, roll = this.roll, heading = this.heading, turns = this.turns) {
 
     this.roll = roll;
     this.pitch = pitch;
     this.heading = heading;
+    this.turns = turns;
 
     const width = this.canvas.width
     const height = this.canvas.height
@@ -491,7 +493,7 @@ module.exports = class HUDBlock {
     ctx.clearRect(0, 0, width, height);
     ctx.save()
     this.drawArtificialHorizon(pitch, roll)
-    this.drawCompass(heading)
+    this.drawCompass(heading, turns)
     ctx.restore()
   }
 
@@ -555,7 +557,7 @@ module.exports = class HUDBlock {
   }
 
 
-  drawCompass(heading) {
+  drawCompass(heading, turns = 0) {
     const width = this.canvas.width;
     const height = this.canvas.height;
     const ctx = this.canvas.getContext("2d");
@@ -586,6 +588,12 @@ module.exports = class HUDBlock {
     ctx.textAlign = "center";
     ctx.fillStyle = "rgb(255,255,255)";
     ctx.fillText(heading.toString().padStart(3,'0'), width/2, 15);
+
+    if (turns != 0) {
+      const text = `${turns < 0 ? '< ' : ''}${Math.abs(turns)}${turns > 0 ? ' >' : ''}`
+      ctx.font = "bold 15px Open Sans";
+      ctx.fillText(text, width/2, 40);
+    }
   }
 }
 
@@ -2810,7 +2818,7 @@ $("#pidTuning .save").on('click', () => {
             p: $("input[name=depthP").val(),
             i: $("input[name=depthI").val(),
             d: $("input[name=depthD").val()
-        },
+            },
         headingPid: {
             p: $("input[name=headingP").val(),
             i: $("input[name=headingI").val(),
@@ -2947,6 +2955,10 @@ socket.on("data", (data) => {
 
         case 'recordStateChange':
             gui.buttonState("gui-controls-button-7", value == "recording" || value == "waitingidr");
+            break;
+
+        case 'turns':
+            hudBlock.draw(undefined, undefined, undefined, value);
             break;
 
         default:

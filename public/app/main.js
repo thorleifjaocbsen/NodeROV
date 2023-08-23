@@ -164,7 +164,7 @@ $("#pidTuning .save").on('click', () => {
             p: $("input[name=depthP").val(),
             i: $("input[name=depthI").val(),
             d: $("input[name=depthD").val()
-        },
+            },
         headingPid: {
             p: $("input[name=headingP").val(),
             i: $("input[name=headingI").val(),
@@ -301,6 +301,10 @@ socket.on("data", (data) => {
 
         case 'recordStateChange':
             gui.buttonState("gui-controls-button-7", value == "recording" || value == "waitingidr");
+            break;
+
+        case 'turns':
+            hudBlock.draw(undefined, undefined, undefined, value);
             break;
 
         default:

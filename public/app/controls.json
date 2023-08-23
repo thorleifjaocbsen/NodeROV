@@ -128,11 +128,11 @@
   },
   "k69": {
     "name": "Open gripper",
-    "forward": "b3"
+    "forward": "b6"
   },
   "k81": {
     "name": "Close gripper",
-    "forward": "b3",
+    "forward": "b6",
     "invert": true
   },
   "k83": {
@@ -155,18 +155,17 @@
     "forward": "b13",
     "invert": false
   },
-  "k99": {
+  "k90": {
     "name": "Camera down",
-    "forward": "b0"
+    "forward": "b5"
   },
-  "k98": {
+  "k88": {
     "name": "Camera center",
     "func": "centerCamera"
   },
-  "k96": {
+  "k67": {
     "name": "Camera up",
-    "forward": "b0",
-    "invert": true
+    "forward": "b4"
   },
   "k32": {
     "name": "Disarm",

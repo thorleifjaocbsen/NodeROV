@@ -337,16 +337,21 @@ function parseWebsocketData(data) {
       rov.depthPID.P = data.depthPid.p;
       rov.depthPID.I = data.depthPid.i;
       rov.depthPID.D = data.depthPid.d;
-      rov.update("depthHold.p", data.depthPid.p)
-      rov.update("depthHold.i", data.depthPid.i)
-      rov.update("depthHold.d", data.depthPid.d)
+      rov.update("depthHold.p", data.depthPid.p);
+      rov.update("depthHold.i", data.depthPid.i);
+      rov.update("depthHold.d", data.depthPid.d);
 
       rov.headingPID.P = data.headingPid.p;
       rov.headingPID.I = data.headingPid.i;
       rov.headingPID.D = data.headingPid.d;
-      rov.update("headingHold.p", data.headingPid.p)
-      rov.update("headingHold.i", data.headingPid.i)
-      rov.update("headingHold.d", data.headingPid.d)
+      rov.update("headingHold.p", data.headingPid.p);
+      rov.update("headingHold.i", data.headingPid.i);
+      rov.update("headingHold.d", data.headingPid.d);
+
+      // log pretty to console:
+      log.info(`New depth pid values (P: ${data.depthPid.p}, I: ${data.depthPid.i}, D: ${data.depthPid.d})`);
+      log.info(`New heading pid values (P: ${data.headingPid.p}, I: ${data.headingPid.i}, D: ${data.headingPid.d})`);
+
       break;
 
     case 'arm': // OK

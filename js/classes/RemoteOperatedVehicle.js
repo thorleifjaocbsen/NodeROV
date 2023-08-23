@@ -89,18 +89,18 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
     }
 
     this.depthPID = new PIDController({
-      kP: options.depthHoldPID.p,
-      kI: options.depthHoldPID.i,
-      kD: options.depthHoldPID.d,
+      kP: this.#data.depthHold.p,
+      kI: this.#data.depthHold.i,
+      kD: this.#data.depthHold.d,
       db: 0,
       min: -100,
       max: 100
     });
 
     this.headingPID = new PIDController({
-      kP: options.headingHoldPID.p,
-      kI: options.headingHoldPID.i,
-      kD: options.headingHoldPID.d,
+      kP: this.#data.headingHold.p,
+      kI: this.#data.headingHold.i,
+      kD: this.#data.headingHold.d,
       db: 0,
       min: -100,
       max: 100
@@ -147,9 +147,9 @@ module.exports = class RemoteOperatedVehicle extends EventEmitter {
               // // End of Fun! :/
 
               let diff = Math.abs(this.#data.heading - value);
-              if (diff > 180 && this.#data.heading > value) { this.#data.turns++; }
-              if (diff > 180 && value > this.#data.heading) { this.#data.turns--; }
-
+              if (diff > 180 && this.#data.heading > value) { this.update("turns", this.#data.turns+1); }
+              if (diff > 180 && value > this.#data.heading) { this.update("turns", this.#data.turns-1); }
+              
             }
           }
         } else {

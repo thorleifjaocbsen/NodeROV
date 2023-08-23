@@ -41,6 +41,7 @@ I have had 5+ successful trips at the current date (21st April 17) but are still
 3. Run command: `git clone https://github.com/thorleifjaocbsen/NodeROV.git```
 4. Run command: `cd ~/NodeROV`
 5. Run command: `npm install`
+6. Run command: `./install.sh`
 6. Reboot your Pi (`sudo reboot`)
 
 # User Interface
@@ -50,7 +51,6 @@ By default it listens to port 8000 so visit `https://noderov-ip-address:8000` to
 # DISCLAIMER
 
 Use this software at own risk, I do NOT recommend you to use this software if you do now know what you are doing. It is not 100% finished and stuff might go haywire at any second! I might remove this disclaimer when I'm done with the project, but who knows? Who wants to take responsibility for anything these days! :)
-
 
 # Calculate Voltage Dividor
 
@@ -70,7 +70,7 @@ Multiplier = 1000 / (Rs * Rd) = 1000 / (0.0005 * 56 000) = 1000 / 28 = 35.714285
 
 # Default controls on keyboard:
 
-Some buttons are set for GUI only. E.g. ARM is only on gui but emergency arm from "space".
+Some buttons are set for GUI only. E.g. ARM is only on gui but emergency disarm from "space".
 
 WS = Left stick forward (fwd / back)
 AD = Left stick lateral (left / right)
@@ -79,5 +79,5 @@ AD = Left stick lateral (left / right)
 QE = Gripper (close / open)
 PG UP = Gain increment
 PG DOWN = Gain decrement
-123 = Light decrement, center, increment
 SPACE = DISARM
+ZXC = Camera down, center, up
