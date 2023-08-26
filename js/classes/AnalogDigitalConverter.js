@@ -53,16 +53,17 @@ module.exports = class AnalogDigitalConverter extends EventEmitter {
       this.data.a0 = (await this.sensor.measure('0+GND') / MAX_RANGE * PGA); // Current
       this.data.a1 = (await this.sensor.measure('1+GND') / MAX_RANGE * PGA); // Voltage
       this.data.a2 = (await this.sensor.measure('2+GND') / MAX_RANGE * PGA); // Leak
+
+      this.calculateAccumulatedMah();
+
+      this.emit('read');  
     }
     catch (e) {
       this.emit("readError", e);
     }
-
-    this.calculateAccumulatedMah();
-
-    this.emit('read');
-
-    if (this.autoRead) setTimeout(() => { this.readSensorData() }, this.readInterval);
+    finally {
+      if (this.autoRead) setTimeout(() => { this.readSensorData() }, this.readInterval);
+    }
   }
 
 
