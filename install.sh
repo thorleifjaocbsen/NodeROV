@@ -56,7 +56,7 @@ echo
 echo "[Unit]
 Description=NodeROV Service
 Documentation=https://github.com/thorleifjacobsen/no.tjweb.noderov/
-After=network.target
+After=time-sync.target
 
 [Service]
 WorkingDirectory=$scriptDir

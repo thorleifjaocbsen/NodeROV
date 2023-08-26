@@ -106,16 +106,18 @@ module.exports = class AnalogDigitalConverter extends EventEmitter {
 
   calculateAccumulatedMah() {
 
+    const currentUptime = process.uptime() * 1000;
+
     if (this.lastRead == null) {
-      this.lastRead = Date.now();
+      this.lastRead = currentUptime;
       this.lastMAH = this.getCurrentInMah();
       this.accumulatedCurrent = 0;
       return;
     }
 
-    const duration = Date.now() - this.lastRead;
+    const duration = currentUptime - this.lastRead;
     this.accumulatedCurrent += (this.lastMAH / 3600000) * duration;
-    this.lastRead = Date.now();
+    this.lastRead = currentUptime;
     this.lastMAH = this.getCurrentInMah();
   }
 
