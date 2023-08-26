@@ -1,4 +1,4 @@
-const EventEmitter = require('stream');
+const EventEmitter = require('events');
 
 var i2cBus = require("i2c-bus");
 var Pca9685Driver = require("pca9685").Pca9685Driver;

@@ -1,7 +1,7 @@
 
 const exec = require('child_process').exec;
 const Gpio = require('onoff').Gpio; //include onoff to interact with the GPIO
-const EventEmitter = require('stream');
+const EventEmitter = require('events');
 
 module.exports = class Systemcontroller extends EventEmitter {
 

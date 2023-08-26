@@ -1,5 +1,5 @@
 
-const EventEmitter = require('stream');
+const EventEmitter = require('events');
 const Splitter = require('stream-split');
 const spawn = require('child_process').spawn;
 const exec = require('child_process').exec;
