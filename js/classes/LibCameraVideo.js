@@ -31,7 +31,7 @@ module.exports = class LibCameraVideo extends EventEmitter {
         args.push('--saturation', '1.1');
         args.push('--sharpness', '2.0');
         args.push('--contrast', '1');
-        args.push('--shutter', 1000*(1000/fps)); // Longest shutter we can based on fps.. 
+        //args.push('--shutter', 1000*(1000/fps)); // Longest shutter we can based on fps.. 
         args.push('--gain', '4');
         args.push('--exposure', 'normal');
         args.push('--metering', 'centre'); // centre, spot, average, custom

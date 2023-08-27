@@ -3,19 +3,19 @@
     "name": "Lateral",
     "func": "lateral",
     "type": "analogue",
-    "invert": true
+    "invert": false
   },
   "a1": {
     "name": "Forward",
     "func": "forward",
     "type": "analogue",
-    "invert": true
+    "invert": false
   },
   "a2": {
     "name": "Yaw right stick",
     "func": "yaw",
     "type": "analogue",
-    "invert": true
+    "invert": false
   },
   "a3": {
     "name": "Ascend/Descend",
@@ -98,7 +98,7 @@
   },
   "k38": {
     "name": "Ascend",
-    "forward": "a4",
+    "forward": "a3",
     "invert": true
   },
   "k37": {
@@ -113,7 +113,7 @@
   },
   "k40": {
     "name": "Descend",
-    "forward": "a4",
+    "forward": "a3",
     "invert": false
   },
   "k65": {

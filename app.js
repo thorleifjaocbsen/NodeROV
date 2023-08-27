@@ -6,6 +6,7 @@
 
 require('./ascii');
 
+const { Worker, isMainThread } = require('worker_threads');
 const ws = require('ws');
 const fs = require('fs');
 const express = require('express');
@@ -25,7 +26,6 @@ const ExternalPressureSensor = require('./js/classes/ExternalPressureSensor');
 const AnalogDigitalConverter = require('./js/classes/AnalogDigitalConverter');
 const InertialMeasurementUnit = require('./js/classes/InertialMeasurementUnit');
 const SystemController = require('./js/classes/SystemController');
-const Video = require('./js/classes/LibCameraVideo');
 const PWM = require('./js/classes/PWM.js');
 
 
@@ -42,6 +42,18 @@ const imu = new InertialMeasurementUnit();
 const adc = new AnalogDigitalConverter(Configuration.calibration.adc);
 const sc = new SystemController();
 const pwm = new PWM();
+
+/************************
+ * Video Streamer Worker
+ ************************/
+log.info("Starting video streamer")
+if (isMainThread) {
+  const videoWorker = new Worker("./app_videostreamer.js");
+  videoWorker.on('message', (msg) => { 
+      log.log(msg.type, "VIDEO: " + msg.value);
+
+  });
+}
 
 /************************
  *
@@ -243,15 +255,6 @@ wss.on('connection', (client) => {
     client.send(`data ${JSON.stringify({ type, value: rovData[type] })}`)
     log.debug(`data ${JSON.stringify({ type, value: rovData[type] })}`)
   }
-
-  video.isRecording();
-
-  /* Send start frames for video initialization */
-  const startFrames = video.getInitFrames();
-  startFrames.forEach((frame) => {
-    client.send(frame);
-  });
-
 });
 
 wss.broadcast = package => {
@@ -267,20 +270,6 @@ wss.broadcast = package => {
     client.send(package, { binary });
   });
 };
-
-const video = new Video();
-video.on('start', () => { log.info('Video started') });
-video.on('stop', () => { log.info('Video stopped') });
-video.on('error', (err) => { log.error(`Video error: ${err}`) });
-video.on('frame', (frame) => { 
-  wss.broadcast(frame)
-});
-video.on('recordStateChange', (value) => { 
-  log.info(`Video record state changed to ${value}`)
-  const type = "recordStateChange";
-  wss.broadcast(`data ${JSON.stringify({ type, value })}`)
-});
-video.start(Configuration.video.width,Configuration.video.height,Configuration.video.fps);
 
 /************************
  *
@@ -319,16 +308,6 @@ function parseWebsocketData(data) {
 
     case 'resetMahCounter': // OK
       adc.resetAccumulatedMah();
-      break;
-
-    case 'recordToggle':
-      if(video.isRecording()) {
-        video.stopRecording();
-      } else {
-        // Generate filename, date + time:
-        let filename = new Date().toISOString().replaceAll(":", "-").split(".")[0];
-        video.startRecording(`${filename}.h264`);
-      }
       break;
 
     case 'newPid': 

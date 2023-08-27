@@ -788,13 +788,16 @@ module.exports = class Socket extends EventEmitter {
 
   onerror(e) {
     this.log(`Error on socket: ${e}`);
+    this.emit('error', e);
   };
 
   onopen(e) {
     this.log(`Connected to to ${this.url}`);
+    this.emit('open', e);
   };
 
   onclose(e) {
+    this.emit('close', e);
     if (this.reconnectTime > 0) {
       setTimeout(() => this.reconnect(), this.reconnectTime * 1000);
       this.log(`Lost connection with socket on ${this.url}, reconnecting in ${this.reconnectTime} seconds.`);
@@ -2663,6 +2666,7 @@ const LineChart = require('./lib/LineChart.js')
 
 /* Initialize classes */
 const socket = new Socket();
+const videoSocket = new Socket();
 const video = new Video($('#video')[0]);
 const controls = new Controls();
 const gui = new GUI();
@@ -2719,8 +2723,33 @@ controls.onPress("ascend", (value) => { socket.send("ascend " + value); });
 /************************
  * Video Socket - Used for camera transmit
  ************************/
+videoSocket.connect(`wss://${location.hostname}:8282`);
+videoSocket.on("binary", (data) => { video.decodeFrame(data); });
+videoSocket.on('open', () => {
+    gui.log('Video socket connected');
+    videoSocket.send("video");
+});
+videoSocket.on('log', (data) => { gui.log(data); });
+videoSocket.on('error', (err) => { gui.log(err, undefined, undefined, "error"); });
+videoSocket.on('close', () => { gui.log('Video socket closed'); });
+videoSocket.on('data', (data) => {
+    let type, value;
+    try {
+        data = JSON.parse(data);
+        type = data.type;
+        value = data.value;
+    }
+    catch (err) { gui.log(`Unable to parse ${data}`) }
 
-/* Configure socket */
+    if (type == 'recordStateChange') {
+        gui.buttonState("gui-controls-button-7", value == "recording" || value == "waitingidr");
+    }
+})
+
+/************************
+ * Socket - Used for everything else
+ ************************/
+
 socket.connect(`wss://${location.hostname}:8000`);
 socket.on("hb", (data) => {
     const [sendtTime, latency] = data.split(" ");
@@ -2764,7 +2793,7 @@ gui.setButton("gui-controls-button-5", "Depthchart", () => {
 gui.setButton("gui-controls-button-2", "ARM", () => { socket.send("toggleArm"); });
 gui.setButton("gui-controls-button-4", "HEADING HOLD", () => { socket.send("headingHoldToggle"); });
 gui.setButton("gui-controls-button-6", "DEPTH HOLD", () => { socket.send("depthHoldToggle"); });
-gui.setButton("gui-controls-button-7", "RECORD", () => { socket.send("recordToggle"); });
+gui.setButton("gui-controls-button-7", "RECORD", () => { videoSocket.send("recordToggle"); });
 
 gui.setButton("gui-controls-button-8", "FULLSCREEN", () => {
     const videoEl = document.getElementById("video");
@@ -2818,7 +2847,7 @@ $("#pidTuning .save").on('click', () => {
             p: $("input[name=depthP").val(),
             i: $("input[name=depthI").val(),
             d: $("input[name=depthD").val()
-            },
+        },
         headingPid: {
             p: $("input[name=headingP").val(),
             i: $("input[name=headingI").val(),
@@ -2829,10 +2858,6 @@ $("#pidTuning .save").on('click', () => {
 })
 
 gui.canvas = $("#dataGraphicsCanvas")[0];
-
-socket.on("binary", (data) => {
-    video.decodeFrame(data);
-});
 
 socket.on("data", (data) => {
     let type, value;
@@ -2951,10 +2976,6 @@ socket.on("data", (data) => {
 
         case 'armed':
             gui.buttonState("gui-controls-button-2", value);
-            break;
-
-        case 'recordStateChange':
-            gui.buttonState("gui-controls-button-7", value == "recording" || value == "waitingidr");
             break;
 
         case 'turns':

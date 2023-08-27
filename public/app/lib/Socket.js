@@ -40,13 +40,16 @@ module.exports = class Socket extends EventEmitter {
 
   onerror(e) {
     this.log(`Error on socket: ${e}`);
+    this.emit('error', e);
   };
 
   onopen(e) {
     this.log(`Connected to to ${this.url}`);
+    this.emit('open', e);
   };
 
   onclose(e) {
+    this.emit('close', e);
     if (this.reconnectTime > 0) {
       setTimeout(() => this.reconnect(), this.reconnectTime * 1000);
       this.log(`Lost connection with socket on ${this.url}, reconnecting in ${this.reconnectTime} seconds.`);
