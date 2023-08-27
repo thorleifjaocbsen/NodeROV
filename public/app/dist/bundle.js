@@ -166,12 +166,12 @@ module.exports = class Dashboard {
 
     this.thrusters = []
 
-    this.setThruster(3, 0, 0, 0, 45+180) // Top left
-    this.setThruster(0, 0, 100, 0, 315+180) // Top right
+    this.setThruster(3, 0, 0, 0, 45) // Top left
+    this.setThruster(0, 0, 100, 0, 315) // Top right
     this.setThruster(4, 0, 20, 100, 180) // Middle left
     this.setThruster(1, 0, 80, 100, 0) // Middle right
-    this.setThruster(5, 0, 0, 200, 135) // Bottom left
-    this.setThruster(2, 0, 100, 200, 225) // Bottom right
+    this.setThruster(5, 0, 0, 200, 135+180) // Bottom left
+    this.setThruster(2, 0, 100, 200, 225+180) // Bottom right
   }
 
   setScale(scale, desc, value, maxValue, warningDiff) {

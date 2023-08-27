@@ -75,10 +75,14 @@ pwm.init()
  * ROV Event Handlers
  *
  ************************/
+
 rov.on('arm', () => { log.info('ROV Armed') })
 rov.on('disarm', () => { log.info('ROV Disarmed') })
 rov.on('thusterOutputChanged', (output) => {
   output.forEach((output) => {
+    // Disable thrusters for developing!
+    if (output.pin < 6) output.us = 1550;
+    
     pwm.setPWM(output.pin, output.us).catch(e => console.error(`Unable to set PWM: ${e}`));
   })
 

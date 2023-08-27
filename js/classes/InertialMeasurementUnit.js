@@ -10,6 +10,7 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
 
   #sensor;
   lastGyroRead;
+  skip = 0;
 
   constructor(options) {
 
@@ -90,16 +91,19 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     // accel is G's
     // gyro is Degrees Pr Second
     // magno is Gauss 
-    const Xa = this.#sensor.accel.x 
-    const Ya = this.#sensor.accel.y
-    const Za = this.#sensor.accel.z
-    const Xm = this.#sensor.mag.x * -1; // Positive X shoud be pointing backwards on the PCB
-    const Ym = this.#sensor.mag.y * -1; // Positive Y should be pointing to the left on the PCB
-    const Zm = this.#sensor.mag.z
-    const Xg = this.#sensor.gyro.x
-    const Yg = this.#sensor.gyro.y
-    const Zg = this.#sensor.gyro.z
+
+
+    const Xa = this.#sensor.accel.x * -1
+    const Ya = this.#sensor.accel.z
+    const Za = this.#sensor.accel.y * -1
+    const Xm = this.#sensor.mag.x; // Positive X shoud be pointing backwards on the PCB
+    const Ym = this.#sensor.mag.z; // Positive Y should be pointing to the left on the PCB
+    const Zm = this.#sensor.mag.y;
+    const Xg = this.#sensor.gyro.x * -1;
+    const Yg = this.#sensor.gyro.z * -1
+    const Zg = this.#sensor.gyro.y
     
+
     let Phi, Theta, Psi, Xh, Yh
 
     // roll: Rotation around the X-axis. -180 <= roll <= 180
@@ -110,7 +114,7 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     //                    z
     //
     // where:  y, z are returned value from accelerometer sensor
-    Phi = Math.atan2(-Ya, Za); // In radian
+    Phi = Math.atan2(Ya, Za); // In radian
 
     // pitch: Rotation around the Y-axis. -180 <= roll <= 180
     // a positive pitch angle is defined to be a clockwise rotation about the positive Y-axis
@@ -120,9 +124,9 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     //                    y * sin(roll) + z * cos(roll)
     //
     // where:  x, y, z are returned value from accelerometer sensor
-    var tmp = Ya * Math.sin(Phi) + Za * Math.cos(Phi)
+    let tmp = Ya * Math.sin(Phi) + Za * Math.cos(Phi)
     if (tmp == 0) Theta = Xa > 0 ? (Math.PI / 2) : (-Math.PI / 2)
-    else Theta = Math.atan(Xa / tmp)
+    else Theta = Math.atan(-Xa / tmp)
 
     // https://youtu.be/wzjQ8L090s0?t=673 - Have no idea what this magic is but it works much better than the old crap.
     Xh = Xm * Math.cos(Theta) - Ym * Math.sin(Phi) * Math.sin(Theta) + Zm * Math.cos(Phi) * Math.sin(Theta)
@@ -135,11 +139,6 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     Psi = Psi * (180 / Math.PI);
     if(Psi < 0) Psi = Psi + 360;
     
-    // Convert PSI radian to 360 degree
-    //Psi = Math.atan2(Ym, Xm) * (180 / Math.PI);
-    // console.log(Psi, Xm, Ym);
-    //console.log(Psi.toFixed(2), Xm.toFixed(2), Ym.toFixed(2), Zm.toFixed(2));
-
     this.phi.measured = Phi;
     this.theta.measured = Theta
     this.psi.measured = Psi;
@@ -162,6 +161,11 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     this.phi.filtered = (this.phi.filtered + Xg * dt) * .95 + (this.phi.measured * .05)
     this.theta.filtered = (this.theta.filtered + Yg * dt) * .95 + (this.theta.measured * .05)
     //this.psi.filtered = (this.psi.filtered + -Zg * dt) * .95 + (this.psi.measured * .05)
+
+    // this.phi.filtered = this.phi.measured;
+    // this.theta.filtered = this.theta.measured;
+    // this.psi.filtered = this.psi.measured;
+    
 
     this.emit('read')
   }

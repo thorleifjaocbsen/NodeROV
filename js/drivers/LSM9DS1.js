@@ -653,8 +653,8 @@ module.exports = class LSM9DS1 {
               gBiasRawTemp[1] += this.gyro.yRaw;
               gBiasRawTemp[2] += this.gyro.zRaw;
               aBiasRawTemp[0] += this.accel.xRaw;
-              aBiasRawTemp[1] += this.accel.yRaw;
-              aBiasRawTemp[2] += this.accel.zRaw - (1 / this.accel.resolution); // Assumes sensor facing up!
+              aBiasRawTemp[1] += this.accel.yRaw; // + (1 / this.accel.resolution);
+              aBiasRawTemp[2] += this.accel.zRaw; // Assumes sensor facing up!
             })
             .catch(err => { throw err; });
         }
