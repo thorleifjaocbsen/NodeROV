@@ -35,7 +35,7 @@ wss.ws('/*', {
 
     const msg = Buffer.from(message).toString();
 
-    console.log(`Received message: ${msg}`);
+    // console.log(`Received message: ${msg}`);
 
     if (msg == "recordToggle") {
       if (video.isRecording()) {

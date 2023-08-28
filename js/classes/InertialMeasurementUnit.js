@@ -92,17 +92,18 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     // gyro is Degrees Pr Second
     // magno is Gauss 
 
-
-    const Xa = this.#sensor.accel.x * -1
-    const Ya = this.#sensor.accel.z
-    const Za = this.#sensor.accel.y * -1
-    const Xm = this.#sensor.mag.x; // Positive X shoud be pointing backwards on the PCB
-    const Ym = this.#sensor.mag.z; // Positive Y should be pointing to the left on the PCB
-    const Zm = this.#sensor.mag.y;
+    const Xa = this.#sensor.accel.x * -1;
+    const Ya = this.#sensor.accel.z * -1;
+    const Za = this.#sensor.accel.y * -1;
+    const Xm = this.#sensor.mag.x * -1; // Positive X shoud be pointing backwards on the PCB
+    const Ym = this.#sensor.mag.z * -1 ; // Positive Y should be pointing to the left on the PCB
+    const Zm = this.#sensor.mag.x * -1;
     const Xg = this.#sensor.gyro.x * -1;
-    const Yg = this.#sensor.gyro.z * -1
-    const Zg = this.#sensor.gyro.y
+    const Yg = this.#sensor.gyro.z * -1;
+    const Zg = this.#sensor.gyro.y * -1;
     
+    this.skip ++;
+
 
     let Phi, Theta, Psi, Xh, Yh
 
@@ -126,12 +127,14 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     // where:  x, y, z are returned value from accelerometer sensor
     let tmp = Ya * Math.sin(Phi) + Za * Math.cos(Phi)
     if (tmp == 0) Theta = Xa > 0 ? (Math.PI / 2) : (-Math.PI / 2)
-    else Theta = Math.atan(-Xa / tmp)
+    else Theta = Math.atan(Xa / tmp)
 
     // https://youtu.be/wzjQ8L090s0?t=673 - Have no idea what this magic is but it works much better than the old crap.
-    Xh = Xm * Math.cos(Theta) - Ym * Math.sin(Phi) * Math.sin(Theta) + Zm * Math.cos(Phi) * Math.sin(Theta)
-    Yh = Ym * Math.cos(Phi) + Zm * Math.sin(Phi)
-    Psi = Math.atan2(Yh, Xh)
+    // Xh = Xm * Math.cos(Theta) - Ym * Math.sin(Phi) * Math.sin(Theta) + Zm * Math.cos(Phi) * Math.sin(Theta)
+    // Yh = Ym * Math.cos(Phi) + Zm * Math.sin(Phi)
+    // Psi = Math.atan2(Yh, Xh)
+    Psi = Math.atan2(Ym, Xm);
+
 
     // Convert radian data to degree (-180 / 180)
     Phi = Phi * (180 / Math.PI);
@@ -139,6 +142,12 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     Psi = Psi * (180 / Math.PI);
     if(Psi < 0) Psi = Psi + 360;
     
+    // if (this.skip == 50) {
+      // console.log(Psi, Xg.toFixed(3), Yg.toFixed(3), Zg.toFixed(3));
+
+      // this.skip = 0;
+    // }
+
     this.phi.measured = Phi;
     this.theta.measured = Theta
     this.psi.measured = Psi;
