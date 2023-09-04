@@ -476,6 +476,7 @@ module.exports = class HUDBlock {
     this.roll = 0;
     this.heading = 0;
     this.turns = 0;
+    this.headingHoldPosition = false;
   }
 
 
@@ -563,12 +564,28 @@ module.exports = class HUDBlock {
     const ctx = this.canvas.getContext("2d");
 
     heading = Math.round(heading)
-
+    
+    
     // Rose
-    const left = (width / 2 - 74) - ((1200 / 360) * heading);
+    const left = (width / 2 - 75) - ((1200 / 360) * heading);
     ctx.drawImage(this.compassRose, left, 0);
     ctx.drawImage(this.compassRose, -1200 + left, 0);
     ctx.drawImage(this.compassRose, 1200 + left, 0);
+    
+    // Create a line on rose for heading hold position. Locked to the heading for heading hold:
+    if (this.headingHoldPosition !== false) {
+      const linePos = left + ((1200 / 360) * this.headingHoldPosition) + 75
+      ctx.save()
+      ctx.beginPath()
+      ctx.strokeStyle = "rgba(255,0,0,0.9)";
+      ctx.lineWidth = 2;
+      ctx.moveTo(linePos, 0);
+      ctx.lineTo(linePos, 40);
+      ctx.stroke()
+      ctx.closePath()
+      ctx.restore()
+    }
+    
 
     // Heading background
     ctx.save()
@@ -610,6 +627,7 @@ module.exports = class LineChart {
   #ctx;
   #points;
   #seaLevelOffset;
+  #depthHoldLine;
 
   constructor(canvas) {
 
@@ -632,6 +650,10 @@ module.exports = class LineChart {
   setDepthScale(depthScale) {
     this.depthScale = depthScale + this.#seaLevelOffset;
     this.pixelsPerCentimeter = this.#canvas.height / (this.depthScale * 100);
+  }
+
+  setDepthHoldLine(depth) {
+    this.#depthHoldLine = depth;
   }
 
 
@@ -675,7 +697,9 @@ module.exports = class LineChart {
     this.#ctx.save();
 
     let lastPointsTime = this.#points[0] ? this.#points[0].time : new Date();
-    let sealevel = (this.#seaLevelOffset * 100) * this.pixelsPerCentimeter;;
+    let sealevel = (this.#seaLevelOffset * 100) * this.pixelsPerCentimeter;
+
+    let depthHoldPosition = (this.#depthHoldLine * 100) * this.pixelsPerCentimeter + sealevel;
 
     this.#ctx.beginPath();
     this.#ctx.lineWidth = 3;
@@ -703,6 +727,15 @@ module.exports = class LineChart {
     this.#ctx.lineTo(this.#canvas.width, sealevel);
     this.#ctx.stroke();
     this.#ctx.restore();
+
+    if (this.#depthHoldLine != 0) {
+      this.#ctx.beginPath();
+      this.#ctx.strokeStyle = "rgba(255,0,0,0.5)";
+      this.#ctx.moveTo(0, depthHoldPosition);
+      this.#ctx.lineTo(this.#canvas.width, depthHoldPosition);
+      this.#ctx.stroke();
+      this.#ctx.restore();
+    }
   }
 
   drawDepthScale() {
@@ -2808,6 +2841,10 @@ gui.setButton("gui-controls-button-11", "PID Tuning", () => {
     $("#pidTuning").toggle();
 });
 
+gui.setButton("gui-controls-button-12", "Magnometer Calibration", () => {
+    
+});
+
 
 gui.setButton("gui-log-button-1", "ADD EVENT", () => {
     var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
@@ -2903,6 +2940,9 @@ socket.on("data", (data) => {
 
         case "leak":
             gui.setInfo(4, value);
+            if (value == true) {
+                gui.overlayText("LEAK DETECTED", 2000);
+            }
             break;
 
         case "voltage":
@@ -2962,6 +3002,8 @@ socket.on("data", (data) => {
 
         case 'headingHold':
             gui.buttonState("gui-controls-button-4", value.setPoint !== false);
+            gui.log(`Heading hold set to: ${value.setPoint}`)
+            hudBlock.headingHoldPosition = value.setPoint;
             $("input[name=headingP").val(value.p);
             $("input[name=headingI").val(value.i);
             $("input[name=headingD").val(value.d);
@@ -2969,6 +3011,8 @@ socket.on("data", (data) => {
 
         case 'depthHold':
             gui.buttonState("gui-controls-button-6", value.setPoint !== false);
+            gui.log(`Depth hold set to: ${value.setPoint}`)
+            lineChart.setDepthHoldLine(value.setPoint);
             $("input[name=depthP").val(value.p);
             $("input[name=depthI").val(value.i);
             $("input[name=depthD").val(value.d);

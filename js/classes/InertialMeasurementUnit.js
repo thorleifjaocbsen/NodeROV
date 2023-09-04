@@ -92,48 +92,38 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     // gyro is Degrees Pr Second
     // magno is Gauss 
 
-    const Xa = this.#sensor.accel.x * -1;
+    const Xa = this.#sensor.accel.x;
     const Ya = this.#sensor.accel.z * -1;
     const Za = this.#sensor.accel.y * -1;
-    const Xm = this.#sensor.mag.x * -1; // Positive X shoud be pointing backwards on the PCB
-    const Ym = this.#sensor.mag.z * -1 ; // Positive Y should be pointing to the left on the PCB
-    const Zm = this.#sensor.mag.x * -1;
-    const Xg = this.#sensor.gyro.x * -1;
+    const Xm = this.#sensor.mag.x; // Positive X shoud be pointing backwards on the PCB
+    const Ym = this.#sensor.mag.y; // Positive Y should be pointing to the left on the PCB
+    const Zm = this.#sensor.mag.z;
+    const Xg = this.#sensor.gyro.x;
     const Yg = this.#sensor.gyro.z * -1;
-    const Zg = this.#sensor.gyro.y * -1;
-    
-    this.skip ++;
+    const Zg = this.#sensor.gyro.y;
+
+    // console.log(`Acceleration (m/s^2): ${Xa.toFixed(3)} ${Ya.toFixed(3)} ${Za.toFixed(3)}`);
+    // console.log(`Magnetometer (gauss): ${Xm.toFixed(3)} ${Ym.toFixed(3)} ${Zm.toFixed(3)}`);
+    // console.log(`Gyroscope (degrees/sec): ${Xg.toFixed(3)} ${Yg.toFixed(3)} ${Zg.toFixed(3)}`);    
+    // this.skip ++;
 
 
     let Phi, Theta, Psi, Xh, Yh
 
-    // roll: Rotation around the X-axis. -180 <= roll <= 180
-    // a positive roll angle is defined to be a clockwise rotation about the positive X-axis
-    //
-    //                    Y
-    //      roll = atan2(---)
-    //                    z
-    //
-    // where:  y, z are returned value from accelerometer sensor
-    Phi = Math.atan2(Ya, Za); // In radian
+ 
+    Phi = Math.atan2(Ya, Math.sqrt(Xa*Xa + Za*Za)); // In radian
+    Theta = Math.atan2(Xa, Math.sqrt(Ya*Ya + Za*Za)); // In radian
 
-    // pitch: Rotation around the Y-axis. -180 <= roll <= 180
-    // a positive pitch angle is defined to be a clockwise rotation about the positive Y-axis
-    //
-    //                                 -x
-    //      pitch = atan(-------------------------------)
-    //                    y * sin(roll) + z * cos(roll)
-    //
-    // where:  x, y, z are returned value from accelerometer sensor
-    let tmp = Ya * Math.sin(Phi) + Za * Math.cos(Phi)
-    if (tmp == 0) Theta = Xa > 0 ? (Math.PI / 2) : (-Math.PI / 2)
-    else Theta = Math.atan(Xa / tmp)
+    // Yaw
+    const magXComp = Xm * Math.cos(Phi) + Ym * Math.sin(Phi) * Math.sin(Theta) + Zm * Math.sin(Phi) * Math.cos(Theta)
+    const magYComp = Ym * Math.cos(Theta) - Zm * Math.sin(Theta)
+    Psi = Math.atan2(magYComp, magXComp)
 
-    // https://youtu.be/wzjQ8L090s0?t=673 - Have no idea what this magic is but it works much better than the old crap.
-    // Xh = Xm * Math.cos(Theta) - Ym * Math.sin(Phi) * Math.sin(Theta) + Zm * Math.cos(Phi) * Math.sin(Theta)
-    // Yh = Ym * Math.cos(Phi) + Zm * Math.sin(Phi)
-    // Psi = Math.atan2(Yh, Xh)
-    Psi = Math.atan2(Ym, Xm);
+    // // https://youtu.be/wzjQ8L090s0?t=673 - Have no idea what this magic is but it works much better than the old crap.
+    Xh = Xm * Math.cos(Theta) - Ym * Math.sin(Phi) * Math.sin(Theta) + Zm * Math.cos(Phi) * Math.sin(Theta)
+    Yh = Ym * Math.cos(Phi) + Zm * Math.sin(Phi)
+    Psi = Math.atan2(Yh, Xh)
+    // Psi = Math.atan2(Ym, Xm);
 
 
     // Convert radian data to degree (-180 / 180)
@@ -160,7 +150,7 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
     // Low pass filter, 95% old and 5% new data - Accel only.
     // this.phi.filtered = (this.phi.filtered * .95) + (this.phi.accMeasured * .05)
     // this.theta.filtered = (this.theta.filtered * .95) + (this.theta.accMeasured * .05)
-    this.psi.filtered = (this.psi.filtered * .95) + (this.psi.measured * .05)
+    this.psi.filtered = this.psi.measured // (this.psi.filtered * .95) + (this.psi.measured * .05)
 
     // Two complements filter, 95% gyro, 5% acc (gives best response)
     // accels is prone to noise, so we use gyros to correct for it
@@ -169,7 +159,7 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
  
     this.phi.filtered = (this.phi.filtered + Xg * dt) * .95 + (this.phi.measured * .05)
     this.theta.filtered = (this.theta.filtered + Yg * dt) * .95 + (this.theta.measured * .05)
-    //this.psi.filtered = (this.psi.filtered + -Zg * dt) * .95 + (this.psi.measured * .05)
+    // this.psi.filtered = (this.psi.filtered + Zg * dt) * .95 + (this.psi.measured * .05)
 
     // this.phi.filtered = this.phi.measured;
     // this.theta.filtered = this.theta.measured;
@@ -190,6 +180,14 @@ module.exports = class InertialMeasurementUnit extends EventEmitter {
 
   getHeading(decimals = 2) {
     return this.psi.filtered.toFixed(decimals);
+  }
+
+  saveCalibration(filename = "calibration.json") {
+    return this.#sensor.saveCalibrationToFile(filename);
+  }
+
+  loadCalibration(filename = "calibration.json") {
+    return this.#sensor.loadCalibrationFromFile(filename);
   }
 
 }

@@ -13,7 +13,7 @@
 'use strict';
 
 const i2c = require('i2c-bus');
-
+const fs = require('fs');
 
 module.exports = class LSM9DS1 {
 
@@ -186,15 +186,10 @@ module.exports = class LSM9DS1 {
       value: 0
     }
 
-    this.gBias = [0, 0, 0];
-    this.aBias = [0, 0, 0];
-    this.mBias = [0, 0, 0];
     this.gBiasRaw = [0, 0, 0];
     this.aBiasRaw = [0, 0, 0];
-    this.mBiasRaw = [419.358913, 3432.603446, 787.272714];
-    this.mSoftIron = [[1.226924, 0.049769, 0.067552],
-    [0.049769, 1.173046, -0.016976],
-    [0.067552, -0.016976, 1.238414]];
+    this.mBiasRaw = [0, 0, 0];
+    this.mSoftIron = [[0, 0, 0],[0, 0, 0],[0, 0, 0]];
 
 
   }
@@ -370,6 +365,7 @@ module.exports = class LSM9DS1 {
     // SOFT_RST - Reset config and user registers (0:default, 1:reset)
     let CTRL_REG2_M = 0;
     switch (this.mag.scale) {
+      case 4: CTRL_REG2_M |= (0x0 << 5); break;
       case 8: CTRL_REG2_M |= (0x1 << 5); break;
       case 12: CTRL_REG2_M |= (0x2 << 5); break;
       case 16: CTRL_REG2_M |= (0x3 << 5); break;
@@ -459,14 +455,17 @@ module.exports = class LSM9DS1 {
         this.gyro.zRaw = this.readInt16LETwoComp(data.buffer, 4); // Store z-axis values
 
         if (this.#agIsCalibrated) {
-          this.gyro.xRaw -= this.gBiasRaw[0];
-          this.gyro.yRaw -= this.gBiasRaw[1];
-          this.gyro.zRaw -= this.gBiasRaw[2];
+          // this.gyro.xRaw -= this.gBiasRaw[0];
+          // this.gyro.yRaw -= this.gBiasRaw[1];
+          // this.gyro.zRaw -= this.gBiasRaw[2];
 
         }
         this.gyro.x = this.calcGyro(this.gyro.xRaw);
         this.gyro.y = this.calcGyro(this.gyro.yRaw);
         this.gyro.z = this.calcGyro(this.gyro.zRaw);
+
+        // Log
+        // console.log(`Gyroscope (rad/s): x=${this.gyro.x.toFixed(3)} y=${this.gyro.y.toFixed(3)} z=${this.gyro.z.toFixed(3)}`);
 
       })
       .catch(err => { throw err });
@@ -524,6 +523,9 @@ module.exports = class LSM9DS1 {
         this.mag.y = this.calcMag(calY);
         this.mag.z = this.calcMag(calZ);
 
+        // Log
+        // console.log(`Magnetometer (gauss): x=${this.mag.x.toFixed(3)} y=${this.mag.y.toFixed(3)} z=${this.mag.z.toFixed(3)}`);
+
       })
       .catch(err => { throw err });
   }
@@ -539,15 +541,21 @@ module.exports = class LSM9DS1 {
         this.accel.yRaw = this.readInt16LETwoComp(data.buffer, 2); // Store y-axis values
         this.accel.zRaw = this.readInt16LETwoComp(data.buffer, 4); // Store z-axis values
 
+        // console.log(this.aBiasRaw, this.accel.xRaw, this.accel.yRaw, this.accel.zRaw);
         if (this.#agIsCalibrated) {
           this.accel.xRaw -= this.aBiasRaw[0];
           this.accel.yRaw -= this.aBiasRaw[1];
           this.accel.zRaw -= this.aBiasRaw[2];
         }
 
+
         this.accel.x = this.calcAccel(this.accel.xRaw);
         this.accel.y = this.calcAccel(this.accel.yRaw);
         this.accel.z = this.calcAccel(this.accel.zRaw);
+
+
+        // Log acceleration max 3 decimals:
+        //console.log(`Acceleration (m/s^2): x=${this.accel.x.toFixed(3)} y=${this.accel.y.toFixed(3)} z=${this.accel.z.toFixed(3)}`);
 
       })
       .catch(err => { throw err });
@@ -581,15 +589,15 @@ module.exports = class LSM9DS1 {
       .catch((err) => { throw err })
   }
 
-  calcGyro(value) {
-    return value * this.gyro.resolution;
+  calcGyro(value) { // DPS to Rads 
+    return value * this.gyro.resolution * (Math.PI / 180); 
   }
 
-  calcAccel(value) {
-    return value * this.accel.resolution;
+  calcAccel(value) { // Add gravity
+    return value * this.accel.resolution * 9.80665;
   }
 
-  calcMag(value) {
+  calcMag(value) { // gauss
     return value * this.mag.resolution;
   }
 
@@ -662,9 +670,7 @@ module.exports = class LSM9DS1 {
         // Loop thorugh biases
         for (let i = 0; i < 3; i++) {
           this.gBiasRaw[i] = gBiasRawTemp[i] / samples;
-          this.gBias[i] = this.calcGyro(this.gBiasRaw[i]);
           this.aBiasRaw[i] = aBiasRawTemp[i] / samples;
-          this.aBias[i] = this.calcAccel(this.aBiasRaw[i]);
         }
 
         this.#agIsCalibrated = true;
@@ -717,7 +723,7 @@ module.exports = class LSM9DS1 {
       this.mBiasRaw[1] = (maxY + minY) / 2;
       this.mBiasRaw[2] = (maxZ + minZ) / 2;
 
-      console.log(this.mBiasRaw);
+      //console.log(this.mBiasRaw);
     }
   }
 
@@ -739,5 +745,43 @@ module.exports = class LSM9DS1 {
     this.gyro.resolution = gyroSens[this.gyro.scale];   // Calculate DPS / ADC tick
     this.accel.resolution = accelSens[this.accel.scale]; // Calculate g / ADC tick
     this.mag.resolution = magSens[this.mag.scale];     // Calculate Gs / ADC tick
+  }
+
+  saveCalibrationToFile(filename) {
+    const calibrationObject = {
+      gBiasRaw: this.gBiasRaw,
+      aBiasRaw: this.aBiasRaw,
+      mBiasRaw: this.mBiasRaw,
+      mSoftIron: this.mSoftIron
+    }
+    const file = fs.openSync(filename, 'w');
+    fs.writeSync(file, JSON.stringify(calibrationObject));
+    fs.closeSync(file);
+    return true;
+  }
+
+  loadCalibrationFromFile(filename) {
+    try {
+      const file = fs.openSync(filename, 'r');
+      const calibrationObject = JSON.parse(fs.readFileSync(file));
+      console.log(calibrationObject);
+      this.gBiasRaw = calibrationObject.gBiasRaw;
+      this.aBiasRaw = calibrationObject.aBiasRaw;
+      this.mBiasRaw = calibrationObject.mBiasRaw;
+      this.mSoftIron = calibrationObject.mSoftIron;
+
+      // Check if abias or gbias has values and is not 0 if so set calibrated true:
+
+      let total = this.gBiasRaw.reduce((p,a)=>p+a,0) + this.aBiasRaw.reduce((p,a)=>p+a,0)
+      if (total != 0) { this.#agIsCalibrated = true; }
+
+      
+      return true;
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+
+
   }
 }

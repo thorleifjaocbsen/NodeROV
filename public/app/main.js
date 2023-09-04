@@ -151,6 +151,10 @@ gui.setButton("gui-controls-button-11", "PID Tuning", () => {
     $("#pidTuning").toggle();
 });
 
+gui.setButton("gui-controls-button-12", "Magnometer Calibration", () => {
+    
+});
+
 
 gui.setButton("gui-log-button-1", "ADD EVENT", () => {
     var msg = "<p>Enter message: <input id='eventmsg' type='text' value='' /></p>";
@@ -246,6 +250,9 @@ socket.on("data", (data) => {
 
         case "leak":
             gui.setInfo(4, value);
+            if (value == true) {
+                gui.overlayText("LEAK DETECTED", 2000);
+            }
             break;
 
         case "voltage":
@@ -305,6 +312,8 @@ socket.on("data", (data) => {
 
         case 'headingHold':
             gui.buttonState("gui-controls-button-4", value.setPoint !== false);
+            gui.log(`Heading hold set to: ${value.setPoint}`)
+            hudBlock.headingHoldPosition = value.setPoint;
             $("input[name=headingP").val(value.p);
             $("input[name=headingI").val(value.i);
             $("input[name=headingD").val(value.d);
@@ -312,6 +321,8 @@ socket.on("data", (data) => {
 
         case 'depthHold':
             gui.buttonState("gui-controls-button-6", value.setPoint !== false);
+            gui.log(`Depth hold set to: ${value.setPoint}`)
+            lineChart.setDepthHoldLine(value.setPoint);
             $("input[name=depthP").val(value.p);
             $("input[name=depthI").val(value.i);
             $("input[name=depthD").val(value.d);

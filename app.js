@@ -168,7 +168,15 @@ adc.on('error', (err) => log.error(`ADS1015 read failed (${err})`));
 imu.init(true, 10).catch((err) => { log.error(`IMU initialization failed (${err})`); })
 imu.on('init', () => { 
   log.info("IMU successfully initialized");
-  imu.calibrateAccelGyroBias().catch((err) => log.error(`IMU calibration failed (${err})`));
+  if (!imu.loadCalibration()) {
+    log.info("IMU calibration not found, starting calibration");
+    imu.calibrateAccelGyroBias().then(_ => {
+      imu.saveCalibration();
+    }).catch((err) => log.error(`IMU calibration failed (${err})`));
+
+  } else {
+    log.info("IMU calibration loaded");
+  }
  })
 imu.on('read', () => {
   log.silly(`IMU Read: ${imu.getRoll()}deg, ${imu.getPitch()}deg, ${imu.getHeading(1)}deg`);
@@ -307,7 +315,11 @@ function parseWebsocketData(data) {
       break;
 
     case 'calibrateAccelGyroBias':
-      imu.calibrateAccelGyroBias();
+      imu.calibrateAccelGyroBias()
+        .then(() => {
+          imu.saveCalibration();
+          log.info("IMU calibration saved");
+        }).catch((err) => log.error(`IMU calibration failed (${err})`));
       break;
 
     case 'resetMahCounter': // OK

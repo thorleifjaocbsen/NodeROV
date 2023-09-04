@@ -45,7 +45,18 @@ module.exports = class LibCameraVideo extends EventEmitter {
         args.push('--profile', 'baseline'); // only thing broadway can decode
 
         this.#process = spawn('libcamera-vid', args);
-
+        // args = [];
+        // args.push("-f", "video4linux2");
+        // args.push("-input_format", "h264");
+        // args.push("-video_size", "1920x1080");
+        // args.push("-r", "15");
+        // args.push("-i", "/dev/video3");
+        // args.push("-c:v", "libx264"); // Use libx264 codec for re-encoding
+        // args.push("-profile:v", "baseline"); // Set the profile to Baseline
+        // args.push("-preset", "medium"); // Choose a preset (medium in this case)
+        // args.push("-f", "rawvideo");
+        // args.push("-");
+        // this.#process = spawn('ffmpeg', args)
         this.#process.on("error", (error) => {
             if (error.code == "ENOENT") {
                 this.emit("error", "Camera Software not found");
@@ -74,7 +85,9 @@ module.exports = class LibCameraVideo extends EventEmitter {
 
         this.#pipe.on("data", (data) => {
             const frame = Buffer.concat([NALseparator, data]);
-    
+            // Log thee first 6 bytes of the frame:
+            // console.log(data.slice(0, 6), data.length, this.#startFrames.length);
+
             // If recording
             if (this.#recordState == RecordState.RECORDING) {
                 this.#recordWriteStream.write(frame);
@@ -85,6 +98,7 @@ module.exports = class LibCameraVideo extends EventEmitter {
             else if (frame[4] == 0x28) { this.#startFrames[1] = frame; }
             else if (frame[4] == 0x25) {
                 this.#startFrames[2] = frame;
+                // console.log(this.#startFrames);
     
                 if (this.#recordState == RecordState.WAITINGIDR) {
                     // Send SPS and PPS IDR frames

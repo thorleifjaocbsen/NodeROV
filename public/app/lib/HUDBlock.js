@@ -15,6 +15,7 @@ module.exports = class HUDBlock {
     this.roll = 0;
     this.heading = 0;
     this.turns = 0;
+    this.headingHoldPosition = false;
   }
 
 
@@ -102,12 +103,28 @@ module.exports = class HUDBlock {
     const ctx = this.canvas.getContext("2d");
 
     heading = Math.round(heading)
-
+    
+    
     // Rose
-    const left = (width / 2 - 74) - ((1200 / 360) * heading);
+    const left = (width / 2 - 75) - ((1200 / 360) * heading);
     ctx.drawImage(this.compassRose, left, 0);
     ctx.drawImage(this.compassRose, -1200 + left, 0);
     ctx.drawImage(this.compassRose, 1200 + left, 0);
+    
+    // Create a line on rose for heading hold position. Locked to the heading for heading hold:
+    if (this.headingHoldPosition !== false) {
+      const linePos = left + ((1200 / 360) * this.headingHoldPosition) + 75
+      ctx.save()
+      ctx.beginPath()
+      ctx.strokeStyle = "rgba(255,0,0,0.9)";
+      ctx.lineWidth = 2;
+      ctx.moveTo(linePos, 0);
+      ctx.lineTo(linePos, 40);
+      ctx.stroke()
+      ctx.closePath()
+      ctx.restore()
+    }
+    
 
     // Heading background
     ctx.save()
