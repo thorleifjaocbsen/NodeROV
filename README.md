@@ -1,4 +1,6 @@
-# WORK IN PROGRESS / NOT TESTED
+# DISCONTINUED
+
+If someone wants to keep working on this please notify me, I have boards deisgned to work with this they are a HAT for the Raspberry PI. I could ship them if you wanted. But that would require a dedicated person to continue this project :P
 
 # NodeROV
 
