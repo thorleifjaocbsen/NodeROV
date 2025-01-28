@@ -1,0 +1,128 @@
+<html>
+
+<head>
+  <title>Controller Test</title>
+  <script type="text/javascript" src="jquery.min.js" charset="utf-8"></script>
+
+  <style type="text/css">
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    #credits {
+      margin-top: 30px;
+      font-size: 10px;
+      color: #cccccc;
+    }
+
+    #credits a {
+      color: #cccccc;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Simple Remote Controller Test</h1>
+  <p>Loop Latency: <span id="looplatency">-1</span>ms</p>
+  <svg width="400" viewBox="0 0 441 383" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g id="gamepad">
+      <path id="LOutline"
+            d="M 220.5 294.5 C 220.5 294.5 195 294.5 150 294.5 C -4 375 43.5 165.5 55 137.5 C 66.5 109.5 95.5 92.0001 128 92.0001 C 154 92.0001 200.5 92.0001 220.5 92.0001"
+            stroke="black" stroke-width="2" stroke-opacity="0.2"></path>
+      <path id="ROutline"
+            d="M 220 294.5 c 0 0 25.5 0 70.5 0 c 154 80.5 106.5 -129 95 -157 C 374 109.5 345 92.0001 312.5 92.0001 C 286.5 92.0001 240 92.0001 220 92.0001"
+            stroke="black" stroke-width="2" stroke-opacity="0.2"></path>
+      <circle id="LStickOutline" cx="113" cy="160" r="37.5" stroke="black" stroke-opacity="0.2" stroke-width="5">
+      </circle>
+      <!-- <circle id="LeftStick" cx="112.85882353782654" cy="160.14117646217346" r="28" fill="rgba(0,0,0,0)"
+        stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle> -->
+      <circle id="RStickOutline" cx="329" cy="160" r="37.5" stroke="black" stroke-opacity="0.2" stroke-width="5">
+      </circle>
+      <circle id="RightStick" cx="329.1411771774292" cy="160.14117646217346" r="28" fill="rgba(0,0,0,0)"
+              stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle>
+
+
+      <g id="LeftRed">
+        <circle cx="120" cy="250" r="10" fill="rgba(0,0,0,0)" stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle>
+      </g>
+
+      <g id="LeftBlack">
+        <circle cx="90" cy="250" r="10" fill="rgba(0,0,0,0)" stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle>
+      </g>
+
+      <g id="RightRed">
+        <circle cx="310" cy="250" r="10" fill="rgba(0,0,0,0)" stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle>
+      </g>
+
+      <g id="RightBlack">
+        <circle cx="350" cy="250" r="10" fill="rgba(0,0,0,0)" stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle>
+      </g>
+
+      <g id="LeftStickRotate">
+        <!-- Base Circle -->
+        <circle cx="113" cy="160" r="28" fill="rgba(0,0,0,0)" stroke="rgba(0,0,0,0.2)" stroke-width="5"></circle>
+
+        <!-- Top Arc -->
+        <path id="LeftStickArc1"
+              d="M113,138 A22,22 0 0,1 113,142"
+              fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="3"></path>
+      </g>
+
+
+
+    </g>
+  </svg><br>
+  <span id="gamepadid">No gamepad detected yed</span>
+
+  <script type="text/javascript">
+    let lastTimestamp = 0
+    let controllerLastTimestamp = 0
+    function mainLoop(timestamp) {
+      const gp = navigator.getGamepads()[0]
+      if (gp != null && gp.timestamp != controllerLastTimestamp) {
+
+        $("#gamepadid").html(gp.id)
+
+        $("#gamepad #LeftBlack > circle").attr('fill', `rgba(0,0,0,${gp.buttons[0] ? gp.buttons[0].value : 0})`)
+        $("#gamepad #LeftRed > circle").attr('fill', `rgba(255,0,0,${gp.buttons[1] ? gp.buttons[1].value : 0})`)
+        $("#gamepad #RightRed > circle").attr('fill', `rgba(255,0,0,${gp.buttons[2] ? gp.buttons[2].value : 0})`)
+        $("#gamepad #RightBlack > circle").attr('fill', `rgba(0,0,0,${gp.buttons[3] ? gp.buttons[3].value : 0})`)
+        $("#gamepad #LeftStickRotate > circle").attr('fill', `rgba(0,0,0,${gp.buttons[4] ? gp.buttons[4].value : 0})`)
+
+        const xOffset = gp.axes[0] * -12; // Calculate X-axis movement
+        const yOffset = gp.axes[1] * -12; // Calculate Y-axis movement
+
+        // Move the base circle
+        $("#gamepad #LeftStickRotate > circle").attr("cx", 113 + xOffset).attr("cy", 160 + yOffset);
+
+        // Move the top arc
+        $("#gamepad #LeftStickArc1").attr(
+          "d",
+          `M${113 + xOffset},${138 + yOffset} A22,22 0 0,1 ${113 + xOffset},${142 + yOffset}`
+        );
+
+        $("#gamepad #RightStick").attr('cx', 329 + gp.axes[3] * -1 * 12)
+        $("#gamepad #RightStick").attr('cy', 160 + gp.axes[4] * 12)
+
+        // Update rotation of LeftStickRotate
+        const rotationAngle = gp.axes[2] * 90; // Scale to -90 to 90 degrees
+        $("#gamepad #LeftStickRotate").attr('transform', `rotate(${rotationAngle}, 113, 160)`);
+
+        $("#looplatency").html(Math.round(timestamp - lastTimestamp))
+
+        controllerLastTimestamp = gp.timestamp
+      }
+
+      // $("#looplatency").html(Math.round(timestamp - lastTimestamp))
+      lastTimestamp = timestamp
+      window.requestAnimationFrame(mainLoop)
+    }
+
+    window.requestAnimationFrame(mainLoop)
+
+  </script>
+</body>
+
+</html>
